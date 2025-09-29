@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { getServerSession } from 'next-auth/next';
@@ -21,6 +21,16 @@ export async function GET() {
   try {
     console.log('🔍 Clients API - Getting clients for authenticated trainer');
     
+    // Check database connection first
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      console.error('❌ Database connection failed');
+      return NextResponse.json(
+        { error: 'Database connection unavailable' },
+        { status: 503 }
+      );
+    }
+    
     // Get session to verify user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -31,9 +41,11 @@ export async function GET() {
       );
     }
 
-    // Find the trainer using session email
-    const trainer = await prisma.user.findUnique({
-      where: { email: session.user.email, role: 'TRAINER' }
+    // Find the trainer using session email with retry
+    const trainer = await withDatabaseRetry(async () => {
+      return await prisma.user.findUnique({
+        where: { email: session.user.email, role: 'TRAINER' }
+      });
     });
     
     if (!trainer) {
@@ -49,34 +61,36 @@ export async function GET() {
     const whereClause = { trainerId: trainer.id, role: 'CLIENT' as const };
     console.log('🔍 Database query where clause:', whereClause);
 
-    // Get all clients assigned to this trainer (or all clients if admin)
-    const clients = await prisma.user.findMany({
-      where: whereClause,
-      include: {
-        clientProfile: true,
-        workoutSessions: {
-          where: {
-            completed: true
+    // Get all clients assigned to this trainer with retry
+    const clients = await withDatabaseRetry(async () => {
+      return await prisma.user.findMany({
+        where: whereClause,
+        include: {
+          clientProfile: true,
+          workoutSessions: {
+            where: {
+              completed: true
+            },
+            orderBy: {
+              endTime: 'desc'
+            },
+            take: 1
           },
-          orderBy: {
-            endTime: 'desc'
+          progressEntries: {
+            orderBy: {
+              date: 'desc'
+            },
+            take: 1
           },
-          take: 1
-        },
-        progressEntries: {
-          orderBy: {
-            date: 'desc'
-          },
-          take: 1
-        },
-        assignedTrainer: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+          assignedTrainer: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
           }
         }
-      }
+      });
     });
 
     // Transform data for frontend
@@ -99,10 +113,20 @@ export async function GET() {
       }
     }));
 
+    console.log(`✅ Found ${transformedClients.length} clients for trainer ${trainer.name}`);
     return NextResponse.json(transformedClients);
     
   } catch (error) {
-    console.error('Get clients error:', error);
+    console.error('❌ Get clients error:', error);
+    
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes('database')) {
+      return NextResponse.json(
+        { error: 'Database connection error. Please try again.' },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -241,7 +265,7 @@ export async function PUT(request: Request) {
     await prisma.clientProfile.create({
       data: {
         userId: newClient.id,
-        fitnessGoals: validatedData.goals || null,
+        fitnessGoals: validatedData.goals || undefined,
         fitnessLevel: fitnessLevelMap[validatedData.fitnessLevel],
         age: validatedData.age ? parseInt(validatedData.age) : null,
         height: validatedData.height ? parseFloat(validatedData.height.replace(/[^0-9.]/g, '')) : null,

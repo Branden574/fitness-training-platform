@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma';
 
 // GET /api/appointments - Fetch appointments for trainer/client
 export async function GET(request: NextRequest) {
   try {
     console.log('📅 Appointments API - Fetching appointments');
+    
+    // Check database connection first
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      console.error('❌ Database connection failed in appointments API');
+      return NextResponse.json(
+        { error: 'Database connection unavailable' },
+        { status: 503 }
+      );
+    }
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -14,9 +24,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { trainer: true }
+    const user = await withDatabaseRetry(async () => {
+      return await prisma.user.findUnique({
+        where: { email: session.user.email },
+        include: { trainer: true }
+      });
     });
 
     if (!user) {
@@ -53,34 +65,45 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const appointments = await prisma.appointment.findMany({
-      where: whereClause,
-      include: {
-        client: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+    const appointments = await withDatabaseRetry(async () => {
+      return await prisma.appointment.findMany({
+        where: whereClause,
+        include: {
+          client: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          trainer: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
           }
         },
-        trainer: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
+        orderBy: {
+          startTime: 'asc'
         }
-      },
-      orderBy: {
-        startTime: 'asc'
-      }
+      });
     });
 
-    console.log(`✅ Found ${appointments.length} appointments`);
+    console.log(`✅ Found ${appointments.length} appointments for ${user.role} ${user.name}`);
     return NextResponse.json(appointments);
 
   } catch (error) {
     console.error('❌ Error fetching appointments:', error);
+    
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes('database')) {
+      return NextResponse.json(
+        { error: 'Database connection error. Please try again.' },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
