@@ -84,6 +84,15 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          // Update login tracking
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              lastLogin: new Date(),
+              loginCount: { increment: 1 }
+            }
+          });
+
           console.log('✅ Login successful for:', user.email);
           return {
             id: user.id,
