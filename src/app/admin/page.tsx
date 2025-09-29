@@ -101,8 +101,35 @@ export default function AdminPage() {
     }
   };
 
-  const deleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+  const deleteUser = async (userId: string, userName: string, userEmail: string) => {
+    // First confirmation
+    const firstConfirm = confirm(
+      `⚠️ WARNING: DELETE USER PERMANENTLY\n\n` +
+      `User: ${userName} (${userEmail})\n\n` +
+      `This will PERMANENTLY DELETE:\n` +
+      `• User account and login access\n` +
+      `• All workout sessions and progress\n` +
+      `• All appointments and schedules\n` +
+      `• All food entries and nutrition data\n` +
+      `• All messages and notifications\n\n` +
+      `❌ THIS CANNOT BE UNDONE!\n\n` +
+      `Consider deactivating instead to preserve data.\n\n` +
+      `Continue with deletion?`
+    );
+
+    if (!firstConfirm) {
+      return;
+    }
+
+    // Second confirmation for extra safety
+    const secondConfirm = confirm(
+      `🚨 FINAL CONFIRMATION\n\n` +
+      `Type the user's email to confirm deletion:\n` +
+      `Expected: ${userEmail}\n\n` +
+      `Click OK to confirm PERMANENT deletion of ${userName}`
+    );
+
+    if (!secondConfirm) {
       return;
     }
 
@@ -112,14 +139,16 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
+        alert(`✅ User ${userName} has been permanently deleted.`);
         fetchAdminData();
         fetchAdminStats();
       } else {
-        alert('Failed to delete user');
+        const error = await response.json();
+        alert(`❌ Failed to delete user: ${error.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert('Failed to delete user');
+      alert('❌ Failed to delete user. Please try again.');
     }
   };
 
@@ -429,22 +458,31 @@ export default function AdminPage() {
                           <div>Progress: {user._count.progressEntries}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                          <button 
-                            onClick={() => resetPassword(user.id)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
-                          >
-                            Reset Password
-                          </button>
-                          <button 
-                            onClick={() => toggleUserStatus(user.id, user.isActive, user.name || user.email)}
-                            className={`px-3 py-1 rounded text-sm transition-colors ${
-                              user.isActive 
-                                ? 'bg-red-600 text-white hover:bg-red-700' 
-                                : 'bg-green-600 text-white hover:bg-green-700'
-                            }`}
-                          >
-                            {user.isActive ? 'Deactivate' : 'Reactivate'}
-                          </button>
+                          <div className="flex flex-wrap gap-2">
+                            <button 
+                              onClick={() => resetPassword(user.id)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                            >
+                              Reset Password
+                            </button>
+                            <button 
+                              onClick={() => toggleUserStatus(user.id, user.isActive, user.name || user.email)}
+                              className={`px-3 py-1 rounded text-sm transition-colors ${
+                                user.isActive 
+                                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                                  : 'bg-green-600 text-white hover:bg-green-700'
+                              }`}
+                            >
+                              {user.isActive ? 'Deactivate' : 'Reactivate'}
+                            </button>
+                            <button 
+                              onClick={() => deleteUser(user.id, user.name || 'Unknown User', user.email)}
+                              className="px-3 py-1 bg-gray-800 text-white rounded text-sm hover:bg-gray-900 transition-colors border border-red-500 hover:border-red-600"
+                              title="Permanently delete user and all data"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -541,8 +579,9 @@ export default function AdminPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
-                          onClick={() => deleteUser(user.id)}
+                          onClick={() => deleteUser(user.id, user.name || 'Unknown User', user.email)}
                           className="text-red-600 hover:text-red-900"
+                          title="Permanently delete user and all data"
                         >
                           Delete
                         </button>
