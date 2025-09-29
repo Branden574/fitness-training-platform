@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { withAuth } from "next-auth/middleware"
 
-// Extend global object for rate limiting
-declare global {
-  var rateLimitMap: Map<string, number[]> | undefined
-}
+// Simple rate limiting without global (Edge Runtime compatible)
+const rateLimitMap = new Map<string, number[]>()
 
 // Security middleware function
 function securityMiddleware(request: NextRequest) {
@@ -14,31 +12,15 @@ function securityMiddleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const response = NextResponse.next()
-  
-  // Add essential security headers
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
-  
-  // Rate limiting protection
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
-            request.headers.get('x-real-ip') || 
-            'unknown'
+  // Basic rate limiting (simplified for Edge Runtime)
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
   const now = Date.now()
   
-  // Initialize rate limit map
-  if (!global.rateLimitMap) {
-    global.rateLimitMap = new Map()
-  }
+  const userRequests = rateLimitMap.get(ip) || []
+  const recentRequests = userRequests.filter((time: number) => now - time < 60000)
   
-  const userRequests = global.rateLimitMap.get(ip) || []
-  const recentRequests = userRequests.filter((time: number) => now - time < 60000) // 1 minute
-  
-  // Allow 200 requests per minute (generous but protective)
-  if (recentRequests.length > 200) {
+  // Allow 100 requests per minute (reasonable limit)
+  if (recentRequests.length > 100) {
     return new NextResponse('Rate limit exceeded', { 
       status: 429,
       headers: { 'Retry-After': '60' }
@@ -46,20 +28,13 @@ function securityMiddleware(request: NextRequest) {
   }
   
   recentRequests.push(now)
-  global.rateLimitMap.set(ip, recentRequests)
+  rateLimitMap.set(ip, recentRequests)
   
-  // Cleanup old entries occasionally
-  if (Math.random() < 0.01) {
-    const cutoff = now - 300000 // 5 minutes
-    for (const [key, requests] of global.rateLimitMap.entries()) {
-      const filtered = requests.filter(time => time > cutoff)
-      if (filtered.length === 0) {
-        global.rateLimitMap.delete(key)
-      } else {
-        global.rateLimitMap.set(key, filtered)
-      }
-    }
-  }
+  // Create response with security headers
+  const response = NextResponse.next()
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
   
   return response
 }
@@ -96,7 +71,7 @@ export default withAuth(
           return true
         }
         
-        // Protect authenticated routes
+        // Protect authenticated routes - require valid token
         return !!token
       },
     },
