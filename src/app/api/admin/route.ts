@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
 export async function GET() {
   try {
+    console.log('🔍 Admin API - Fetching admin dashboard data');
+    
+    // Check database connection first
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      console.error('❌ Database connection failed in admin API');
+      return NextResponse.json(
+        { error: 'Database connection unavailable' },
+        { status: 503 }
+      );
+    }
+    
     const session = await getServerSession(authOptions);
     
     // Check if user is authenticated and is an admin
@@ -15,32 +27,45 @@ export async function GET() {
       );
     }
 
-    // Get all users with their profiles
-    const users = await prisma.user.findMany({
-      include: {
-        clientProfile: true,
-        trainer: true,
-        accounts: true,
-      },
-      orderBy: { createdAt: 'desc' },
+    // Get all users with their profiles using retry logic
+    const users = await withDatabaseRetry(async () => {
+      return await prisma.user.findMany({
+        include: {
+          clientProfile: true,
+          trainer: true,
+          accounts: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
     });
 
-    // Get contact submissions
-    const contactSubmissions = await prisma.contactSubmission.findMany({
-      orderBy: { createdAt: 'desc' },
+    // Get contact submissions with retry
+    const contactSubmissions = await withDatabaseRetry(async () => {
+      return await prisma.contactSubmission.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
     });
 
-    // Get invitations
-    const invitations = await prisma.invitation.findMany({
-      include: {
-        inviter: {
-          select: {
-            name: true,
-            email: true,
+    // Get invitations with retry
+    const invitations = await withDatabaseRetry(async () => {
+      return await prisma.invitation.findMany({
+        include: {
+          inviter: {
+            select: {
+              name: true,
+              email: true,
+            }
           }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    console.log(`✅ Found ${users.length} users for admin dashboard`);
+    
+    // Log user statuses for debugging
+    users.forEach(user => {
+      console.log(`  - ${user.name}: isActive=${user.isActive}, role=${user.role}`);
     });
 
     return NextResponse.json({
@@ -61,7 +86,16 @@ export async function GET() {
     });
     
   } catch (error) {
-    console.error('Admin data fetch error:', error);
+    console.error('❌ Admin data fetch error:', error);
+    
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes('database')) {
+      return NextResponse.json(
+        { error: 'Database connection error. Please try again.' },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
