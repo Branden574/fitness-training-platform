@@ -37,8 +37,9 @@ export async function withDatabaseRetry<T>(
   for (let i = 0; i < retries; i++) {
     try {
       return await operation();
-    } catch (error: any) {
-      console.error(`Database operation failed (attempt ${i + 1}/${retries}):`, error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Database operation failed (attempt ${i + 1}/${retries}):`, errorMessage);
       
       if (i === retries - 1) {
         throw error;
