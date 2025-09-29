@@ -1,57 +1,21 @@
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
-import SuccessGallery from "@/components/SuccessGallery";
 import ContactForm from "@/components/ContactForm";
 import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      <HeroSection />
-      
-      {/* Invitation Code Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                🎯 Have an Invitation Code?
-              </h2>
-              <p className="text-xl text-gray-600">
-                Join our fitness community with your personal trainer&apos;s invitation code
-              </p>
-            </div>
-            
-            <div className="max-w-md mx-auto">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-6">
-                <div className="text-4xl mb-4">📧</div>
-                <h3 className="font-semibold text-gray-800 mb-2">Quick & Easy Registration</h3>
-                <p className="text-sm text-gray-600">
-                  Enter your 6-character code to create your account and connect with your trainer
-                </p>
-              </div>
-              
-              <Link href="/register-with-code">
-                <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 px-8 rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
-                  Enter Invitation Code
-                </button>
-              </Link>
-              
-              <p className="text-sm text-gray-500 mt-4">
-                Don&apos;t have a code? <a href="#contact" className="text-blue-600 hover:text-blue-700 font-medium">Contact us</a> to get started
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      <FeaturesSection />
-      <SuccessGallery />
+    <main className="min-h-screen" style={{background: 'yellow', padding: '100px'}}>
+      <h1 style={{color: 'red', fontSize: '48px'}}>EMPTY PAGE TEST</h1>
+      <p>If you still see "Brent Martinez" anywhere, it's not from our React components!</p>
+    </main>
+  );
+}
       <TestimonialsSection />
       
       {/* Contact Section */}
-      <section id="contact" className="py-20 bg-gradient-to-br from-gray-50 to-white">
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Contact Info */}
@@ -65,21 +29,23 @@ export default function Home() {
               </p>
               
               <div className="space-y-6">
-                  <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-xl">📞</span>
                   </div>
                   <div>
                     <div className="font-semibold text-gray-800">Phone</div>
-                    <div className="text-gray-600">(559) 365-2946</div>
+                    <div className="text-gray-600">(555) 123-4567</div>
                   </div>
-                </div>                <div className="flex items-center space-x-4">
+                </div>
+                
+                <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-xl">✉️</span>
                   </div>
                   <div>
                     <div className="font-semibold text-gray-800">Email</div>
-                    <div className="text-gray-600">martinezfitness559@gmail.com</div>
+                    <div className="text-gray-600">brent@brentmartinezfitness.com</div>
                   </div>
                 </div>
                 

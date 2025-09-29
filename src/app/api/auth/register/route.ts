@@ -1,0 +1,137 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
+import bcrypt from 'bcryptjs';
+
+const registerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  invitationCode: z.string().min(1, 'Invitation code is required'),
+  role: z.enum(['CLIENT', 'TRAINER']).optional().default('CLIENT'),
+});
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    // Validate the request body
+    const validatedData = registerSchema.parse(body);
+    
+    // Normalize email to lowercase for consistency
+    const normalizedEmail = validatedData.email.toLowerCase().trim();
+    
+    // Validate invitation code
+    const invitation = await prisma.invitation.findUnique({
+      where: { code: validatedData.invitationCode }
+    });
+
+    if (!invitation) {
+      return NextResponse.json(
+        { message: 'Invalid invitation code' },
+        { status: 400 }
+      );
+    }
+
+    if (invitation.status !== 'PENDING') {
+      return NextResponse.json(
+        { message: 'Invitation has already been used or expired' },
+        { status: 400 }
+      );
+    }
+
+    if (new Date() > invitation.expiresAt) {
+      return NextResponse.json(
+        { message: 'Invitation has expired' },
+        { status: 400 }
+      );
+    }
+
+    if (invitation.email.toLowerCase().trim() !== normalizedEmail) {
+      return NextResponse.json(
+        { message: 'Email does not match the invitation' },
+        { status: 400 }
+      );
+    }
+    
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail }
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { message: 'User with this email already exists' },
+        { status: 400 }
+      );
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
+
+    // Create the user and link to trainer
+    const user = await prisma.user.create({
+      data: {
+        name: validatedData.name,
+        email: normalizedEmail,
+        password: hashedPassword,
+        role: validatedData.role,
+        trainerId: invitation.invitedBy, // Link client to the trainer who invited them
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        trainerId: true,
+        createdAt: true,
+      }
+    });
+
+    // Mark invitation as accepted
+    await prisma.invitation.update({
+      where: { id: invitation.id },
+      data: {
+        status: 'ACCEPTED',
+        acceptedAt: new Date(),
+      }
+    });
+
+    // Update contact submission status to COMPLETED
+    await prisma.contactSubmission.updateMany({
+      where: { 
+        email: normalizedEmail,
+        status: 'INVITED'
+      },
+      data: {
+        status: 'COMPLETED'
+      }
+    });
+
+    return NextResponse.json(
+      { 
+        message: 'User created successfully',
+        user
+      },
+      { status: 201 }
+    );
+    
+  } catch (error) {
+    console.error('Registration error:', error);
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { 
+          message: 'Validation error',
+          errors: error.issues 
+        },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

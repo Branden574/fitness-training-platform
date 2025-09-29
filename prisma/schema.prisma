@@ -1,0 +1,571 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id                     String            @id @default(cuid())
+  name                   String?
+  email                  String            @unique
+  emailVerified          DateTime?
+  password               String?
+  passwordChangeRequired Boolean           @default(false)
+  image                  String?
+  role                   Role              @default(CLIENT)
+  isActive               Boolean           @default(true)
+  lastLogin              DateTime?
+  loginCount             Int               @default(0)
+  adminNotes             String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  trainerId              String?
+  accounts               Account[]
+  clientAppointments     Appointment[]     @relation("ClientAppointments")
+  trainerAppointments    Appointment[]     @relation("TrainerAppointments")
+  clientProfile          ClientProfile?
+  foodEntries            FoodEntry[]
+  sentInvitations        Invitation[]      @relation("InvitationInviter")
+  createdMealPlans       MealPlan[]        @relation("TrainerMealPlans")
+  mealPlans              MealPlan[]
+  receivedMessages       Message[]         @relation("MessageReceiver")
+  sentMessages           Message[]         @relation("MessageSender")
+  notifications          Notification[]
+  nutritionPlans         NutritionPlan[]
+  progressEntries        ProgressEntry[]
+  sessions               Session[]
+  trainer                Trainer?
+  assignedTrainer        User?             @relation("TrainerClients", fields: [trainerId], references: [id])
+  clients                User[]            @relation("TrainerClients")
+  workoutProgress        WorkoutProgress[]
+  workoutSessions        WorkoutSession[]
+  createdWorkouts        Workout[]
+
+  @@index([email])
+  @@index([role])
+  @@index([trainerId])
+  @@index([isActive])
+  @@index([lastLogin])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model AdminLog {
+  id           String   @id @default(cuid())
+  adminEmail   String
+  action       String
+  targetUserId String?
+  targetEmail  String?
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([adminEmail])
+  @@index([action])
+  @@index([targetUserId])
+  @@index([createdAt])
+  @@map("admin_logs")
+}
+
+model Trainer {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  bio             String?
+  specializations Json?
+  experience      Int      @default(0)
+  certifications  Json?
+  hourlyRate      Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trainers")
+}
+
+model ClientProfile {
+  id                String       @id @default(cuid())
+  userId            String       @unique
+  age               Int?
+  height            Float?
+  weight            Float?
+  fitnessGoals      Json?
+  fitnessLevel      FitnessLevel @default(BEGINNER)
+  medicalConditions Json?
+  preferences       Json?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
+}
+
+model Exercise {
+  id               String            @id @default(cuid())
+  name             String
+  description      String?
+  instructions     Json?
+  muscleGroups     Json?
+  equipment        Json?
+  difficulty       Difficulty        @default(BEGINNER)
+  imageUrl         String?
+  videoUrl         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  workoutExercises WorkoutExercise[]
+  workoutProgress  WorkoutProgress[]
+
+  @@index([name])
+  @@index([difficulty])
+  @@map("exercises")
+}
+
+model Workout {
+  id          String            @id @default(cuid())
+  title       String
+  description String?
+  duration    Int
+  difficulty  Difficulty        @default(BEGINNER)
+  type        WorkoutType       @default(STRENGTH)
+  createdBy   String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  exercises   WorkoutExercise[]
+  sessions    WorkoutSession[]
+  creator     User              @relation(fields: [createdBy], references: [id])
+
+  @@index([createdBy])
+  @@index([difficulty])
+  @@index([type])
+  @@map("workouts")
+}
+
+model WorkoutExercise {
+  id         String   @id @default(cuid())
+  workoutId  String
+  exerciseId String
+  sets       Int
+  reps       Int?
+  duration   Int?
+  weight     Float?
+  restTime   Int?
+  notes      String?
+  order      Int
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, exerciseId])
+  @@map("workout_exercises")
+}
+
+model WorkoutSession {
+  id               String             @id @default(cuid())
+  workoutId        String
+  userId           String
+  startTime        DateTime
+  endTime          DateTime?
+  completed        Boolean            @default(false)
+  notes            String?
+  rating           Int?
+  caloriesBurned   Int?
+  createdAt        DateTime           @default(now())
+  exerciseProgress ExerciseProgress[]
+  workoutProgress  WorkoutProgress[]
+  user             User               @relation(fields: [userId], references: [id])
+  workout          Workout            @relation(fields: [workoutId], references: [id])
+
+  @@unique([workoutId, userId])
+  @@index([userId, startTime])
+  @@index([workoutId])
+  @@map("workout_sessions")
+}
+
+model ExerciseProgress {
+  id            String         @id @default(cuid())
+  sessionId     String
+  exerciseId    String
+  setsCompleted Int
+  repsPerSet    Json?
+  weightsUsed   Json?
+  restTimes     Json?
+  notes         String?
+  session       WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("exercise_progress")
+}
+
+model WorkoutProgress {
+  id               String         @id @default(cuid())
+  userId           String
+  exerciseId       String
+  workoutSessionId String
+  weight           Float?
+  sets             Int?
+  reps             Int?
+  notes            String?
+  date             DateTime       @default(now())
+  createdAt        DateTime       @default(now())
+  exercise         Exercise       @relation(fields: [exerciseId], references: [id])
+  user             User           @relation(fields: [userId], references: [id])
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id])
+
+  @@index([userId, date])
+  @@index([exerciseId])
+  @@map("workout_progress")
+}
+
+model Food {
+  id                 String      @id @default(cuid())
+  name               String
+  brand              String?
+  caloriesPerServing Int
+  protein            Float
+  carbs              Float
+  fat                Float
+  fiber              Float?
+  sugar              Float?
+  sodium             Float?
+  servingSize        String
+  servingUnit        String
+  createdAt          DateTime    @default(now())
+  foodEntries        FoodEntry[]
+  mealItems          MealItem[]
+
+  @@index([name])
+  @@map("foods")
+}
+
+model FoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  foodName  String
+  quantity  Float
+  unit      String
+  calories  Float
+  protein   Float
+  carbs     Float
+  fat       Float
+  mealType  MealType
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  foodId    String?
+  food      Food?    @relation(fields: [foodId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+  @@index([date])
+  @@index([mealType])
+  @@map("food_entries")
+}
+
+model Meal {
+  id         String     @id @default(cuid())
+  name       String
+  type       MealType
+  mealPlanId String
+  items      MealItem[]
+  mealPlan   MealPlan   @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  @@map("meals")
+}
+
+model MealItem {
+  id       String  @id @default(cuid())
+  mealId   String
+  foodId   String
+  quantity Float
+  notes    String?
+  food     Food    @relation(fields: [foodId], references: [id])
+  meal     Meal    @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  @@map("meal_items")
+}
+
+model MealPlan {
+  id                 String   @id @default(cuid())
+  name               String
+  description        String?
+  userId             String
+  trainerId          String
+  startDate          DateTime
+  endDate            DateTime
+  dailyCalorieTarget Int
+  dailyProteinTarget Float
+  dailyCarbTarget    Float
+  dailyFatTarget     Float
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  trainer            User     @relation("TrainerMealPlans", fields: [trainerId], references: [id])
+  user               User     @relation(fields: [userId], references: [id])
+  meals              Meal[]
+
+  @@index([userId])
+  @@index([trainerId])
+  @@map("meal_plans")
+}
+
+model NutritionPlan {
+  id            String   @id @default(cuid())
+  userId        String
+  dailyCalories Float
+  proteinGrams  Float
+  carbsGrams    Float
+  fatGrams      Float
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("nutrition_plans")
+}
+
+model ProgressEntry {
+  id           String   @id @default(cuid())
+  userId       String
+  date         DateTime
+  weight       Float?
+  bodyFat      Float?
+  muscleMass   Float?
+  measurements Json?
+  photos       Json?
+  notes        String?
+  mood         Int?
+  energy       Int?
+  sleep        Float?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("progress_entries")
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  type       MessageType @default(TEXT)
+  fileUrl    String?
+  read       Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender     User        @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  userId        String
+  title         String
+  message       String
+  type          NotificationType
+  read          Boolean          @default(false)
+  actionUrl     String?
+  appointmentId String?
+  createdAt     DateTime         @default(now())
+  user          User             @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
+}
+
+model ContactSubmission {
+  id              String        @id @default(cuid())
+  name            String
+  email           String
+  phone           String?
+  message         String
+  age             String?
+  fitnessLevel    String?
+  fitnessGoals    String?
+  currentActivity String?
+  injuries        String?
+  availability    String?
+  status          ContactStatus @default(NEW)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_submissions")
+}
+
+model Invitation {
+  id         String           @id @default(cuid())
+  email      String
+  phone      String?
+  code       String           @unique
+  invitedBy  String
+  status     InvitationStatus @default(PENDING)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  inviter    User             @relation("InvitationInviter", fields: [invitedBy], references: [id])
+
+  @@unique([email, status])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("invitations")
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  clientId       String
+  trainerId      String
+  title          String
+  description    String?
+  type           AppointmentType
+  status         AppointmentStatus @default(PENDING)
+  startTime      DateTime
+  endTime        DateTime
+  duration       Int
+  location       String?
+  notes          String?
+  cancelReason   String?
+  adminNotes     String?
+  lastModifiedBy String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  client         User              @relation("ClientAppointments", fields: [clientId], references: [id])
+  trainer        User              @relation("TrainerAppointments", fields: [trainerId], references: [id])
+
+  @@index([clientId])
+  @@index([trainerId])
+  @@index([startTime])
+  @@index([status])
+  @@index([trainerId, startTime])
+  @@map("appointments")
+}
+
+enum AppointmentType {
+  TRAINING_SESSION
+  CHECK_IN
+  NUTRITION_CONSULTATION
+  ASSESSMENT
+  FOLLOW_UP
+}
+
+enum AppointmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum Role {
+  CLIENT
+  TRAINER
+  ADMIN
+}
+
+enum FitnessLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum WorkoutType {
+  STRENGTH
+  CARDIO
+  FLEXIBILITY
+  MIXED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
+enum NotificationType {
+  WORKOUT_ASSIGNED
+  MEAL_PLAN_ASSIGNED
+  MEAL_PLAN_ENDED
+  MESSAGE_RECEIVED
+  PROGRESS_REMINDER
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_RESCHEDULED
+  APPOINTMENT_READ
+  GENERAL
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  CONTACTED
+  INVITED
+  COMPLETED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
