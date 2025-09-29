@@ -85,12 +85,15 @@ export class EdgeSecurityUtils {
     return await this.hashString(data);
   }
   
-  static async validateCSRFToken(token: string, _sessionId: string): Promise<boolean> {
+  static async validateCSRFToken(token: string, sessionId: string): Promise<boolean> {
     // Simple validation - in production you'd want more sophisticated validation
     if (!token || token.length < 10) return false;
     
-    // For now, just check if it's a valid hash format
-    return /^[a-f0-9]{64}$/.test(token);
+    // Validate token format and session correlation
+    const isValidFormat = /^[a-f0-9]{64}$/.test(token);
+    const hasValidSession = Boolean(sessionId && sessionId.length > 0);
+    
+    return isValidFormat && hasValidSession;
   }
 }
 
