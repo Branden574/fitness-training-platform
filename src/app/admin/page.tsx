@@ -146,7 +146,19 @@ export default function AdminPage() {
     }
   };
 
-  const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
+  const toggleUserStatus = async (userId: string, currentStatus: boolean, userName: string) => {
+    // Get user confirmation before making changes
+    const action = currentStatus ? 'deactivate' : 'reactivate';
+    const actionPast = currentStatus ? 'deactivated' : 'reactivated';
+    
+    const confirmMessage = currentStatus 
+      ? `Are you sure you want to DEACTIVATE ${userName}?\n\nThis will:\n• Prevent them from logging in\n• Disable their access to the platform\n• Keep their data intact for potential reactivation\n\nYou can reactivate them later if they return.`
+      : `Are you sure you want to REACTIVATE ${userName}?\n\nThis will:\n• Allow them to log in again\n• Restore their access to the platform\n• Enable all their previous functionality`;
+    
+    if (!confirm(confirmMessage)) {
+      return; // User cancelled
+    }
+
     try {
       const response = await fetch('/api/admin/toggle-user', {
         method: 'POST',
@@ -155,16 +167,16 @@ export default function AdminPage() {
       });
       
       if (response.ok) {
-        alert(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+        alert(`✅ ${userName} has been ${actionPast} successfully!`);
         fetchAdminData();
         fetchAdminStats();
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to toggle user status');
+        alert(`❌ Failed to ${action} user: ${error.message || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Failed to toggle user status:', error);
-      alert('Failed to toggle user status');
+      console.error(`Failed to ${action} user:`, error);
+      alert(`❌ Failed to ${action} user. Please try again.`);
     }
   };
 
@@ -424,14 +436,14 @@ export default function AdminPage() {
                             Reset Password
                           </button>
                           <button 
-                            onClick={() => toggleUserStatus(user.id, user.isActive)}
+                            onClick={() => toggleUserStatus(user.id, user.isActive, user.name || user.email)}
                             className={`px-3 py-1 rounded text-sm transition-colors ${
                               user.isActive 
                                 ? 'bg-red-600 text-white hover:bg-red-700' 
                                 : 'bg-green-600 text-white hover:bg-green-700'
                             }`}
                           >
-                            {user.isActive ? 'Deactivate' : 'Activate'}
+                            {user.isActive ? 'Deactivate' : 'Reactivate'}
                           </button>
                         </td>
                       </tr>
