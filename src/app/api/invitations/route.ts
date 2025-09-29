@@ -145,7 +145,14 @@ export async function POST(request: Request) {
     }
 
     // Generate invitation URL
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3001';
+    let baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3001';
+    
+    // Validate URL to prevent build-time errors with placeholder values
+    try {
+      new URL(baseUrl);
+    } catch {
+      baseUrl = 'http://localhost:3001';
+    }
 
     return NextResponse.json({
       message: 'Invitation created successfully',

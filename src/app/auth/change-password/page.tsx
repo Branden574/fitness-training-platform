@@ -5,6 +5,9 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, AlertTriangle } from 'lucide-react';
 
+// Force dynamic rendering to avoid build-time issues
+export const dynamic = 'force-dynamic';
+
 export default function ChangePasswordPage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
