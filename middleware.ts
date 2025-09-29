@@ -21,23 +21,23 @@ export default withAuth(
       return secureNext();
     }
 
-    // 1. RATE LIMITING (Edge Runtime Compatible)
-    const clientId = EdgeSecurityUtils.getClientId(req);
+    // 1. RATE LIMITING (Edge Runtime Compatible) - TEMPORARILY DISABLED
+    // const clientId = EdgeSecurityUtils.getClientId(req);
     
     // Different limits for different types of requests
-    let maxRequests = 100; // Default: 100 requests per minute
-    if (pathname.includes('auth') || pathname.includes('password')) {
-      maxRequests = 10; // Auth: 10 requests per minute
-    } else if (pathname.startsWith('/api/admin')) {
-      maxRequests = 50; // Admin: 50 requests per minute
-    }
+    // let maxRequests = 100; // Default: 100 requests per minute
+    // if (pathname.includes('auth') || pathname.includes('password')) {
+    //   maxRequests = 10; // Auth: 10 requests per minute
+    // } else if (pathname.startsWith('/api/admin')) {
+    //   maxRequests = 50; // Admin: 50 requests per minute
+    // }
     
-    if (!EdgeSecurityUtils.checkRateLimit(clientId, maxRequests)) {
-      return secureNext(NextResponse.json(
-        { error: 'Rate limit exceeded. Please try again later.' },
-        { status: 429 }
-      ));
-    }
+    // if (!EdgeSecurityUtils.checkRateLimit(clientId, maxRequests)) {
+    //   return secureNext(NextResponse.json(
+    //     { error: 'Rate limit exceeded. Please try again later.' },
+    //     { status: 429 }
+    //   ));
+    // }
 
     // 2. REQUEST SIZE VALIDATION
     if (!EdgeSecurityUtils.validateRequestSize(req)) {
