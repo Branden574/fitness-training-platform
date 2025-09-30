@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Dumbbell, User, MessageCircle, TrendingUp, Home } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,13 +20,22 @@ const Navigation = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navItems = [
+  // Base navigation items available to everyone
+  const baseNavItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/about', label: 'About', icon: User },
     { href: '/programs', label: 'Programs', icon: Dumbbell },
-    { href: '/client/dashboard', label: 'Dashboard', icon: TrendingUp },
     { href: '/contact', label: 'Contact', icon: MessageCircle },
   ];
+
+  // Add Dashboard only for authenticated users
+  const navItems = session 
+    ? [
+        ...baseNavItems.slice(0, 3), // Home, About, Programs
+        { href: '/client/dashboard', label: 'Dashboard', icon: TrendingUp },
+        ...baseNavItems.slice(3) // Contact
+      ]
+    : baseNavItems;
 
   const navVariants = {
     hidden: { opacity: 0, y: -20 },
@@ -127,25 +138,37 @@ const Navigation = () => {
               variants={itemVariants}
               className="hidden md:flex items-center space-x-4"
             >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link
-                  href="/auth/signin"
-                  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
-                >
-                  Sign In
-                </Link>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)' }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link
-                  href="/auth/signup"
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  Get Started
-                </Link>
-              </motion.div>
+              {session ? (
+                // Authenticated user - show user info or sign out
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <span className="px-4 py-2 text-gray-700 font-medium">
+                    Welcome, {session.user?.name || 'Client'}
+                  </span>
+                </motion.div>
+              ) : (
+                // Non-authenticated user - show sign in and get started
+                <>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Link
+                      href="/auth/signin"
+                      className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
+                    >
+                      Sign In
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)' }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link
+                      href="/auth/signup"
+                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                      Get Started
+                    </Link>
+                  </motion.div>
+                </>
+              )}
             </motion.div>
 
             {/* Mobile Menu Button */}
@@ -226,24 +249,34 @@ const Navigation = () => {
 
                   <motion.div variants={mobileItemVariants} className="pt-6 border-t border-gray-200">
                     <div className="flex flex-col space-y-3">
-                      <motion.div whileTap={{ scale: 0.95 }}>
-                        <Link
-                          href="/auth/signin"
-                          onClick={() => setIsOpen(false)}
-                          className="w-full p-3 text-left text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200 block"
-                        >
-                          Sign In
-                        </Link>
-                      </motion.div>
-                      <motion.div whileTap={{ scale: 0.95 }}>
-                        <Link
-                          href="/auth/signup"
-                          onClick={() => setIsOpen(false)}
-                          className="w-full p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-center block"
-                        >
-                          Get Started
-                        </Link>
-                      </motion.div>
+                      {session ? (
+                        // Authenticated user - show welcome message
+                        <div className="p-3 text-lg font-medium text-gray-700">
+                          Welcome, {session.user?.name || 'Client'}
+                        </div>
+                      ) : (
+                        // Non-authenticated user - show sign in and get started
+                        <>
+                          <motion.div whileTap={{ scale: 0.95 }}>
+                            <Link
+                              href="/auth/signin"
+                              onClick={() => setIsOpen(false)}
+                              className="w-full p-3 text-left text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200 block"
+                            >
+                              Sign In
+                            </Link>
+                          </motion.div>
+                          <motion.div whileTap={{ scale: 0.95 }}>
+                            <Link
+                              href="/auth/signup"
+                              onClick={() => setIsOpen(false)}
+                              className="w-full p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-center block"
+                            >
+                              Get Started
+                            </Link>
+                          </motion.div>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 </div>
