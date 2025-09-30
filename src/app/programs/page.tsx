@@ -24,154 +24,120 @@ interface Program {
 const programs: Program[] = [
   {
     id: 'personal-training',
-    name: 'Personal Training',
-    subtitle: 'One-on-One Coaching',
-    description: 'Intensive personal training sessions designed exclusively for you. Get Brent&rsquo;s undivided attention and accelerate your results.',
+    name: '1-on-1 Personal Training',
+    subtitle: 'In-Person Training (Fresno Clients Only)',
+    description: 'Customized workouts designed for your goals with hands-on coaching and proper form & technique guidance. Best for those who want maximum attention and accountability.',
     duration: '60 minutes',
-    sessions: '2-3 per week',
+    sessions: 'Flexible scheduling',
     maxClients: '1 client',
-    price: '$150/session',
+    price: '$75/session',
     image: imagePlaceholders.training,
-    popular: true,
+    popular: false,
     features: [
-      'Customized workout plans',
-      'Real-time form correction',
+      'Customized workouts designed for your goals',
+      'Hands-on coaching with proper form & technique',
       'Flexible scheduling',
-      'Progress tracking',
-      'Nutrition guidance',
-      'Direct trainer access'
+      'Maximum attention and accountability'
     ],
     bestFor: [
-      'Beginners needing guidance',
-      'Those with specific goals',
-      'People with injuries',
-      'Maximum accountability'
+      'Maximum attention needed',
+      'Form correction important',
+      'Flexible schedule required',
+      'Fresno area clients'
     ]
   },
   {
     id: 'semi-private',
     name: 'Semi-Private Training',
-    subtitle: 'Small Group Sessions',
-    description: 'Train with a friend or small group while still receiving personalized attention and custom programming.',
+    subtitle: 'In-Person Training (2–4 clients)',
+    description: 'Train with a small group for extra motivation while still getting personal guidance. Cost-effective community-style environment that\'s fun and results-focused.',
     duration: '60 minutes',
-    sessions: '2-3 per week',
+    sessions: 'Group sessions',
     maxClients: '2-4 clients',
-    price: '$75/session',
+    price: '$50/session per person',
     image: imagePlaceholders.workout,
     features: [
-      'Partner/group motivation',
-      'Shared workout experience',
-      'Individual programming',
-      'Cost-effective training',
-      'Social accountability',
-      'Flexible group formation'
+      'Train with a small group for extra motivation',
+      'Cost-effective while still getting personal guidance',
+      'Fun, community-style environment',
+      'Personal attention in group setting'
     ],
     bestFor: [
-      'Training with friends',
-      'Motivation through others',
-      'Budget-conscious clients',
-      'Social fitness experience'
+      'Friends or training partners',
+      'Want results together',
+      'Cost-effective option',
+      'Community motivation'
     ]
   },
   {
-    id: 'online-coaching',
-    name: 'Online Coaching',
-    subtitle: 'Remote Training Program',
-    description: 'Get expert coaching from anywhere with custom workout plans, nutrition guidance, and regular check-ins.',
-    duration: 'Self-paced',
-    sessions: 'Daily workouts',
-    maxClients: 'Unlimited',
-    price: '$97/month',
+    id: 'month-to-month',
+    name: 'Month-to-Month',
+    subtitle: 'Online Coaching',
+    description: 'Flexible, no long-term contract option. Perfect if you want to try things out or need flexibility.',
+    duration: 'Monthly',
+    sessions: '2x weekly check-ins',
+    maxClients: 'Remote',
+    price: '$200/month',
     image: imagePlaceholders.equipment,
     features: [
-      'Custom workout programs',
-      'Video exercise library',
-      'Weekly check-ins',
-      'Nutrition meal plans',
-      'Progress tracking app',
-      '24/7 message support'
+      'Flexible, no long-term contract',
+      'Custom training & nutrition plan',
+      '2x weekly accountability check-ins',
+      'Try before longer commitment'
     ],
     bestFor: [
-      'Busy professionals',
-      'Home gym users',
-      'Travel frequently',
-      'Self-motivated individuals'
+      'Want to try things out',
+      'Need flexibility',
+      'No long-term commitment',
+      'Budget-conscious start'
     ]
   },
   {
-    id: 'transformation',
-    name: 'Transformation Program',
-    subtitle: '12-Week Body Transformation',
-    description: 'Comprehensive 12-week program combining personal training, nutrition coaching, and lifestyle changes for dramatic results.',
-    duration: '12 weeks',
-    sessions: '3 per week',
-    maxClients: '1 client',
-    price: '$2,997 (12 weeks)',
-    image: imagePlaceholders.transformation,
+    id: 'three-month',
+    name: '3-Month Package',
+    subtitle: 'Most Popular Online Coaching',
+    description: 'Save $100 compared to month-to-month with locked-in consistency & structure. Best for building momentum and sticking with it.',
+    duration: '3 months',
+    sessions: '2x weekly check-ins',
+    maxClients: 'Remote',
+    price: '$500 total ($167/month)',
+    image: imagePlaceholders.training,
+    popular: true,
     features: [
-      'Complete body transformation',
-      '36 personal training sessions',
-      'Custom nutrition plan',
-      'Weekly body assessments',
-      'Lifestyle coaching',
-      'Supplement recommendations',
-      'Before/after photo shoot'
+      'Save $100 compared to month-to-month',
+      'Locked-in consistency & structure',
+      'Custom training & nutrition plan',
+      '2x weekly accountability check-ins'
     ],
     bestFor: [
-      'Major life changes',
-      'Wedding preparation',
-      'Health transformations',
-      'Maximum results focus'
+      'Building momentum',
+      'Sticking with routine',
+      'Structured approach',
+      'Best value option'
     ]
   },
   {
-    id: 'nutrition-only',
-    name: 'Nutrition Coaching',
-    subtitle: 'Meal Planning & Guidance',
-    description: 'Focus on nutrition with custom meal plans, macro coaching, and ongoing support to fuel your fitness goals.',
-    duration: 'Ongoing',
-    sessions: 'Weekly check-ins',
-    maxClients: 'Multiple clients',
-    price: '$197/month',
-    image: imagePlaceholders.nutrition,
-    features: [
-      'Custom meal plans',
-      'Macro calculation',
-      'Recipe suggestions',
-      'Grocery shopping lists',
-      'Weekly adjustments',
-      'Educational resources'
-    ],
-    bestFor: [
-      'Diet optimization',
-      'Weight management',
-      'Sports performance',
-      'Healthy lifestyle change'
-    ]
-  },
-  {
-    id: 'maintenance',
-    name: 'Maintenance Program',
-    subtitle: 'Ongoing Support',
-    description: 'Perfect for established clients who want ongoing support to maintain their results and continue progressing.',
-    duration: '60 minutes',
-    sessions: '1-2 per week',
-    maxClients: '1 client',
-    price: '$125/session',
+    id: 'six-month',
+    name: '6-Month Package',
+    subtitle: 'Best Value Online Coaching',
+    description: 'Save $300 compared to month-to-month for serious, long-term results. Includes monthly strategy calls to adjust & optimize your plan.',
+    duration: '6 months',
+    sessions: '2x weekly check-ins + monthly calls',
+    maxClients: 'Remote',
+    price: '$900 total ($150/month)',
     image: imagePlaceholders.studio,
     features: [
-      'Maintenance workouts',
-      'Progress monitoring',
-      'Program adjustments',
-      'Injury prevention',
-      'Motivation support',
-      'Flexible scheduling'
+      'Save $300 compared to month-to-month',
+      'Serious, long-term results focus',
+      'Custom training & nutrition plan',
+      '2x weekly accountability check-ins',
+      'Monthly strategy call to adjust & optimize'
     ],
     bestFor: [
-      'Long-term clients',
-      'Goal maintenance',
-      'Injury prevention',
-      'Lifestyle support'
+      'Committed to transformation',
+      'Long-term results focus',
+      'Maximum value',
+      'Comprehensive support'
     ]
   }
 ];
@@ -200,7 +166,7 @@ const ProgramsPage = () => {
                 <span className="text-sm font-medium text-blue-600">✓ NASM Certified</span>
               </div>
               <div className="bg-white px-6 py-3 rounded-full shadow-sm">
-                <span className="text-sm font-medium text-purple-600">✓ 500+ Success Stories</span>
+                <span className="text-sm font-medium text-purple-600">✓ Hundreds of Clients</span>
               </div>
               <div className="bg-white px-6 py-3 rounded-full shadow-sm">
                 <span className="text-sm font-medium text-green-600">✓ Proven Results</span>
@@ -318,7 +284,12 @@ const ProgramsPage = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <span>Get Started</span>
+                      <span>
+                        {program.id === 'month-to-month' ? 'Start Flexible Plan' :
+                         program.id === 'three-month' ? 'Lock In My Spot' :
+                         program.id === 'six-month' ? 'Start Transformation' :
+                         'Get Started'}
+                      </span>
                       <ArrowRight className="w-4 h-4" />
                     </motion.button>
                   </Link>

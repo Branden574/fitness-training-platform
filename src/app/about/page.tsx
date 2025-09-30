@@ -21,18 +21,17 @@ const AboutPage = () => {
                 Meet Brent Martinez
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Certified personal trainer with over 10 years of experience helping clients achieve their fitness goals. 
-                Specializing in weight loss, strength training, and lifestyle transformation.
+                I know what it takes to transform your body because I&rsquo;ve done it myself—and now I help others do the same. With 5 years of coaching experience and hundreds of clients served, I&rsquo;ll give you the tools and accountability to finally reach your goals.
               </p>
               <div className="flex flex-wrap gap-4">
                 <div className="bg-white px-4 py-2 rounded-full shadow-sm">
                   <span className="text-sm font-medium text-blue-600">NASM Certified</span>
                 </div>
                 <div className="bg-white px-4 py-2 rounded-full shadow-sm">
-                  <span className="text-sm font-medium text-purple-600">500+ Clients</span>
+                  <span className="text-sm font-medium text-purple-600">Hundreds of Clients</span>
                 </div>
                 <div className="bg-white px-4 py-2 rounded-full shadow-sm">
-                  <span className="text-sm font-medium text-green-600">10+ Years Experience</span>
+                  <span className="text-sm font-medium text-green-600">5+ Years Experience</span>
                 </div>
               </div>
             </motion.div>
@@ -85,10 +84,9 @@ const AboutPage = () => {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">The Beginning</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  My passion for fitness began during my college years when I struggled with confidence and energy. 
-                  Through consistent training and proper nutrition, I not only transformed my body but discovered 
-                  my calling to help others do the same. This personal transformation ignited a lifelong commitment 
-                  to health and wellness.
+                  My passion for fitness started back in high school when I struggled with confidence and energy. 
+                  Training quickly became more than just a hobby—it was a way to push myself, build discipline, 
+                  and take control of my life. That early transformation inspired me to help others do the same.
                 </p>
               </div>
               <div className="w-full md:w-80">
@@ -112,9 +110,9 @@ const AboutPage = () => {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">Professional Development</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  After earning my NASM certification and multiple specializations, I&rsquo;ve dedicated over a decade 
-                  to mastering the art and science of fitness. I&rsquo;ve worked with clients of all ages and fitness 
-                  levels, from complete beginners to competitive athletes, helping each achieve their unique goals.
+                  After earning my NASM certification, I&rsquo;ve spent the last 5 years coaching people at all levels—from 
+                  those just starting out to athletes chasing peak performance. My focus is on building programs that 
+                  deliver results while creating lasting habits clients can actually stick to.
                 </p>
               </div>
               <div className="w-full md:w-80">
@@ -136,7 +134,7 @@ const AboutPage = () => {
               viewport={{ once: true }}
             >
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">The Mission</h3>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">Mission</h3>
                 <p className="text-gray-600 leading-relaxed">
                   Today, my mission is simple: to provide personalized, sustainable fitness solutions that fit into 
                   real life. I believe that everyone deserves to feel confident, healthy, and strong. Through this 
@@ -182,37 +180,37 @@ const AboutPage = () => {
               {
                 title: "NASM-CPT",
                 subtitle: "Certified Personal Trainer",
-                description: "National Academy of Sports Medicine certification with advanced exercise science knowledge",
+                description: "Certified by the National Academy of Sports Medicine, equipped with advanced exercise science knowledge to design safe and effective programs.",
                 icon: "🏆"
               },
               {
                 title: "Corrective Exercise",
                 subtitle: "Movement Specialist",
-                description: "Specialized training in injury prevention and corrective exercise techniques",
+                description: "Specialized in injury prevention and proper movement mechanics to keep clients training safely while improving performance.",
                 icon: "🔧"
               },
               {
                 title: "Nutrition Coaching",
-                subtitle: "Certified Nutrition Coach",
-                description: "Evidence-based nutrition guidance and meal planning expertise",
+                subtitle: "Nutrition Specialist",
+                description: "Evidence-based nutrition strategies and meal guidance designed to fuel progress without restrictive diets.",
                 icon: "🥗"
               },
               {
                 title: "Weight Loss",
                 subtitle: "Transformation Specialist",
-                description: "Proven strategies for sustainable weight loss and body composition changes",
+                description: "Expertise in fat loss, body composition changes, and sustainable approaches that deliver long-term results.",
                 icon: "📉"
               },
               {
                 title: "Strength Training",
                 subtitle: "Performance Coach",
-                description: "Advanced strength and conditioning for all fitness levels and goals",
+                description: "Advanced programming to build strength, muscle, and conditioning for all fitness levels.",
                 icon: "💪"
               },
               {
                 title: "Behavioral Change",
                 subtitle: "Lifestyle Coach",
-                description: "Psychology-based approaches to creating lasting healthy habits",
+                description: "Psychology-backed methods to create lasting healthy habits and break through the barriers holding clients back.",
                 icon: "🧠"
               }
             ].map((credential, index) => (
@@ -250,9 +248,8 @@ const AboutPage = () => {
             </h2>
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-8 md:p-12 rounded-2xl">
               <blockquote className="text-xl md:text-2xl text-gray-700 italic leading-relaxed mb-6">
-                &ldquo;Fitness isn&rsquo;t about perfection—it&rsquo;s about progress. Every small step forward is a victory 
-                worth celebrating. My role is to guide, support, and empower you to become the strongest version of yourself, 
-                both physically and mentally.&rdquo;
+                &ldquo;Fitness is more than workouts—it&rsquo;s mindset, discipline, and consistency. I believe in celebrating 
+                small wins, building sustainable habits, and guiding you to become your strongest self.&rdquo;
               </blockquote>
               <div className="text-lg font-medium text-gray-800">— Brent Martinez</div>
             </div>
