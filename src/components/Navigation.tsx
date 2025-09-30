@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Dumbbell, User, MessageCircle, TrendingUp } from 'lucide-react';
+import { Menu, X, Dumbbell, User, MessageCircle, TrendingUp, Home } from 'lucide-react';
 import Link from 'next/link';
 
 const Navigation = () => {
@@ -19,6 +19,7 @@ const Navigation = () => {
   }, []);
 
   const navItems = [
+    { href: '/', label: 'Home', icon: Home },
     { href: '/about', label: 'About', icon: User },
     { href: '/programs', label: 'Programs', icon: Dumbbell },
     { href: '/client/dashboard', label: 'Dashboard', icon: TrendingUp },
