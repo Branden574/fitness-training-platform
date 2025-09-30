@@ -274,7 +274,7 @@ const ProgramsPage = () => {
                   </div>
 
                   {/* CTA Button */}
-                  <Link href="/">
+                  <Link href="/contact">
                     <motion.button
                       className={`w-full py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2 ${
                         program.popular
@@ -284,12 +284,7 @@ const ProgramsPage = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <span>
-                        {program.id === 'month-to-month' ? 'Start Flexible Plan' :
-                         program.id === 'three-month' ? 'Lock In My Spot' :
-                         program.id === 'six-month' ? 'Start Transformation' :
-                         'Get Started'}
-                      </span>
+                      <span>Get Started</span>
                       <ArrowRight className="w-4 h-4" />
                     </motion.button>
                   </Link>
@@ -316,7 +311,7 @@ const ProgramsPage = () => {
               Schedule a free consultation with Brent to discuss your goals and find the perfect program for your needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/">
+              <Link href="/contact">
                 <motion.button 
                   className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-200"
                   whileHover={{ scale: 1.05 }}
