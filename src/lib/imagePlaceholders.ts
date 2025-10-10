@@ -18,36 +18,36 @@ const createPlaceholderImage = (width: number, height: number, text: string) => 
 export const imagePlaceholders = {
   // Hero slideshow images (REAL IMAGES)
   heroSlides: [
-    '/images/Home screen Slide show.jpeg',
-    '/images/Home screen slide show 2.jpeg',
-    '/images/Home screen slide show 3.jpeg'
+    '/images/Home%20screen%20Slide%20show.jpeg',
+    '/images/Home%20screen%20slide%20show%202.jpeg',
+    '/images/Home%20screen%20slide%20show%203.jpeg'
   ],
   // Keep legacy heroSlide function for backward compatibility
   heroSlide: (index: number) => {
     const slides = [
-      '/images/Home screen Slide show.jpeg',
-      '/images/Home screen slide show 2.jpeg', 
-      '/images/Home screen slide show 3.jpeg'
+      '/images/Home%20screen%20Slide%20show.jpeg',
+      '/images/Home%20screen%20slide%20show%202.jpeg', 
+      '/images/Home%20screen%20slide%20show%203.jpeg'
     ];
     return slides[index] || slides[0];
   },
   portrait: '/images/brent-martinez.jpg',
   testimonial: (name: string) => createPlaceholderImage(120, 120, name.split(' ').map(n => n[0]).join('')),
-  training: '/images/Home screen Slide show.jpeg',
-  studio: '/images/Home screen slide show 2.jpeg', 
-  transformation: '/images/The Beginning .png',
-  equipment: '/images/Home screen slide show 3.jpeg',
-  workout: '/images/Professional development.jpeg',
-  nutrition: '/images/real people real results 2.JPG',
+  training: '/images/Home%20screen%20Slide%20show.jpeg',
+  studio: '/images/Home%20screen%20slide%20show%202.jpeg', 
+  transformation: '/images/The%20Beginning%20.png',
+  equipment: '/images/Home%20screen%20slide%20show%203.jpeg',
+  workout: '/images/Professional%20development.jpeg',
+  nutrition: '/images/real%20people%20real%20results%202.JPG',
   // About page story images (REAL IMAGES)
-  theBeginning: '/images/The Beginning .png',
-  professionalDevelopment: '/images/Professional development.jpeg',
+  theBeginning: '/images/The%20Beginning%20.png',
+  professionalDevelopment: '/images/Professional%20development.jpeg',
   // Success gallery images (REAL IMAGES) 
   successStories: [
-    '/images/Real people real results 1.JPG',
-    '/images/real people real results 2.JPG',
-    '/images/real people real results 3.JPEG',
-    '/images/real people real results 4.JPEG'
+    '/images/Real%20people%20real%20results%201.JPG',
+    '/images/real%20people%20real%20results%202.JPG',
+    '/images/real%20people%20real%20results%203.JPEG',
+    '/images/real%20people%20real%20results%204.JPEG'
   ],
   // Client photos for testimonials (REAL IMAGES)
   clients: [
