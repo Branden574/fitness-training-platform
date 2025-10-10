@@ -15,29 +15,29 @@ interface SuccessStory {
 const successStories: SuccessStory[] = [
   {
     id: 1,
-    name: "Sarah J.",
-    achievement: "Lost 35 lbs",
+    name: "Client Success",
+    achievement: "Amazing Transformation",
     image: imagePlaceholders.successStories[0],
     timeframe: "6 months"
   },
   {
     id: 2,
-    name: "Mike C.",
-    achievement: "Gained 15 lbs muscle",
+    name: "Client Success",
+    achievement: "Incredible Results",
     image: imagePlaceholders.successStories[1],
     timeframe: "8 months"
   },
   {
     id: 3,
-    name: "Jessica M.",
-    achievement: "Increased strength 200%",
+    name: "Client Success",
+    achievement: "Life Changing",
     image: imagePlaceholders.successStories[2],
     timeframe: "1 year"
   },
   {
     id: 4,
-    name: "David T.",
-    achievement: "Improved mobility",
+    name: "Client Success",
+    achievement: "Remarkable Progress",
     image: imagePlaceholders.successStories[3],
     timeframe: "10 months"
   }
