@@ -42,12 +42,12 @@ export const imagePlaceholders = {
   // About page story images (REAL IMAGES - OPTIMIZED)
   theBeginning: '/images/the-beginning.jpg',
   professionalDevelopment: '/images/professional-development.jpg',
-  // Success gallery images (REAL IMAGES - OPTIMIZED) 
+  // Success gallery images (REAL CLIENT PHOTOS - OPTIMIZED) 
   successStories: [
-    '/images/success-1.jpg',
-    '/images/success-2.jpg',
-    '/images/success-3.jpg',
-    '/images/success-4.jpg'
+    '/images/client-1.jpg',
+    '/images/client-2.jpg',
+    '/images/client-3.jpg',
+    '/images/client-5.jpg'
   ],
   // Client photos for testimonials (REAL IMAGES)
   clients: [
