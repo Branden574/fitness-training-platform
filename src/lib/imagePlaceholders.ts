@@ -18,36 +18,36 @@ const createPlaceholderImage = (width: number, height: number, text: string) => 
 export const imagePlaceholders = {
   // Hero slideshow images (REAL IMAGES)
   heroSlides: [
-    '/images/Home%20screen%20Slide%20show.jpeg',
-    '/images/Home%20screen%20slide%20show%202.jpeg',
-    '/images/Home%20screen%20slide%20show%203.jpeg'
+    '/images/hero-slide-1.jpeg',
+    '/images/hero-slide-2.jpeg',
+    '/images/hero-slide-3.jpeg'
   ],
   // Keep legacy heroSlide function for backward compatibility
   heroSlide: (index: number) => {
     const slides = [
-      '/images/Home%20screen%20Slide%20show.jpeg',
-      '/images/Home%20screen%20slide%20show%202.jpeg', 
-      '/images/Home%20screen%20slide%20show%203.jpeg'
+      '/images/hero-slide-1.jpeg',
+      '/images/hero-slide-2.jpeg', 
+      '/images/hero-slide-3.jpeg'
     ];
     return slides[index] || slides[0];
   },
   portrait: '/images/brent-martinez.jpg',
   testimonial: (name: string) => createPlaceholderImage(120, 120, name.split(' ').map(n => n[0]).join('')),
-  training: '/images/Home%20screen%20Slide%20show.jpeg',
-  studio: '/images/Home%20screen%20slide%20show%202.jpeg', 
-  transformation: '/images/The%20Beginning%20.png',
-  equipment: '/images/Home%20screen%20slide%20show%203.jpeg',
-  workout: '/images/Professional%20development.jpeg',
-  nutrition: '/images/real%20people%20real%20results%202.JPG',
+  training: '/images/hero-slide-1.jpeg',
+  studio: '/images/hero-slide-2.jpeg', 
+  transformation: '/images/the-beginning.png',
+  equipment: '/images/hero-slide-3.jpeg',
+  workout: '/images/professional-development.jpeg',
+  nutrition: '/images/success-2.jpg',
   // About page story images (REAL IMAGES)
-  theBeginning: '/images/The%20Beginning%20.png',
-  professionalDevelopment: '/images/Professional%20development.jpeg',
+  theBeginning: '/images/the-beginning.png',
+  professionalDevelopment: '/images/professional-development.jpeg',
   // Success gallery images (REAL IMAGES) 
   successStories: [
-    '/images/Real%20people%20real%20results%201.JPG',
-    '/images/real%20people%20real%20results%202.JPG',
-    '/images/real%20people%20real%20results%203.JPEG',
-    '/images/real%20people%20real%20results%204.JPEG'
+    '/images/success-1.jpg',
+    '/images/success-2.jpg',
+    '/images/success-3.jpeg',
+    '/images/success-4.jpeg'
   ],
   // Client photos for testimonials (REAL IMAGES)
   clients: [
