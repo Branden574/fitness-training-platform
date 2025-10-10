@@ -76,11 +76,11 @@ const SuccessGallery = () => {
             >
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 p-1">
                 <div className="relative aspect-square overflow-hidden rounded-xl">
-                  <OptimizedImage
+                  {/* Temporarily using img for debugging */}
+                  <img
                     src={story.image}
                     alt={`${story.name} transformation`}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   
                   {/* Hover Overlay */}
