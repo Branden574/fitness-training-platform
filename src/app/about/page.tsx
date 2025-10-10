@@ -91,8 +91,8 @@ const AboutPage = () => {
               </div>
               <div className="w-full md:w-80">
                 <OptimizedImage
-                  src={imagePlaceholders.transformation}
-                  alt="Brent's early fitness journey"
+                  src={imagePlaceholders.theBeginning}
+                  alt="Brent's fitness journey - The Beginning"
                   width={320}
                   height={240}
                   className="rounded-xl shadow-lg"
@@ -117,8 +117,8 @@ const AboutPage = () => {
               </div>
               <div className="w-full md:w-80">
                 <OptimizedImage
-                  src={imagePlaceholders.training}
-                  alt="Brent training clients"
+                  src={imagePlaceholders.professionalDevelopment}
+                  alt="Brent's professional development and training expertise"
                   width={320}
                   height={240}
                   className="rounded-xl shadow-lg"

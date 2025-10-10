@@ -2,52 +2,43 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, ChevronLeft, ChevronRight, Star, Users, Trophy, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Users, Trophy, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import OptimizedImage from './OptimizedImage';
 import { imagePlaceholders } from '@/lib/imagePlaceholders';
 
 const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   // Sample trainer/gym images (you'll replace these with actual images)
   const slides = [
     {
       type: 'image',
+      src: imagePlaceholders.heroSlides[0],
+      alt: 'Brent Martinez Fitness Training - Professional Personal Training',
+      title: 'Transform Your Life',
+      subtitle: 'With Expert Personal Training & Nutrition Coaching'
+    },
+    {
+      type: 'image',
+      src: imagePlaceholders.heroSlides[1],
+      alt: 'Personal Training Sessions with Brent Martinez',
+      title: 'One-on-One Training',
+      subtitle: 'Personalized Workouts That Deliver Real Results'
+    },
+    {
+      type: 'image',
+      src: imagePlaceholders.heroSlides[2], 
+      alt: 'Professional Fitness Studio and Equipment',
+      title: 'Professional Environment',
+      subtitle: 'State-of-the-Art Equipment & Proven Methods'
+    },
+    {
+      type: 'image',
       src: imagePlaceholders.portrait,
       alt: 'Brent Martinez - Certified Personal Trainer',
       title: 'Meet Your Trainer',
-      subtitle: 'Expert Personal Training with Brent Martinez'
-    },
-    {
-      type: 'image',
-      src: imagePlaceholders.training,
-      alt: 'Brent Martinez Personal Training Session',
-      title: 'Transform Your Body',
-      subtitle: 'One-on-One Professional Training'
-    },
-    {
-      type: 'image',
-      src: imagePlaceholders.equipment,
-      alt: 'Modern Gym Equipment',
-      title: 'State-of-the-Art Training',
-      subtitle: 'Professional Equipment & Environment'
-    },
-    {
-      type: 'video',
-      src: '/videos/training-session.mp4',
-      poster: imagePlaceholders.workout,
-      alt: 'Training Session Video',
-      title: 'See Results in Action',
-      subtitle: 'Real Client Transformations'
-    },
-    {
-      type: 'image',
-      src: imagePlaceholders.nutrition,
-      alt: 'Nutrition Planning',
-      title: 'Complete Nutrition Guidance',
-      subtitle: 'Personalized Meal Plans & Coaching'
+      subtitle: 'NASM Certified with 5+ Years Experience'
     }
   ];
 
@@ -60,13 +51,11 @@ const HeroSection = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!isVideoPlaying) {
-        setCurrentSlide((prev) => (prev + 1) % slides.length);
-      }
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [isVideoPlaying, slides.length]);
+  }, [slides.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -95,42 +84,14 @@ const HeroSection = () => {
                 transition={{ duration: 1 }}
                 className="absolute inset-0"
               >
-                {slide.type === 'image' ? (
-                  <div className="relative w-full h-full">
-                    <OptimizedImage
-                      src={slide.src}
-                      alt={slide.alt}
-                      fill
-                      priority={index === 0}
-                    />
-                  </div>
-                ) : (
-                  <div className="relative w-full h-full">
-                    <video
-                      className="w-full h-full object-cover"
-                      poster={slide.poster}
-                      autoPlay={isVideoPlaying}
-                      muted
-                      loop
-                      onPlay={() => setIsVideoPlaying(true)}
-                      onPause={() => setIsVideoPlaying(false)}
-                    >
-                      <source src={slide.src} type="video/mp4" />
-                    </video>
-                    {!isVideoPlaying && (
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setIsVideoPlaying(true)}
-                        className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-                      >
-                        <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-2xl">
-                          <Play className="w-8 h-8 text-gray-800 ml-1" />
-                        </div>
-                      </motion.button>
-                    )}
-                  </div>
-                )}
+                <div className="relative w-full h-full">
+                  <OptimizedImage
+                    src={slide.src}
+                    alt={slide.alt}
+                    fill
+                    priority={index === 0}
+                  />
+                </div>
                 
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />

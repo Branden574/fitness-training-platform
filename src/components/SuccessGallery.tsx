@@ -17,36 +17,29 @@ const successStories: SuccessStory[] = [
     id: 1,
     name: "Sarah J.",
     achievement: "Lost 35 lbs",
-    image: imagePlaceholders.clients[0],
+    image: imagePlaceholders.successStories[0],
     timeframe: "6 months"
   },
   {
     id: 2,
     name: "Mike C.",
     achievement: "Gained 15 lbs muscle",
-    image: imagePlaceholders.clients[1],
+    image: imagePlaceholders.successStories[1],
     timeframe: "8 months"
   },
   {
     id: 3,
     name: "Jessica M.",
     achievement: "Increased strength 200%",
-    image: imagePlaceholders.clients[2],
+    image: imagePlaceholders.successStories[2],
     timeframe: "1 year"
   },
   {
     id: 4,
     name: "David T.",
     achievement: "Improved mobility",
-    image: imagePlaceholders.clients[3],
+    image: imagePlaceholders.successStories[3],
     timeframe: "10 months"
-  },
-  {
-    id: 5,
-    name: "Amanda R.",
-    achievement: "Better sleep & energy",
-    image: imagePlaceholders.clients[4],
-    timeframe: "4 months"
   }
 ];
 
