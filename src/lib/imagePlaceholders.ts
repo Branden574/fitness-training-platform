@@ -16,38 +16,38 @@ const createPlaceholderImage = (width: number, height: number, text: string) => 
 };
 
 export const imagePlaceholders = {
-  // Hero slideshow images (REAL IMAGES)
+  // Hero slideshow images (REAL IMAGES - OPTIMIZED)
   heroSlides: [
-    '/images/hero-slide-1.jpeg',
-    '/images/hero-slide-2.jpeg',
-    '/images/hero-slide-3.jpeg'
+    '/images/hero-slide-1.jpg',
+    '/images/hero-slide-2.jpg',
+    '/images/hero-slide-3.jpg'
   ],
   // Keep legacy heroSlide function for backward compatibility
   heroSlide: (index: number) => {
     const slides = [
-      '/images/hero-slide-1.jpeg',
-      '/images/hero-slide-2.jpeg', 
-      '/images/hero-slide-3.jpeg'
+      '/images/hero-slide-1.jpg',
+      '/images/hero-slide-2.jpg', 
+      '/images/hero-slide-3.jpg'
     ];
     return slides[index] || slides[0];
   },
   portrait: '/images/brent-martinez.jpg',
   testimonial: (name: string) => createPlaceholderImage(120, 120, name.split(' ').map(n => n[0]).join('')),
-  training: '/images/hero-slide-1.jpeg',
-  studio: '/images/hero-slide-2.jpeg', 
-  transformation: '/images/the-beginning.png',
-  equipment: '/images/hero-slide-3.jpeg',
-  workout: '/images/professional-development.jpeg',
+  training: '/images/hero-slide-1.jpg',
+  studio: '/images/hero-slide-2.jpg', 
+  transformation: '/images/the-beginning.jpg',
+  equipment: '/images/hero-slide-3.jpg',
+  workout: '/images/professional-development.jpg',
   nutrition: '/images/success-2.jpg',
-  // About page story images (REAL IMAGES)
-  theBeginning: '/images/the-beginning.png',
-  professionalDevelopment: '/images/professional-development.jpeg',
-  // Success gallery images (REAL IMAGES) 
+  // About page story images (REAL IMAGES - OPTIMIZED)
+  theBeginning: '/images/the-beginning.jpg',
+  professionalDevelopment: '/images/professional-development.jpg',
+  // Success gallery images (REAL IMAGES - OPTIMIZED) 
   successStories: [
     '/images/success-1.jpg',
     '/images/success-2.jpg',
-    '/images/success-3.jpeg',
-    '/images/success-4.jpeg'
+    '/images/success-3.jpg',
+    '/images/success-4.jpg'
   ],
   // Client photos for testimonials (REAL IMAGES)
   clients: [
