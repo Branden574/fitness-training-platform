@@ -17,29 +17,36 @@ const successStories: SuccessStory[] = [
     id: 1,
     name: "Client Success",
     achievement: "Amazing Transformation",
-    image: imagePlaceholders.successStories[0],
+    image: imagePlaceholders.clients[0],
     timeframe: "6 months"
   },
   {
     id: 2,
     name: "Client Success",
     achievement: "Incredible Results",
-    image: imagePlaceholders.successStories[1],
+    image: imagePlaceholders.clients[1],
     timeframe: "8 months"
   },
   {
     id: 3,
     name: "Client Success",
     achievement: "Life Changing",
-    image: imagePlaceholders.successStories[2],
+    image: imagePlaceholders.clients[2],
     timeframe: "1 year"
   },
   {
     id: 4,
     name: "Client Success",
     achievement: "Remarkable Progress",
-    image: imagePlaceholders.successStories[3],
+    image: imagePlaceholders.clients[3],
     timeframe: "10 months"
+  },
+  {
+    id: 5,
+    name: "Client Success",
+    achievement: "Outstanding Results",
+    image: imagePlaceholders.clients[4],
+    timeframe: "9 months"
   }
 ];
 

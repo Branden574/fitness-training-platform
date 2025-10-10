@@ -156,8 +156,8 @@ const FeaturesSection = () => {
             <p className="text-xl text-gray-600 mb-8">
               See how Brent&apos;s personalized approach has transformed the lives of clients just like you.
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {imagePlaceholders.clients.slice(0, 5).map((clientImage, index) => (
+            <div className="grid grid-cols-2 gap-6">
+              {imagePlaceholders.clients.slice(0, 4).map((clientImage, index) => (
                 <motion.div
                   key={index}
                   className="relative aspect-square rounded-2xl overflow-hidden shadow-lg"
