@@ -10,10 +10,6 @@ import { imagePlaceholders } from '@/lib/imagePlaceholders';
 const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Debug: Log image paths
-  console.log('Hero Slides Images:', imagePlaceholders.heroSlides);
-  console.log('Portrait Image:', imagePlaceholders.portrait);
-
   // Sample trainer/gym images (you'll replace these with actual images)
   const slides = [
     {
@@ -89,19 +85,12 @@ const HeroSection = () => {
                 className="absolute inset-0"
               >
                 <div className="relative w-full h-full">
-                  {/* Temporarily using img for debugging */}
                   <img
                     src={slide.src}
                     alt={slide.alt}
                     className="w-full h-full object-cover"
                     style={{ objectFit: 'cover' }}
-                    onLoad={() => console.log('✅ Image loaded:', slide.src)}
-                    onError={() => console.error('❌ Image failed to load:', slide.src)}
                   />
-                  {/* Debug display */}
-                  <div className="absolute top-4 left-4 bg-black/70 text-white p-2 text-xs rounded">
-                    Path: {slide.src}
-                  </div>
                 </div>
                 
                 {/* Gradient Overlay */}
