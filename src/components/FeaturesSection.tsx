@@ -164,11 +164,10 @@ const FeaturesSection = () => {
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <OptimizedImage
+                  <img
                     src={clientImage}
                     alt={`Client transformation ${index + 1}`}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                   <div className="absolute bottom-3 left-3 text-white">
@@ -182,11 +181,10 @@ const FeaturesSection = () => {
           <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-8 md:p-12">
             <div className="text-center mb-8">
               <div className="relative w-24 h-24 mx-auto mb-6">
-                <OptimizedImage
+                <img
                   src={imagePlaceholders.portrait}
                   alt="Brent Martinez - Personal Trainer"
-                  fill
-                  className="rounded-full object-cover ring-4 ring-blue-200"
+                  className="w-full h-full rounded-full object-cover ring-4 ring-blue-200"
                 />
               </div>
               <h4 className="text-2xl font-bold text-gray-800 mb-2">Brent Martinez</h4>
