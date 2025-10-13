@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import Link from 'next/link';
 
 const SignUpPage = () => {
@@ -13,22 +13,6 @@ const SignUpPage = () => {
         transition={{ duration: 0.6 }}
         className="max-w-lg w-full"
       >
-        {/* Back Link */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
-          <Link 
-            href="/"
-            className="flex items-center text-gray-600 hover:text-blue-600 transition-colors duration-200"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Link>
-        </motion.div>
-
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

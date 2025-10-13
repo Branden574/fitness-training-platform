@@ -42,7 +42,7 @@ export const imagePlaceholders = {
   workout: '/images/professional-development.jpg',
   nutrition: '/images/success-2.jpg',
   // About page story images (REAL IMAGES - OPTIMIZED)
-  theBeginning: '/images/the-beginning.jpg',
+  theBeginning: '/images/the beginning .jpg',
   professionalDevelopment: '/images/professional-development.jpg',
   // Success gallery images (REAL CLIENT PHOTOS - OPTIMIZED) 
   successStories: [

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Mail, Clock, MessageCircle, Instagram, Facebook, Youtube } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, MessageCircle, Instagram } from 'lucide-react';
 import ContactForm from '@/components/ContactForm';
 
 const ContactPage = () => {
@@ -134,14 +134,14 @@ const ContactPage = () => {
                 <h3 className="font-semibold text-gray-800 mb-4">Follow My Journey</h3>
                 <div className="flex space-x-4">
                   {[
-                    { icon: Instagram, label: 'Instagram', href: '#', color: 'bg-pink-500' },
-                    { icon: Facebook, label: 'Facebook', href: '#', color: 'bg-blue-600' },
-                    { icon: Youtube, label: 'YouTube', href: '#', color: 'bg-red-500' },
-                    { icon: MessageCircle, label: 'TikTok', href: '#', color: 'bg-gray-800' }
+                    { icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/brentjmartinez/', color: 'bg-pink-500' },
+                    { icon: MessageCircle, label: 'WhatsApp', href: 'https://wa.me/15593652946', color: 'bg-gray-800' }
                   ].map((social, index) => (
                     <motion.a
                       key={index}
                       href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={`w-12 h-12 ${social.color} rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform`}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}

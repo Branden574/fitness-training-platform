@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import OptimizedImage from './OptimizedImage';
 import { imagePlaceholders } from '@/lib/imagePlaceholders';
+import Link from 'next/link';
 
 interface Feature {
   icon: string;
@@ -252,13 +253,15 @@ const FeaturesSection = () => {
               </p>
             </div>
           </div>
-          <motion.button
-            className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-full hover:bg-gray-100 transition-all shadow-lg"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Start Your Free Consultation
-          </motion.button>
+          <Link href="/contact">
+            <motion.button
+              className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-full hover:bg-gray-100 transition-all shadow-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Start Your Free Consultation
+            </motion.button>
+          </Link>
         </motion.div>
       </div>
     </section>
