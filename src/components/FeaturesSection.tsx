@@ -198,7 +198,7 @@ const FeaturesSection = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                 <span className="text-gray-600">Clients Trained</span>
-                <span className="font-bold text-blue-600">500+</span>
+                <span className="font-bold text-blue-600">150+</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                 <span className="text-gray-600">Years Experience</span>
@@ -239,7 +239,7 @@ const FeaturesSection = () => {
               </div>
               <h4 className="text-xl font-semibold">Proven Results</h4>
               <p className="text-blue-100">
-                500+ successful transformations with a 95% client satisfaction rate
+                150+ successful transformations with a 95% client satisfaction rate
               </p>
             </div>
             <div className="flex flex-col items-center space-y-3">

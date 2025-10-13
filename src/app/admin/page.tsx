@@ -508,7 +508,7 @@ export default function AdminPage() {
                   <div className="text-sm text-gray-600">Status</div>
                 </div>
                 <div className="p-4 bg-gray-50 rounded">
-                  <div className="text-2xl font-bold text-blue-600">500+</div>
+                  <div className="text-2xl font-bold text-blue-600">150+</div>
                   <div className="text-sm text-gray-600">Client Capacity</div>
                 </div>
               </div>

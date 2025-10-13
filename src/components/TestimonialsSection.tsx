@@ -187,7 +187,7 @@ const TestimonialsSection = () => {
           viewport={{ once: true }}
         >
           {[
-            { number: "500+", label: "Clients Transformed" },
+            { number: "150+", label: "Clients Transformed" },
             { number: "95%", label: "Success Rate" },
             { number: "10,000+", label: "Pounds Lost" },
             { number: "5★", label: "Average Rating" }
