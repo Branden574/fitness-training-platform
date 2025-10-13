@@ -20,14 +20,16 @@ export const imagePlaceholders = {
   heroSlides: [
     '/images/hero-slide-1.jpg',
     '/images/hero-slide-2.jpg',
-    '/images/hero-slide-3.jpg'
+    '/images/hero-slide-3.jpg',
+    '/images/homescreen-slide-4.jpg'
   ],
   // Keep legacy heroSlide function for backward compatibility
   heroSlide: (index: number) => {
     const slides = [
       '/images/hero-slide-1.jpg',
       '/images/hero-slide-2.jpg', 
-      '/images/hero-slide-3.jpg'
+      '/images/hero-slide-3.jpg',
+      '/images/homescreen-slide-4.jpg'
     ];
     return slides[index] || slides[0];
   },

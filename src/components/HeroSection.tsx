@@ -35,10 +35,10 @@ const HeroSection = () => {
     },
     {
       type: 'image',
-      src: imagePlaceholders.portrait,
-      alt: 'Brent Martinez - Certified Personal Trainer',
-      title: 'Meet Your Trainer',
-      subtitle: 'NASM Certified with 5+ Years Experience'
+      src: imagePlaceholders.heroSlides[3],
+      alt: 'Fitness Training Results',
+      title: 'Real Results',
+      subtitle: 'Proven Track Record of Client Success'
     }
   ];
 
