@@ -1027,6 +1027,9 @@ const TrainerDashboard = () => {
             if (data.entries && data.entries.length > 0) {
               allFoodEntries.push(...data.entries);
             }
+          } else if (response.status === 404) {
+            // 404 could mean client not assigned to trainer or no data for this date
+            console.log(`ℹ️ No data available for ${dateString} (client may not be assigned or no entries exist)`);
           } else {
             console.error(`❌ Failed to fetch data for ${dateString}, status:`, response.status);
           }
