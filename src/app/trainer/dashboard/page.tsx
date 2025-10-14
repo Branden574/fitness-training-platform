@@ -417,6 +417,7 @@ const TrainerDashboard = () => {
   const [showRemoveConfirm, setShowRemoveConfirm] = useState<string | null>(null);
   const [removeAction, setRemoveAction] = useState<'remove' | 'delete'>('remove');
   const [showClientDetails, setShowClientDetails] = useState<string | null>(null);
+  const [loadingClientDetails, setLoadingClientDetails] = useState<string | null>(null);
   const [showAssignWorkout, setShowAssignWorkout] = useState<string | null>(null);
   const [selectedClientData, setSelectedClientData] = useState<ClientData | null>(null);
   const [selectedFoodEntryDate, setSelectedFoodEntryDate] = useState<string>('all');
@@ -965,9 +966,13 @@ const TrainerDashboard = () => {
   const handleViewClientDetails = async (clientId: string) => {
     try {
       console.log('Opening client details for:', clientId);
+      setLoadingClientDetails(clientId);
+      setShowClientMenu(null); // Close the menu
+      
       const client = clients.find(c => c.id === clientId);
       if (!client) {
         console.error('Client not found:', clientId);
+        setLoadingClientDetails(null);
         return;
       }
 
@@ -1139,8 +1144,10 @@ const TrainerDashboard = () => {
       setSelectedWorkoutProgressDate('all'); // Reset workout progress filter
       setShowClientDetails(clientId);
       setShowClientMenu(null);
+      setLoadingClientDetails(null); // Clear loading state
     } catch (error) {
       console.error('Error fetching client details:', error);
+      setLoadingClientDetails(null); // Clear loading state on error
     }
   };
 
@@ -2103,6 +2110,20 @@ const TrainerDashboard = () => {
                       )
                       .map((client) => (
                       <div key={client.id} className="p-6 hover:bg-gray-50 transition-colors relative">
+                        {/* Loading Overlay */}
+                        {loadingClientDetails === client.id && (
+                          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 rounded-lg">
+                            <div className="text-center">
+                              <div className="relative w-16 h-16 mx-auto mb-4">
+                                <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                                <div className="absolute inset-0 border-4 border-transparent border-t-blue-600 rounded-full animate-spin"></div>
+                              </div>
+                              <p className="text-sm font-medium text-gray-900">Loading client details...</p>
+                              <p className="text-xs text-gray-500 mt-1">Please wait</p>
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
