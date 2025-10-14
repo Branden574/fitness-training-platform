@@ -179,8 +179,8 @@ const TestimonialsSection = () => {
         >
           {[
             { number: "150+", label: "Clients Transformed" },
-            { number: "95%", label: "Success Rate" },
-            { number: "10,000+", label: "Pounds Lost" },
+            { number: "98%", label: "Success Rate" },
+            { number: "1,000+", label: "Pounds Lost" },
             { number: "5★", label: "Average Rating" }
           ].map((stat, index) => (
             <div key={index} className="text-center">

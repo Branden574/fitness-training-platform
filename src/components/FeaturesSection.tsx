@@ -240,7 +240,7 @@ const FeaturesSection = () => {
               </div>
               <h4 className="text-xl font-semibold">Proven Results</h4>
               <p className="text-blue-100">
-                150+ successful transformations with a 95% client satisfaction rate
+                150+ successful transformations with a 98% client satisfaction rate
               </p>
             </div>
             <div className="flex flex-col items-center space-y-3">
