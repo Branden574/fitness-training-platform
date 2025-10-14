@@ -21,7 +21,7 @@ const AboutPage = () => {
                 Meet Brent Martinez
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                I know what it takes to transform your body because I&rsquo;ve done it myself—and now I help others do the same. With 5 years of coaching experience and hundreds of clients served, I&rsquo;ll give you the tools and accountability to finally reach your goals.
+                I know what it takes to transform your body because I&rsquo;ve done it myself—and now I help others do the same. With 10 years of coaching experience and hundreds of clients served, I&rsquo;ll give you the tools and accountability to finally reach your goals.
               </p>
               <div className="flex flex-wrap gap-4">
                 <div className="bg-white px-4 py-2 rounded-full shadow-sm">
@@ -31,7 +31,7 @@ const AboutPage = () => {
                   <span className="text-sm font-medium text-purple-600">Hundreds of Clients</span>
                 </div>
                 <div className="bg-white px-4 py-2 rounded-full shadow-sm">
-                  <span className="text-sm font-medium text-green-600">5+ Years Experience</span>
+                  <span className="text-sm font-medium text-green-600">10+ Years Experience</span>
                 </div>
               </div>
             </motion.div>
@@ -110,7 +110,7 @@ const AboutPage = () => {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">Professional Development</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  After earning my NASM certification, I&rsquo;ve spent the last 5 years coaching people at all levels—from 
+                  After earning my NASM certification, I&rsquo;ve spent the last 10 years coaching people at all levels—from 
                   those just starting out to athletes chasing peak performance. My focus is on building programs that 
                   deliver results while creating lasting habits clients can actually stick to.
                 </p>

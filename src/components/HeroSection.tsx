@@ -45,7 +45,7 @@ const HeroSection = () => {
   const stats = [
     { icon: Users, number: '150+', label: 'Happy Clients' },
     { icon: Trophy, number: '98%', label: 'Success Rate' },
-    { icon: Calendar, number: '8+', label: 'Years Experience' },
+    { icon: Calendar, number: '10+', label: 'Years Experience' },
     { icon: Star, number: '4.9', label: 'Client Rating' }
   ];
 
