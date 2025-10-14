@@ -2346,10 +2346,10 @@ const TrainerDashboard = () => {
                                 <button
                                   onClick={() => handleApproveClient(submission)}
                                   className="px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center space-x-2"
-                                  title="Resend Invitation Email"
+                                  title="View Invitation & Send Email"
                                 >
                                   <Mail className="w-4 h-4" />
-                                  <span>Resend Email</span>
+                                  <span>Send Email</span>
                                 </button>
                                 <button
                                   onClick={() => setViewingSubmission(submission)}
