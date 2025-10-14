@@ -478,6 +478,9 @@ const TrainerDashboard = () => {
   const [showDeleteNutritionConfirm, setShowDeleteNutritionConfirm] = useState<string | null>(null);
   const [showInvitationCode, setShowInvitationCode] = useState<string | null>(null);
   const [generatedCode, setGeneratedCode] = useState<string>('');
+  const [inviteEmailSent, setInviteEmailSent] = useState<boolean>(false);
+  const [inviteEmailError, setInviteEmailError] = useState<string | null>(null);
+  const [resendingEmail, setResendingEmail] = useState<boolean>(false);
   const [viewingSubmission, setViewingSubmission] = useState<ContactSubmission | null>(null);
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   
@@ -738,6 +741,8 @@ const TrainerDashboard = () => {
         const data = await response.json();
         console.log('✅ Invitation created:', data);
         setGeneratedCode(data.code);
+        setInviteEmailSent(data.emailSent || false);
+        setInviteEmailError(data.emailError || null);
         setShowInvitationCode(submission.email);
         fetchContactSubmissions();
       } else {
@@ -748,6 +753,40 @@ const TrainerDashboard = () => {
     } catch (error) {
       console.error('Failed to approve client:', error);
       alert('Error approving client. Please try again.');
+    }
+  };
+
+  // Resend invitation email
+  const handleResendInviteEmail = async (clientEmail: string, clientName: string, inviteCode: string) => {
+    try {
+      setResendingEmail(true);
+      const response = await fetch('/api/send-invite-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientEmail,
+          clientName,
+          inviteCode,
+        }),
+      });
+
+      if (response.ok) {
+        setInviteEmailSent(true);
+        setInviteEmailError(null);
+        alert('✅ Invitation email sent successfully!');
+      } else {
+        const errorData = await response.json();
+        setInviteEmailSent(false);
+        setInviteEmailError(errorData.error || 'Failed to send email');
+        alert('❌ Failed to send email. You can still copy the code manually.');
+      }
+    } catch (error) {
+      console.error('Error resending email:', error);
+      setInviteEmailSent(false);
+      setInviteEmailError(error instanceof Error ? error.message : 'Unknown error');
+      alert('❌ Failed to send email. You can still copy the code manually.');
+    } finally {
+      setResendingEmail(false);
     }
   };
 
@@ -2299,6 +2338,25 @@ const TrainerDashboard = () => {
                                   title="Reject Application"
                                 >
                                   <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                            {submission.status === 'INVITED' && (
+                              <>
+                                <button
+                                  onClick={() => handleApproveClient(submission)}
+                                  className="px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center space-x-2"
+                                  title="Resend Invitation Email"
+                                >
+                                  <Mail className="w-4 h-4" />
+                                  <span>Resend Email</span>
+                                </button>
+                                <button
+                                  onClick={() => setViewingSubmission(submission)}
+                                  className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                                  title="View Details & Code"
+                                >
+                                  <Eye className="w-4 h-4" />
                                 </button>
                               </>
                             )}
@@ -4797,6 +4855,39 @@ const TrainerDashboard = () => {
               <p className="text-gray-600">
                 Client has been approved! Share this invitation code with them:
               </p>
+
+              {/* Email Status */}
+              {inviteEmailSent ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start space-x-2">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-green-800">Email Sent Successfully!</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      The invitation has been sent to {showInvitationCode}
+                    </p>
+                  </div>
+                </div>
+              ) : inviteEmailError ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start space-x-2">
+                  <X className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-800">Email Failed to Send</p>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      You can resend the email or copy the code to share manually
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start space-x-2">
+                  <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-800">Email Sending...</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Attempting to send invitation email
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
                 <div className="text-center">
@@ -4805,6 +4896,14 @@ const TrainerDashboard = () => {
                     {generatedCode}
                   </p>
                 </div>
+              </div>
+
+              {/* Invitation URL */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Full Invitation Link:</p>
+                <p className="text-xs font-mono text-gray-700 break-all">
+                  {`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${generatedCode}`}
+                </p>
               </div>
               
               <div className="bg-blue-50 p-4 rounded-lg">
@@ -4817,20 +4916,59 @@ const TrainerDashboard = () => {
                 </p>
               </div>
               
-              <div className="flex space-x-3">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(generatedCode);
                     alert('Invitation code copied to clipboard!');
                   }}
-                  className="flex-1 px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+                  className="px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center space-x-2"
                 >
-                  Copy Code
+                  <span>Copy Code</span>
                 </button>
+                <button
+                  onClick={() => {
+                    const inviteUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${generatedCode}`;
+                    navigator.clipboard.writeText(inviteUrl);
+                    alert('Invitation link copied to clipboard!');
+                  }}
+                  className="px-4 py-2 text-purple-700 bg-purple-100 rounded-lg hover:bg-purple-200 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <span>Copy Link</span>
+                </button>
+              </div>
+
+              {/* Resend Email Button */}
+              {!inviteEmailSent && (
+                <button
+                  onClick={() => {
+                    if (showInvitationCode) {
+                      handleResendInviteEmail(
+                        showInvitationCode,
+                        showInvitationCode.split('@')[0],
+                        generatedCode
+                      );
+                    }
+                  }}
+                  disabled={resendingEmail}
+                  className={`w-full px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
+                    resendingEmail
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                  }`}
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>{resendingEmail ? 'Sending...' : 'Resend Invitation Email'}</span>
+                </button>
+              )}
+              
+              <div className="flex space-x-3">
                 <button
                   onClick={() => {
                     setShowInvitationCode(null);
                     setGeneratedCode('');
+                    setInviteEmailSent(false);
+                    setInviteEmailError(null);
                   }}
                   className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
