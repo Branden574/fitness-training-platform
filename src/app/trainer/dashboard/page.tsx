@@ -756,7 +756,7 @@ const TrainerDashboard = () => {
     }
   };
 
-  // Resend invitation email
+  // Send invitation email (manual trigger by trainer)
   const handleResendInviteEmail = async (clientEmail: string, clientName: string, inviteCode: string) => {
     try {
       setResendingEmail(true);
@@ -4873,7 +4873,7 @@ const TrainerDashboard = () => {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-yellow-800">Email Failed to Send</p>
                     <p className="text-xs text-yellow-600 mt-1">
-                      You can resend the email or copy the code to share manually
+                      You can try sending again or copy the code to share manually
                     </p>
                   </div>
                 </div>
@@ -4881,9 +4881,9 @@ const TrainerDashboard = () => {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start space-x-2">
                   <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-800">Email Sending...</p>
+                    <p className="text-sm font-medium text-blue-800">Ready to Send Email</p>
                     <p className="text-xs text-blue-600 mt-1">
-                      Attempting to send invitation email
+                      Click &quot;Send Email&quot; below to email the invitation to {showInvitationCode}
                     </p>
                   </div>
                 </div>
@@ -4938,7 +4938,7 @@ const TrainerDashboard = () => {
                 </button>
               </div>
 
-              {/* Resend Email Button */}
+              {/* Send Email Button */}
               {!inviteEmailSent && (
                 <button
                   onClick={() => {
@@ -4958,7 +4958,7 @@ const TrainerDashboard = () => {
                   }`}
                 >
                   <Mail className="w-4 h-4" />
-                  <span>{resendingEmail ? 'Sending...' : 'Resend Invitation Email'}</span>
+                  <span>{resendingEmail ? 'Sending...' : inviteEmailError ? 'Resend Invitation Email' : 'Send Invitation Email'}</span>
                 </button>
               )}
               

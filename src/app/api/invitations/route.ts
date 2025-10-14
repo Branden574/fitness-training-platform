@@ -154,42 +154,15 @@ export async function POST(request: Request) {
       baseUrl = 'http://localhost:3001';
     }
 
-    // Automatically send invitation email
-    let emailSent = false;
-    let emailError = null;
-    
-    try {
-      const emailResponse = await fetch(`${baseUrl}/api/send-invite-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clientEmail: validatedData.email,
-          clientName: validatedData.name || validatedData.email.split('@')[0],
-          inviteCode: invitationCode,
-        }),
-      });
-
-      if (emailResponse.ok) {
-        emailSent = true;
-        console.log('✅ Invitation email sent automatically to:', validatedData.email);
-      } else {
-        const errorData = await emailResponse.json();
-        emailError = errorData.error;
-        console.error('⚠️ Failed to send invitation email:', errorData);
-      }
-    } catch (error) {
-      emailError = error instanceof Error ? error.message : 'Unknown error';
-      console.error('⚠️ Error sending invitation email:', error);
-    }
+    // Don't automatically send email - trainer will manually send it
+    console.log('✅ Invitation created, email will be sent manually by trainer');
 
     return NextResponse.json({
       message: 'Invitation created successfully',
       code: invitationCode,
       invitationUrl: `${baseUrl}/invite/${invitationCode}`,
-      emailSent,
-      emailError: emailSent ? null : emailError
+      emailSent: false,
+      emailError: null
     }, { status: 201 });
     
   } catch (error: unknown) {
