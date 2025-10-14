@@ -18,57 +18,48 @@ interface Testimonial {
 const testimonials: Testimonial[] = [
   {
     id: 1,
-    name: "Sarah Johnson",
-    role: "Marketing Executive",
-    content: "Brent transformed my entire approach to fitness. In 6 months, I lost 35 pounds and gained confidence I never knew I had. His personalized program fit perfectly into my busy schedule.",
+    name: "Rob",
+    role: "",
+    content: "Working with Brent has been a game changer for me. He really knows his stuff and kept me motivated even when I wanted to quit. Down 35 pounds and feeling better than I have in years!",
     rating: 5,
     image: imagePlaceholders.clients[0], // Client 1 photo
-    achievement: "Lost 35 lbs in 6 months"
+    achievement: ""
   },
   {
     id: 2,
-    name: "Mike Chen",
-    role: "Software Engineer",
-    content: "As someone who spent 12+ hours at a desk, I thought I was doomed to be out of shape. Brent's program helped me build muscle, improve my posture, and boost my energy levels dramatically.",
+    name: "Tony",
+    role: "",
+    content: "I sit at a desk all day and thought I'd just accept being out of shape. Brent changed that mindset completely. My back doesn't hurt anymore and I actually have energy after work now. Worth every penny.",
     rating: 5,
     image: imagePlaceholders.clients[1], // Client 2 photo
-    achievement: "Gained 15 lbs muscle"
+    achievement: ""
   },
   {
     id: 3,
-    name: "Jessica Martinez",
-    role: "Stay-at-home Mom",
-    content: "After having three kids, I felt like my body wasn't mine anymore. Brent's compassionate approach and effective workouts helped me feel strong and confident again. Best investment I've made!",
+    name: "Isdro",
+    role: "",
+    content: "Honestly didn't think I'd stick with it but Brent makes the workouts challenging without being impossible. Seeing real results and actually enjoying the process. Highly recommend!",
     rating: 5,
     image: imagePlaceholders.clients[2], // Client 3 photo
-    achievement: "Increased strength by 200%"
+    achievement: ""
   },
   {
     id: 4,
-    name: "David Thompson",
-    role: "Retired Teacher",
-    content: "At 58, I thought my best physical days were behind me. Brent proved me wrong! His age-appropriate training has me feeling better than I did in my 40s. Highly recommend!",
+    name: "Robert",
+    role: "",
+    content: "I thought my best days were behind me but Brent proved me wrong. He adjusted everything for my needs and now I'm moving better and have way more energy. Highly recommend working with him!",
     rating: 5,
     image: imagePlaceholders.clients[3], // Client 4 photo
-    achievement: "Improved mobility & strength"
+    achievement: ""
   },
   {
     id: 5,
-    name: "Amanda Rodriguez",
-    role: "Nurse",
-    content: "Working long shifts left me exhausted and stressed. Brent's training program not only improved my physical health but also my mental well-being. I sleep better and have more energy for my family.",
+    name: "Brandon",
+    role: "",
+    content: "My job leaves me exhausted but Brent's program actually gives me MORE energy somehow. Sleep better, feel stronger, and way less stressed. Best decision I've made for my health.",
     rating: 5,
     image: imagePlaceholders.clients[4], // Client 5 photo
-    achievement: "Reduced stress & improved sleep"
-  },
-  {
-    id: 6,
-    name: "Tom Wilson",
-    role: "Business Owner",
-    content: "Brent understands the demands of running a business. His efficient, results-driven approach helped me stay in peak condition without sacrificing my work commitments. Phenomenal results!",
-    rating: 5,
-    image: imagePlaceholders.testimonial("Tom Wilson"), // Fallback to placeholder for 6th testimonial
-    achievement: "Built lean muscle & endurance"
+    achievement: ""
   }
 ];
 
