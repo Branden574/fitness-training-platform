@@ -97,9 +97,10 @@ const ContactPage = () => {
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Studio Location</h3>
                     <p className="text-gray-600 mb-2">
-                      Premium Fitness Studio<br />
-                      123 Fitness Avenue<br />
-                      Wellness City, WC 12345
+                      Synergy Personal Training<br />
+                      4774 N Blackstone<br />
+                      Fresno, CA 93726<br />
+                      United States
                     </p>
                     <p className="text-sm text-gray-500">
                       Private training studio with state-of-the-art equipment
