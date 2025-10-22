@@ -119,9 +119,9 @@ const ContactPage = () => {
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Training Hours</h3>
                     <div className="text-gray-600 space-y-1">
-                      <p><strong>Monday - Friday:</strong> 6:00 AM - 8:00 PM</p>
-                      <p><strong>Saturday:</strong> 7:00 AM - 6:00 PM</p>
-                      <p><strong>Sunday:</strong> 8:00 AM - 4:00 PM</p>
+                      <p><strong>Monday - Friday:</strong> 5:00 AM - 8:00 PM</p>
+                      <p><strong>Saturday:</strong> Closed</p>
+                      <p><strong>Sunday:</strong> Closed</p>
                     </div>
                     <p className="text-sm text-gray-500 mt-2">
                       Flexible scheduling available for busy professionals
