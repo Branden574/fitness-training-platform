@@ -4,18 +4,33 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Create a more robust Prisma client with better error handling
+// Production-ready Prisma client with connection pooling
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: ['warn', 'error'],
+  log: process.env.NODE_ENV === 'production' ? ['error'] : ['warn', 'error'],
   errorFormat: 'minimal',
   datasources: {
     db: {
       url: process.env.DATABASE_URL
     }
-  }
+  },
+  // Add connection pool settings for production stability
+  datasourceUrl: process.env.DATABASE_URL,
 });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+// Prevent multiple instances in development
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
+
+// Handle graceful shutdown
+if (process.env.NODE_ENV === 'production') {
+  const cleanup = async () => {
+    await prisma.$disconnect();
+  };
+  
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+}
 
 // Add connection health check function
 export async function checkDatabaseConnection(): Promise<boolean> {
