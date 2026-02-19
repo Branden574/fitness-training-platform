@@ -403,26 +403,11 @@ export async function PATCH(request: NextRequest) {
 
     // Check authorization (trainer can approve/reject, both can cancel)
     if (status === 'APPROVED' || status === 'REJECTED') {
-      
-      // TEMPORARY COMPLETE BYPASS FOR BRENT - DEBUGGING ONLY
-      if (user.email === 'Martinezfitness559@gmail.com') {
-      } else {
-        // More detailed logging for debugging
-        
-        // COMPREHENSIVE AUTHORIZATION CHECK
-        const isBrentMartinez = user.email === 'Martinezfitness559@gmail.com';
-        const hasTrainerRole = user.role === 'TRAINER';
-        const isAssignedTrainer = appointment.trainerId === actualUserId;
-        
-        // Authorization: Must be trainer AND either assigned to appointment OR be main trainer
-        const isAuthorized = hasTrainerRole && (isAssignedTrainer || isBrentMartinez);
-        
-        if (!isAuthorized) {
-          return NextResponse.json(
-            { error: 'Only assigned trainer can approve/reject appointments' },
-            { status: 403 }
-          );
-        }
+      if (user.role !== 'TRAINER' || appointment.trainerId !== actualUserId) {
+        return NextResponse.json(
+          { error: 'Only assigned trainer can approve/reject appointments' },
+          { status: 403 }
+        );
       }
       
     } else if (status === 'CANCELLED') {

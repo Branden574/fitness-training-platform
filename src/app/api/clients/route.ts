@@ -130,16 +130,26 @@ export async function GET() {
 // Assign workout to client
 export async function POST(request: Request) {
   try {
-    // TEMPORARY: Skip authentication for debugging
-    
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const trainer = await prisma.user.findUnique({
+      where: { email: session.user.email, role: 'TRAINER' }
+    });
+    if (!trainer) {
+      return NextResponse.json({ message: 'Trainer not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { clientId, workoutId, notes } = body;
 
     // Verify the client belongs to this trainer
-    // TEMPORARY: Skip trainer verification for debugging
     const client = await prisma.user.findFirst({
       where: {
         id: clientId,
+        trainerId: trainer.id,
         role: 'CLIENT'
       }
     });
@@ -196,11 +206,13 @@ export async function POST(request: Request) {
 // Add new client to trainer
 export async function PUT(request: Request) {
   try {
-    // TEMPORARY: Skip authentication for debugging
-    
-    // Use the correct business trainer account
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const trainer = await prisma.user.findUnique({
-      where: { email: 'martinezfitness559@gmail.com' },
+      where: { email: session.user.email, role: 'TRAINER' },
       select: { id: true, name: true }
     });
     
@@ -305,11 +317,13 @@ export async function PUT(request: Request) {
 // Update client status (deactivate/reactivate)
 export async function PATCH(request: Request) {
   try {
-    // TEMPORARY: Skip authentication for debugging
-    
-    // Use Brent Martinez's trainer email that has the client relationship
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const trainer = await prisma.user.findUnique({
-      where: { email: 'martinezfitness559@gmail.com' },
+      where: { email: session.user.email, role: 'TRAINER' },
       select: { id: true }
     });
     
@@ -378,11 +392,13 @@ export async function PATCH(request: Request) {
 // Completely delete client account
 export async function DELETE(request: Request) {
   try {
-    // TEMPORARY: Skip authentication for debugging
-    
-    // Use Brent Martinez's trainer email that has the client relationship
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const trainer = await prisma.user.findUnique({
-      where: { email: 'martinezfitness559@gmail.com' },
+      where: { email: session.user.email, role: 'TRAINER' },
       select: { id: true }
     });
     
