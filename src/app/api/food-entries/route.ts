@@ -6,12 +6,9 @@ import { authOptions } from '@/lib/auth';
 // Get food entries for a client
 export async function GET(request: Request) {
   try {
-    console.log('🔍 Food Entries API - GET request started');
-    
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -21,14 +18,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
     const clientId = searchParams.get('clientId');
-    
-    console.log('📅 Request parameters:', { date, clientId });
-    console.log('👤 Session user:', { id: session.user.id, role: session.user.role });
 
     // Determine user ID - trainers can view client data, clients view their own
     let userId = session.user.id;
     if (session.user.role === 'TRAINER' && clientId) {
-      console.log('🔍 Trainer requesting client data, verifying access...');
       // Verify trainer has access to this client
       const client = await prisma.user.findFirst({
         where: {
@@ -37,42 +30,27 @@ export async function GET(request: Request) {
         }
       });
       if (!client) {
-        console.log('❌ Client not found or not assigned to trainer');
         return NextResponse.json(
           { error: 'Client not found or not assigned to you' },
           { status: 404 }
         );
       }
       userId = clientId;
-      console.log('✅ Trainer access verified for client:', clientId);
     }
 
-    // Get food entries for the specified date or today
-    // Fix timezone issues by parsing date in local timezone
+    // Parse date in local timezone to avoid UTC shift
     let targetDate: Date;
     if (date) {
-      // Parse date string in local timezone to avoid UTC shift
       const [year, month, day] = date.split('-').map(Number);
-      targetDate = new Date(year, month - 1, day); // month is 0-indexed
-      console.log('📅 Parsed date from components:', { year, month: month - 1, day });
+      targetDate = new Date(year, month - 1, day);
     } else {
       targetDate = new Date();
     }
-    
-    console.log('📅 Original date string:', date);
-    console.log('📅 Final targetDate (local timezone):', targetDate.toString());
-    
+
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
-    
-    console.log('🕰️ Date range for query (local timezone):');
-    console.log('  Start of day:', startOfDay.toString());
-    console.log('  End of day:', endOfDay.toString());
-    console.log('🕰️ Date range for query (UTC):');
-    console.log('  Start of day UTC:', startOfDay.toISOString());
-    console.log('  End of day UTC:', endOfDay.toISOString());
 
     const foodEntries = await prisma.foodEntry.findMany({
       where: {
@@ -87,14 +65,6 @@ export async function GET(request: Request) {
       }
     });
 
-    console.log(`📊 Found ${foodEntries.length} food entries for user ${userId}`);
-    if (foodEntries.length > 0) {
-      console.log('🍎 Food entries details:');
-      foodEntries.forEach((entry, index) => {
-        console.log(`  ${index + 1}. ${entry.foodName} - Date: ${entry.date.toISOString()}, Created: ${entry.createdAt.toISOString()}`);
-      });
-    }
-
     // Calculate daily totals
     const dailyTotals = foodEntries.reduce((totals, entry) => ({
       calories: totals.calories + (entry.calories || 0),
@@ -103,14 +73,10 @@ export async function GET(request: Request) {
       fat: totals.fat + (entry.fat || 0)
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
-    const responseDate = targetDate.toISOString().split('T')[0];
-    console.log('📤 Returning response with date:', responseDate);
-    console.log('✅ Food entries API completed successfully');
-
     return NextResponse.json({
       entries: foodEntries,
       dailyTotals,
-      date: responseDate
+      date: targetDate.toISOString().split('T')[0]
     });
 
   } catch (error) {
@@ -125,23 +91,16 @@ export async function GET(request: Request) {
 // Create new food entry
 export async function POST(request: Request) {
   try {
-    console.log('🍎 Food Entries API - Creating new food entry');
-    
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user || session.user.role !== 'CLIENT') {
-      console.log('❌ Unauthorized access attempt');
       return NextResponse.json(
         { error: 'Unauthorized - Client access required' },
         { status: 401 }
       );
     }
 
-    console.log('👤 Creating food entry for user:', session.user.email);
-
     const body = await request.json();
-    console.log('📝 Food entry data received:', body);
-    
     const {
       foodName,
       quantity,
@@ -156,24 +115,19 @@ export async function POST(request: Request) {
     } = body;
 
     if (!foodName || !quantity || !calories) {
-      console.log('❌ Missing required fields');
       return NextResponse.json(
         { error: 'Food name, quantity, and calories are required' },
         { status: 400 }
       );
     }
 
-    // Parse and validate the date - fix timezone issues
+    // Parse date in local timezone to avoid UTC shift
     let entryDate: Date;
     if (date) {
-      // Parse date string in local timezone to avoid UTC shift
       const [year, month, day] = date.split('-').map(Number);
-      entryDate = new Date(year, month - 1, day); // month is 0-indexed
-      console.log('📅 Parsed entry date from components:', { year, month: month - 1, day });
-      console.log('📅 Entry date (local timezone):', entryDate.toString());
+      entryDate = new Date(year, month - 1, day);
     } else {
       entryDate = new Date();
-      console.log('📅 Using current date:', entryDate.toString());
     }
     
     const foodEntry = await prisma.foodEntry.create({
@@ -192,16 +146,10 @@ export async function POST(request: Request) {
       }
     });
 
-    console.log('✅ Food entry created successfully:', foodEntry.id);
     return NextResponse.json(foodEntry);
 
   } catch (error) {
-    console.error('❌ Error creating food entry:', error);
-    console.error('Error details:', {
-      name: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : 'No stack trace available'
-    });
+    console.error('Error creating food entry:', error);
     return NextResponse.json(
       { error: 'Failed to create food entry' },
       { status: 500 }

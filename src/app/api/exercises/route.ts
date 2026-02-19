@@ -5,7 +5,6 @@ import { getServerSession } from 'next-auth';
 // Get all available exercises
 export async function GET() {
   try {
-    console.log('🔍 Exercises API - Fetching all exercises');
     
     const exercises = await prisma.exercise.findMany({
       orderBy: [
@@ -28,7 +27,6 @@ export async function GET() {
 // Create a new exercise
 export async function POST(request: Request) {
   try {
-    console.log('➕ Exercises API - Creating new exercise');
     
     const session = await getServerSession();
     if (!session) {
@@ -59,7 +57,6 @@ export async function POST(request: Request) {
       }
     });
 
-    console.log('✅ Exercise created successfully:', exercise.id);
     return NextResponse.json(exercise);
     
   } catch (error) {
@@ -74,7 +71,6 @@ export async function POST(request: Request) {
 // Update an existing exercise
 export async function PUT(request: Request) {
   try {
-    console.log('✏️ Exercises API - Updating exercise');
     
     const session = await getServerSession();
     if (!session) {
@@ -106,7 +102,6 @@ export async function PUT(request: Request) {
       }
     });
 
-    console.log('✅ Exercise updated successfully:', exercise.id);
     return NextResponse.json(exercise);
     
   } catch (error) {
@@ -121,7 +116,6 @@ export async function PUT(request: Request) {
 // Delete an exercise
 export async function DELETE(request: Request) {
   try {
-    console.log('🗑️ Exercises API - Deleting exercise');
     
     const session = await getServerSession();
     if (!session) {
@@ -157,7 +151,6 @@ export async function DELETE(request: Request) {
       where: { id }
     });
 
-    console.log('✅ Exercise deleted successfully:', id);
     return NextResponse.json({ message: 'Exercise deleted successfully' });
     
   } catch (error) {

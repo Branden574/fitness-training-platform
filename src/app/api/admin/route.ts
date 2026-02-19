@@ -5,7 +5,6 @@ import { authOptions } from '@/lib/auth';
 
 export async function GET() {
   try {
-    console.log('🔍 Admin API - Fetching admin dashboard data');
     
     // Check database connection first
     const isConnected = await checkDatabaseConnection();
@@ -61,11 +60,8 @@ export async function GET() {
       });
     });
 
-    console.log(`✅ Found ${users.length} users for admin dashboard`);
-    
     // Log user statuses for debugging
     users.forEach(user => {
-      console.log(`  - ${user.name}: isActive=${user.isActive}, role=${user.role}`);
     });
 
     return NextResponse.json({

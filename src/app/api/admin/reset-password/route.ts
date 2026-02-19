@@ -33,8 +33,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log(`Admin ${session.user.id} reset password for user ${userId}`);
-
     return NextResponse.json({ 
       success: true, 
       newPassword,

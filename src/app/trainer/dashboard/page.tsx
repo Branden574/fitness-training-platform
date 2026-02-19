@@ -357,30 +357,25 @@ const TrainerDashboard = () => {
   
   // CRITICAL: Verify trainer access with better session handling
   useEffect(() => {
-    console.log('🔍 Trainer Dashboard - Session status:', status, 'Session:', session);
     
     // Don't redirect while session is still loading
     if (status === 'loading') {
-      console.log('⏳ Session still loading...');
       return;
     }
     
     // Only redirect after session has finished loading
     if (status === 'unauthenticated') {
-      console.log('❌ No session - redirecting to login...');
       router.push('/auth/signin');
       return;
     }
     
     // Check for password change requirement first
     if (session && session.user.passwordChangeRequired) {
-      console.log('🔐 Password change required - redirecting...');
       router.push('/auth/change-password');
       return;
     }
     
     if (session && session.user.role !== 'TRAINER') {
-      console.log('❌ Access denied - Not a trainer, redirecting...');
       if (session.user.role === 'CLIENT') {
         router.push('/client/dashboard');
       } else {
@@ -516,12 +511,10 @@ const TrainerDashboard = () => {
   // Fetch functions
   const fetchClients = async () => {
     try {
-      console.log('👥 Fetching clients from API...');
       const response = await fetch('/api/clients');
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Clients fetched successfully:', data.length);
         setClients(data);
         setStats(prev => ({ ...prev, totalClients: data.length, activeClients: data.length }));
       } else {
@@ -529,13 +522,11 @@ const TrainerDashboard = () => {
         
         // If unauthorized, retry after delay (session might be loading)
         if (response.status === 401) {
-          console.log('🔄 Retrying in 5 seconds due to auth issue...');
           setTimeout(fetchClients, 5000);
           return;
         }
         
         // For other errors, show mock data with real client info
-        console.log('📝 API failed, using mock data with real client info');
         const mockClients = [
           {
             id: 'cmfn3t3ic0002xninyonutrrn',
@@ -557,7 +548,6 @@ const TrainerDashboard = () => {
       console.error('❌ Network error fetching clients:', error);
       
       // Retry after delay on network errors
-      console.log('🔄 Retrying in 5 seconds due to network error...');
       setTimeout(fetchClients, 5000);
       
       // Fallback to mock data with real client info in the meantime
@@ -596,17 +586,14 @@ const TrainerDashboard = () => {
 
   const fetchAppointments = async () => {
     try {
-      console.log('🔄 Fetching appointments...');
       const response = await fetch('/api/appointments');
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Appointments fetched successfully:', data.length, 'appointments');
         setAppointments(data);
         const pendingCount = data.filter((appointment: Appointment) => appointment.status === 'PENDING').length;
         setStats(prev => ({ ...prev, pendingAppointments: pendingCount }));
         
         // Log appointment IDs for debugging
-        console.log('📋 Current appointment IDs:', data.map((apt: Appointment) => apt.id));
       } else {
         console.error('Failed to fetch appointments:', response.status, response.statusText);
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -717,8 +704,6 @@ const TrainerDashboard = () => {
 
   const handleApproveClient = async (submission: ContactSubmission) => {
     try {
-      console.log('🔍 Approving client:', submission);
-      console.log('🔑 Current session:', session);
       
       const response = await fetch('/api/invitations', {
         method: 'POST',
@@ -734,12 +719,8 @@ const TrainerDashboard = () => {
         })
       });
       
-      console.log('📊 Invitation Response status:', response.status);
-      console.log('📊 Invitation Response headers:', response.headers);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Invitation created:', data);
         setGeneratedCode(data.code);
         setInviteEmailSent(data.emailSent || false);
         setInviteEmailError(data.emailError || null);
@@ -809,10 +790,6 @@ const TrainerDashboard = () => {
         return;
       }
 
-      console.log('🔍 Approving appointment:', appointmentId);
-      console.log('🔍 Current session:', session);
-      console.log('🔍 Session user:', session?.user);
-      
       const response = await fetch('/api/appointments', {
         method: 'PATCH',
         headers: { 
@@ -825,13 +802,8 @@ const TrainerDashboard = () => {
         })
       });
       
-      console.log('📊 Response status:', response.status);
-      console.log('📊 Response headers:', response.headers);
-      
       if (response.ok) {
         const responseData = await response.json();
-        console.log('✅ Appointment approved successfully');
-        console.log('✅ Response data:', responseData);
         
         // Update the local state immediately for better UX
         setAppointments(prev => prev.map(apt => 
@@ -842,7 +814,6 @@ const TrainerDashboard = () => {
         
         // Then fetch fresh data
         setTimeout(() => {
-          console.log('🔄 Refreshing appointments after approval...');
           fetchAppointments();
         }, 500);
       } else {
@@ -880,8 +851,6 @@ const TrainerDashboard = () => {
         return;
       }
 
-      console.log('🔍 Rejecting appointment:', appointmentId);
-      
       const response = await fetch('/api/appointments', {
         method: 'PATCH',
         headers: { 
@@ -894,10 +863,7 @@ const TrainerDashboard = () => {
         })
       });
       
-      console.log('📊 Response status:', response.status);
-      
       if (response.ok) {
-        console.log('✅ Appointment rejected successfully');
         
         // Update the local state immediately for better UX
         setAppointments(prev => prev.map(apt => 
@@ -908,7 +874,6 @@ const TrainerDashboard = () => {
         
         // Then fetch fresh data
         setTimeout(() => {
-          console.log('🔄 Refreshing appointments after rejection...');
           fetchAppointments();
         }, 500);
       } else {
@@ -1004,7 +969,6 @@ const TrainerDashboard = () => {
 
   const handleViewClientDetails = async (clientId: string) => {
     try {
-      console.log('Opening client details for:', clientId);
       setLoadingClientDetails(clientId);
       setShowClientMenu(null); // Close the menu
       
@@ -1053,27 +1017,20 @@ const TrainerDashboard = () => {
       const today = new Date();
       const allFoodEntries: FoodEntry[] = [];
       
-      console.log("🗓️ Trainer fetching food entries for client:", clientId);
-      console.log("📅 Today's date:", today.toISOString());
-      
       // Fetch food entries for each of the last 7 days
       for (let i = 0; i < 7; i++) {
         const targetDate = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
         const dateString = targetDate.toISOString().split('T')[0];
         
-        console.log(`🔍 Fetching food entries for date ${i}: ${dateString}`);
-        
         try {
           const response = await fetch(`/api/food-entries?clientId=${clientId}&date=${dateString}`);
           if (response.ok) {
             const data = await response.json();
-            console.log(`📊 Data for ${dateString}:`, data);
             if (data.entries && data.entries.length > 0) {
               allFoodEntries.push(...data.entries);
             }
           } else if (response.status === 404) {
             // 404 could mean client not assigned to trainer or no data for this date
-            console.log(`ℹ️ No data available for ${dateString} (client may not be assigned or no entries exist)`);
           } else {
             console.error(`❌ Failed to fetch data for ${dateString}, status:`, response.status);
           }
@@ -1096,14 +1053,7 @@ const TrainerDashboard = () => {
         notes?: string;
       }> = [];
       let nutritionStats = { avgCalories: 0, avgProtein: 0, adherenceRate: '0%' };
-      
-      console.log("🍎 Total food entries found:", allFoodEntries.length);
-      console.log("📊 All food entries:", allFoodEntries.map(entry => ({
-        food: entry.foodName,
-        date: entry.date,
-        calories: entry.calories
-      })));
-      
+
       if (allFoodEntries.length > 0) {
         // Get the most recent entries (last 10)
         recentFoodEntries = allFoodEntries
@@ -1177,7 +1127,6 @@ const TrainerDashboard = () => {
         nutritionStats
       };
 
-      console.log('Setting client data:', detailedClientData);
       setSelectedClientData(detailedClientData);
       setSelectedFoodEntryDate('all'); // Reset food entry filter
       setSelectedWorkoutProgressDate('all'); // Reset workout progress filter
@@ -1191,7 +1140,6 @@ const TrainerDashboard = () => {
   };
 
   const handleAssignWorkout = (clientId: string) => {
-    console.log('Opening workout assignment for client:', clientId);
     setShowAssignWorkout(clientId);
     setShowClientMenu(null);
   };
@@ -1775,7 +1723,6 @@ const TrainerDashboard = () => {
       // Add delay to ensure proper session establishment and server readiness
       const initializeData = async () => {
         try {
-          console.log('🚀 Initializing trainer dashboard data...');
           
           // Wait a moment for session to be fully established
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1788,7 +1735,6 @@ const TrainerDashboard = () => {
           await fetchNutritionPlans();
           await fetchAvailableExercises();
           
-          console.log('✅ Dashboard initialization complete');
           setLoading(false);
         } catch (error) {
           console.error('❌ Error initializing dashboard data:', error);
@@ -1870,7 +1816,6 @@ const TrainerDashboard = () => {
 
   const updateTrainerSetting = (key: string, value: string | boolean) => {
     setUserSettings((prev) => ({ ...prev, [key]: value }));
-    console.log(`Updated trainer ${key} to:`, value);
   };
 
   const resetTrainerSettings = () => {
@@ -5304,7 +5249,6 @@ const TrainerDashboard = () => {
                       <option value="all">All Days</option>
                       {(() => {
                         const uniqueDates = Array.from(new Set(selectedClientData.recentFoodEntries.map(entry => entry.date)));
-                        console.log("🗓️ Available dates for dropdown:", uniqueDates);
                         return uniqueDates
                           .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
                           .map(date => {
@@ -5492,15 +5436,11 @@ const TrainerDashboard = () => {
                       const filteredProgress = selectedWorkoutProgressDate === 'all' 
                         ? selectedClientData.workoutProgress
                         : (() => {
-                            console.log('🔍 Trainer Filter Debug:');
-                            console.log('  Selected filter date:', selectedWorkoutProgressDate);
                             const results = selectedClientData.workoutProgress.filter(entry => {
                               const progressDate = new Date(entry.date);
                               const match = entry.date === selectedWorkoutProgressDate;
-                              console.log(`  Entry date: ${entry.date} (${progressDate.toDateString()}) ${match ? '✅' : '❌'} filter: ${selectedWorkoutProgressDate}`);
                               return match;
                             });
-                            console.log('  Filtered results:', results.length, 'out of', selectedClientData.workoutProgress.length);
                             return results;
                           })();
                       
@@ -6564,7 +6504,6 @@ const TrainerDashboard = () => {
                               </div>
                               <button
                                 onClick={() => {
-                                  console.log('🔍 View Details clicked for appointment:', appointment);
                                   // Close the day modal first
                                   setShowDayModal(false);
                                   setSelectedDate(null);

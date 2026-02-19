@@ -27,8 +27,6 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
   const [lastChecked, setLastChecked] = useState<Date>(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)); // Start 7 days ago
   const [animateCount, setAnimateCount] = useState(false);
 
-  // Use userId to prevent unused warning - it's passed for future use
-  console.log('NotificationSystem initialized for user:', userId, 'role:', userRole);
 
   // Fetch initial notifications (last 7 days)
   const fetchInitialNotifications = useCallback(async () => {
@@ -64,18 +62,10 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
       } else if (response.status === 401) {
         // Session not ready yet, silently retry later
         setTimeout(fetchInitialNotifications, 10000);
-      } else {
-        console.warn('⚠️ Failed to fetch notifications:', response.status);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          console.warn('⏰ Notification fetch timeout');
-        } else {
-          console.warn('⚠️ Network error fetching notifications:', error.message);
-        }
-      } else {
-        console.warn('⚠️ Unknown error fetching notifications');
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.warn('Network error fetching notifications:', error.message);
       }
       // Silently retry after longer delay
       setTimeout(fetchInitialNotifications, 15000);
@@ -85,12 +75,10 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
   // Fetch new notifications
   const checkForNotifications = useCallback(async () => {
     try {
-      console.log('🔍 Checking for new notifications since:', lastChecked.toISOString());
       const response = await fetch(`/api/notifications?since=${lastChecked.toISOString()}`);
-      
+
       if (response.ok) {
         const newNotifications = await response.json();
-        console.log('📬 New notifications found:', newNotifications.length);
         
         if (newNotifications.length > 0) {
           setNotifications(prev => {
@@ -119,12 +107,10 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
           
           setLastChecked(new Date());
         }
-      } else {
-        console.error('❌ Failed to check notifications:', response.status, response.statusText);
       }
     } catch (error) {
       if (error instanceof Error) {
-        console.error('❌ Network error checking notifications:', error.message);
+        console.error('Network error checking notifications:', error.message);
       }
     }
   }, [lastChecked]);
@@ -186,7 +172,6 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
   useEffect(() => {
     // Check for both TRAINER and CLIENT roles
     if (userRole === 'TRAINER' || userRole === 'CLIENT') {
-      console.log('🔔 Initializing notification system for role:', userRole);
       
       // Add delay to ensure session is fully established
       const initNotifications = () => {
@@ -238,23 +223,18 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
   // Clear all notifications
   const clearAll = async () => {
     try {
-      console.log('🗑️ Clearing all notifications...');
       const response = await fetch('/api/notifications', {
         method: 'DELETE'
       });
-      
+
       if (response.ok) {
-        const result = await response.json();
         setNotifications([]);
-        console.log('✅ All notifications cleared successfully:', result);
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('❌ Failed to clear notifications:', response.status, errorData);
-        // You could add a toast notification here to inform the user
         alert(`Failed to clear notifications: ${errorData.error || 'Server error'}`);
       }
     } catch (error) {
-      console.error('❌ Error clearing notifications:', error);
+      console.error('Error clearing notifications:', error);
       alert('Failed to clear notifications. Please try again.');
     }
   };

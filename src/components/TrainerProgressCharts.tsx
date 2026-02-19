@@ -71,7 +71,6 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
             data: data.monthlyStats || []
           }]);
         } else {
-          console.log('No progress data for client:', selectedClientId, data);
           setProgressData([]);
         }
       } else {

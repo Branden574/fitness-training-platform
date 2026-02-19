@@ -8,10 +8,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    console.log('👤 Profile API - Session:', session?.user?.email, session?.user?.id);
-    
     if (!session?.user) {
-      console.log('❌ Profile API - No session found');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -34,10 +31,7 @@ export async function GET() {
       }
     });
 
-    console.log('🔍 Profile API - User found:', user?.email, 'Trainer:', user?.assignedTrainer?.name);
-
     if (!user) {
-      console.log('❌ Profile API - User not found');
       return NextResponse.json(
         { message: 'User not found' },
         { status: 404 }
@@ -56,7 +50,6 @@ export async function GET() {
       createdAt: user.createdAt
     };
 
-    console.log('✅ Profile API - Returning trainer:', profileData.trainer?.name);
     return NextResponse.json(profileData);
     
   } catch (error) {

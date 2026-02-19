@@ -44,7 +44,7 @@ If you want to connect directly using your database URL:
 
 ### Connection String:
 ```
-postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:5432/postgres
+postgresql://postgres:[REDACTED]@db.[REDACTED].supabase.co:5432/postgres
 ```
 
 ### In the extension:
@@ -52,7 +52,7 @@ postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:
 - **Port:** 5432
 - **Database:** postgres
 - **Username:** postgres
-- **Password:** iE27&+nQ7VdHp8#
+- **Password:** [REDACTED]
 
 ---
 

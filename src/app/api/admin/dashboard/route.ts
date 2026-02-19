@@ -5,7 +5,6 @@ import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma
 
 export async function GET() {
   try {
-    console.log('🔍 Admin Dashboard - Fetching comprehensive stats');
     
     // Check database connection first
     const isConnected = await checkDatabaseConnection();
@@ -65,13 +64,8 @@ export async function GET() {
       ]);
     });
 
-    console.log(`✅ Admin dashboard data fetched successfully`);
-    console.log(`  - Total Users: ${totalUsers}`);
-    console.log(`  - Recent Users: ${recentUsers.length}`);
-    
     // Log user statuses for debugging
     recentUsers.forEach(user => {
-      console.log(`  - ${user.name}: isActive=${user.isActive}, role=${user.role}`);
     });
 
     const adminStats = {

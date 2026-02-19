@@ -55,7 +55,6 @@ export async function GET() {
 // POST - Create new invitation (trainer only)
 export async function POST(request: Request) {
   try {
-    console.log('🔍 Creating invitation - starting');
     
     const session = await getServerSession(authOptions);
     
@@ -67,13 +66,10 @@ export async function POST(request: Request) {
     }
 
     const trainerId = session.user.id;
-    console.log('🔑 Using trainer ID:', trainerId);
 
     const body = await request.json();
-    console.log('📨 Request body:', body);
     
     const validatedData = createInvitationSchema.parse(body);
-    console.log('✅ Validated data:', validatedData);
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -155,7 +151,6 @@ export async function POST(request: Request) {
     }
 
     // Don't automatically send email - trainer will manually send it
-    console.log('✅ Invitation created, email will be sent manually by trainer');
 
     return NextResponse.json({
       message: 'Invitation created successfully',

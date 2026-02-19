@@ -21,40 +21,29 @@ const SignInPage = () => {
     setError('');
 
     try {
-      console.log('🔐 Attempting signin with:', { email, password: '***' });
-      
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       });
 
-      console.log('🔍 SignIn result:', result);
-
       if (result?.error && result.error !== 'undefined') {
-        console.log('❌ SignIn error:', result.error);
         setError('Invalid credentials');
       } else if (result?.ok) {
-        console.log('✅ SignIn successful, getting session...');
         const session = await getSession();
-        console.log('👤 Session:', session);
-        
+
         if (session?.user?.role === 'ADMIN') {
-          console.log('🔄 Redirecting to admin dashboard');
           router.push('/admin');
         } else if (session?.user?.role === 'TRAINER') {
-          console.log('🔄 Redirecting to trainer dashboard');
           router.push('/trainer/dashboard');
         } else {
-          console.log('🔄 Redirecting to client dashboard');
           router.push('/client/dashboard');
         }
       } else {
-        console.log('⚠️ Unknown signin state:', result);
         setError('Something went wrong');
       }
     } catch (error) {
-      console.error('💥 SignIn exception:', error);
+      console.error('Sign-in error:', error);
       setError('Something went wrong');
     } finally {
       setLoading(false);

@@ -25,12 +25,10 @@ const createWorkoutSchema = z.object({
 // Get workout templates created by trainer
 export async function GET() {
   try {
-    console.log('🔍 Workout Templates API - GET request');
     
     // Get session to verify user is authenticated and get their user ID
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -43,7 +41,6 @@ export async function GET() {
     });
 
     if (!trainer) {
-      console.log('❌ Trainer not found');
       return NextResponse.json(
         { error: 'Trainer not found' },
         { status: 404 }
@@ -88,12 +85,10 @@ export async function GET() {
 // Create new workout template
 export async function POST(request: Request) {
   try {
-    console.log('🔍 Workout Templates POST API - Creating workout template');
     
     // Get session to verify user is authenticated and get their user ID
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -106,7 +101,6 @@ export async function POST(request: Request) {
     });
 
     if (!trainer) {
-      console.log('❌ Trainer not found');
       return NextResponse.json(
         { error: 'Trainer not found' },
         { status: 404 }
@@ -174,12 +168,10 @@ export async function POST(request: Request) {
 // Update workout template
 export async function PUT(request: Request) {
   try {
-    console.log('🔍 Workout Templates PUT API - Updating workout template');
     
     // Get session to verify user is authenticated and get their user ID
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -192,7 +184,6 @@ export async function PUT(request: Request) {
     });
 
     if (!trainer) {
-      console.log('❌ Trainer not found');
       return NextResponse.json(
         { error: 'Trainer not found' },
         { status: 404 }
@@ -281,12 +272,10 @@ export async function PUT(request: Request) {
 // Delete workout template
 export async function DELETE(request: Request) {
   try {
-    console.log('🔍 Workout Templates DELETE API - Deleting workout template');
     
     // Get session to verify user is authenticated and get their user ID
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -299,7 +288,6 @@ export async function DELETE(request: Request) {
     });
 
     if (!trainer) {
-      console.log('❌ Trainer not found');
       return NextResponse.json(
         { error: 'Trainer not found' },
         { status: 404 }

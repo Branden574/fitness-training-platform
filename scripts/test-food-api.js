@@ -1,78 +1,72 @@
-const { PrismaClient } = require('@prisma/client');
+const http = require('http');
 
-const prisma = new PrismaClient();
+// Test the food entries API with our debugging
+const data = JSON.stringify({
+  foodName: "Test Food",
+  quantity: "100",
+  unit: "grams",
+  calories: "150",
+  protein: "10",
+  carbs: "20",
+  fat: "5",
+  mealType: "BREAKFAST",
+  date: "2025-09-22",
+  notes: "Test entry for debugging"
+});
 
-async function testFoodEntriesAPI() {
-  try {
-    // Get the client
-    const client = await prisma.user.findFirst({
-      where: { role: 'CLIENT' }
-    });
-
-    if (!client) {
-      console.log('No client found');
-      return;
-    }
-
-    console.log('Testing food entries for client:', client.name);
-
-    // Test the basic query that the API would use
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Get food entries for today
-    const entries = await prisma.foodEntry.findMany({
-      where: {
-        userId: client.id,
-        date: {
-          gte: today,
-          lt: tomorrow
-        }
-      },
-      orderBy: {
-        date: 'asc'
-      }
-    });
-
-    console.log(`Found ${entries.length} food entries for today`);
-    
-    entries.forEach(entry => {
-      console.log(`- ${entry.foodName}: ${entry.calories} cal, ${entry.protein}g protein`);
-    });
-
-    // Calculate daily totals
-    const totals = await prisma.foodEntry.aggregate({
-      where: {
-        userId: client.id,
-        date: {
-          gte: today,
-          lt: tomorrow
-        }
-      },
-      _sum: {
-        calories: true,
-        protein: true,
-        carbs: true,
-        fat: true
-      }
-    });
-
-    console.log('Daily totals:', {
-      calories: totals._sum.calories || 0,
-      protein: totals._sum.protein || 0,
-      carbs: totals._sum.carbs || 0,
-      fat: totals._sum.fat || 0
-    });
-
-    console.log('✅ Food entries API test successful!');
-
-  } catch (error) {
-    console.error('Error testing food entries API:', error);
-  } finally {
-    await prisma.$disconnect();
+// First create a food entry
+const postOptions = {
+  hostname: 'localhost',
+  port: 3000,
+  path: '/api/food-entries',
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Content-Length': data.length
   }
-}
+};
 
-testFoodEntriesAPI();
+console.log('Creating test food entry for 2025-09-22...');
+const req = http.request(postOptions, (res) => {
+  console.log(`POST status: ${res.statusCode}`);
+  
+  let body = '';
+  res.on('data', (chunk) => {
+    body += chunk;
+  });
+  
+  res.on('end', () => {
+    console.log('POST response:', body);
+    
+    // Now try to fetch it
+    console.log('\nFetching food entries for 2025-09-22...');
+    const getOptions = {
+      hostname: 'localhost',
+      port: 3000,
+      path: '/api/food-entries?date=2025-09-22',
+      method: 'GET'
+    };
+    
+    const getReq = http.request(getOptions, (getRes) => {
+      console.log(`GET status: ${getRes.statusCode}`);
+      
+      let getBody = '';
+      getRes.on('data', (chunk) => {
+        getBody += chunk;
+      });
+      
+      getRes.on('end', () => {
+        console.log('GET response:', getBody);
+      });
+    });
+    
+    getReq.end();
+  });
+});
+
+req.on('error', (e) => {
+  console.error(`Problem with request: ${e.message}`);
+});
+
+req.write(data);
+req.end();

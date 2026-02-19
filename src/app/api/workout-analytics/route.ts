@@ -5,12 +5,10 @@ import { authOptions } from '@/lib/auth';
 
 export async function GET() {
   try {
-    console.log('🔍 Workout Analytics API - GET request');
     
     // Get session to verify user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -23,14 +21,11 @@ export async function GET() {
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
-
-    console.log('📝 Fetching workout analytics for user:', user.name);
 
     // Get workout progress
     const workoutProgress = await prisma.workoutProgress.findMany({
@@ -42,8 +37,6 @@ export async function GET() {
         date: 'desc'
       }
     });
-
-    console.log(`✅ Found ${workoutProgress.length} workout progress records`);
 
     // Calculate strongest exercise
     const strongestExercise = workoutProgress
@@ -122,8 +115,6 @@ export async function GET() {
         where: { userId: user.id, completed: true }
       })
     };
-
-    console.log('📊 Workout analytics:', analytics);
 
     return NextResponse.json(analytics);
 

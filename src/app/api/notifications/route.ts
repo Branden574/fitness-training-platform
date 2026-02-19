@@ -6,11 +6,9 @@ import { prisma } from '@/lib/prisma';
 // GET /api/notifications - Fetch notifications for the authenticated user
 export async function GET(request: NextRequest) {
   try {
-    // console.log('🔔 Notifications API - Fetching notifications'); // Reduced logging for development
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -19,7 +17,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -27,7 +24,6 @@ export async function GET(request: NextRequest) {
     const since = searchParams.get('since');
     const sinceDate = since ? new Date(since) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     
-    // console.log('🔍 Fetching notifications since:', sinceDate); // Reduced logging
 
     // Fetch actual notifications from database
     const dbNotifications = await prisma.notification.findMany({
@@ -42,7 +38,6 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // console.log(`📋 Found ${dbNotifications.length} database notifications`); // Reduced logging
 
     // For trainers, also fetch notifications about appointment changes
     if (user.role === 'TRAINER') {
@@ -165,7 +160,6 @@ export async function GET(request: NextRequest) {
           skipDuplicates: true
         });
 
-        console.log(`📝 Created ${notificationRecords.length} notification tracking records`);
       }
 
       // Combine database notifications with appointment notifications
@@ -208,7 +202,6 @@ export async function GET(request: NextRequest) {
         return acc;
       }, [] as typeof allNotifications);
 
-      // console.log(`✅ Found ${uniqueNotifications.length} unique notifications (${dbNotifications.length} from DB, ${appointmentNotifications.length} from appointments)`);
       return NextResponse.json(uniqueNotifications);
     }
 
@@ -223,7 +216,6 @@ export async function GET(request: NextRequest) {
       read: notif.read || false
     }));
 
-    // console.log(`✅ Found ${clientNotifications.length} notifications for client`); // Reduced logging
     return NextResponse.json(clientNotifications);
 
   } catch (error) {
@@ -238,11 +230,9 @@ export async function GET(request: NextRequest) {
 // POST /api/notifications - Create a new notification (for system use)
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔔 Notifications API - Creating notification');
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -251,8 +241,6 @@ export async function POST(request: NextRequest) {
 
     // This endpoint could be used by the system to create persistent notifications
     // For now, we're handling notifications dynamically based on appointment changes
-    
-    console.log('📝 Notification creation requested:', { type, title, appointmentId });
     
     // Return success - in a full implementation, you might store notifications in the database
     return NextResponse.json({ success: true });
@@ -269,40 +257,29 @@ export async function POST(request: NextRequest) {
 // DELETE /api/notifications - Clear all notifications for the authenticated user
 export async function DELETE(_request: NextRequest) {
   try {
-    console.log('🗑️ Notifications API - Clearing all notifications');
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    console.log('🔍 Session found for user:', session.user.email);
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    console.log('👤 User found:', user.email, 'Role:', user.role);
-
     // Delete all database notifications for this user
-    console.log('🗑️ Deleting database notifications...');
     const deleteResult = await prisma.notification.deleteMany({
       where: {
         userId: user.id
       }
     });
 
-    console.log(`✅ Deleted ${deleteResult.count} database notifications for user ${user.email}`);
-
     // For trainers, also dismiss all current appointment notifications
     if (user.role === 'TRAINER') {
-      console.log('👨‍🏫 User is trainer, handling appointment notifications...');
       
       // Get all recent appointment changes for this trainer
       const recentChanges = await prisma.appointment.findMany({
@@ -323,8 +300,6 @@ export async function DELETE(_request: NextRequest) {
         }
       });
 
-      console.log(`📅 Found ${recentChanges.length} recent appointment changes`);
-
       // Create dismissal records for all appointment notifications
       const dismissalRecords = recentChanges.map(appointment => ({
         userId: user.id,
@@ -336,15 +311,12 @@ export async function DELETE(_request: NextRequest) {
       }));
 
       if (dismissalRecords.length > 0) {
-        console.log(`📝 Creating ${dismissalRecords.length} dismissal records...`);
         await prisma.notification.createMany({
           data: dismissalRecords
         });
-        console.log(`✅ Created ${dismissalRecords.length} dismissal records for appointment notifications`);
       }
     }
     
-    console.log('✅ Clear notifications operation completed successfully');
     return NextResponse.json({ 
       success: true,
       deletedCount: deleteResult.count,

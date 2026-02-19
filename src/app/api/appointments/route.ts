@@ -6,7 +6,6 @@ import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma
 // GET /api/appointments - Fetch appointments for trainer/client
 export async function GET(request: NextRequest) {
   try {
-    console.log('📅 Appointments API - Fetching appointments');
     
     // Check database connection first
     const isConnected = await checkDatabaseConnection();
@@ -20,7 +19,6 @@ export async function GET(request: NextRequest) {
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -32,7 +30,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -90,7 +87,6 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    console.log(`✅ Found ${appointments.length} appointments for ${user.role} ${user.name}`);
     return NextResponse.json(appointments);
 
   } catch (error) {
@@ -114,11 +110,9 @@ export async function GET(request: NextRequest) {
 // POST /api/appointments - Create new appointment (client books)
 export async function POST(request: NextRequest) {
   try {
-    console.log('📅 Appointments API - Creating appointment');
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -127,7 +121,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -230,7 +223,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('✅ Appointment created:', appointment.id);
     return NextResponse.json(appointment, { status: 201 });
 
   } catch (error) {
@@ -245,19 +237,10 @@ export async function POST(request: NextRequest) {
 // PATCH /api/appointments - Update appointment status (trainer approval/rejection)
 export async function PATCH(request: NextRequest) {
   try {
-    console.log('📅 Appointments API - Updating appointment');
-    console.log('🔍 Request headers:', Object.fromEntries(request.headers.entries()));
     
     const session = await getServerSession(authOptions);
-    console.log('🔍 Session check:', { 
-      hasSession: !!session, 
-      userEmail: session?.user?.email,
-      userId: session?.user?.id,
-      sessionObject: session 
-    });
-    
+
     if (!session?.user?.email) {
-      console.log('❌ No session found - Authentication required');
       return NextResponse.json({ error: 'Unauthorized - Please log in' }, { status: 401 });
     }
 
@@ -265,34 +248,19 @@ export async function PATCH(request: NextRequest) {
       where: { email: session.user.email }
     });
 
-    console.log('👤 User lookup:', { 
-      found: !!user, 
-      email: user?.email, 
-      role: user?.role,
-      databaseId: user?.id,
-      sessionUserId: session.user.id,
-      sessionUserEmail: session.user.email,
-      idsMatch: session.user.id === user?.id
-    });
-
     if (!user) {
-      console.log('❌ User not found in database');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // CRITICAL FIX: Use the database user ID instead of session ID for consistency
     const actualUserId = user.id;
-    console.log('🔧 Using database user ID for authorization:', actualUserId);
 
     const body = await request.json();
     const { appointmentId, status, notes, cancelReason, action, newDate, newTime, reason } = body;
 
-    console.log('📋 Request data:', { appointmentId, status, action, newDate, newTime, reason, notes, cancelReason });
-
     // Handle reschedule requests
     if (action === 'RESCHEDULE_REQUEST') {
       if (!appointmentId || !newDate || !newTime) {
-        console.log('❌ Missing required fields for reschedule');
         return NextResponse.json(
           { error: 'Missing required fields for reschedule' },
           { status: 400 }
@@ -305,7 +273,6 @@ export async function PATCH(request: NextRequest) {
       });
 
       if (!appointment) {
-        console.log('❌ Appointment not found');
         return NextResponse.json(
           { error: 'Appointment not found' },
           { status: 404 }
@@ -314,7 +281,6 @@ export async function PATCH(request: NextRequest) {
 
       // Only client can request reschedule
       if (appointment.clientId !== actualUserId) {
-        console.log('❌ Authorization failed - Only client can request reschedule');
         return NextResponse.json(
           { error: 'Only client can request reschedule' },
           { status: 403 }
@@ -354,14 +320,12 @@ export async function PATCH(request: NextRequest) {
         }
       });
 
-      console.log('✅ Reschedule request processed:', updatedAppointment.id);
       return NextResponse.json(updatedAppointment);
     }
 
     // Handle cancel requests
     if (action === 'CANCEL_REQUEST') {
       if (!appointmentId) {
-        console.log('❌ Missing required fields for cancel');
         return NextResponse.json(
           { error: 'Missing required fields for cancel' },
           { status: 400 }
@@ -374,7 +338,6 @@ export async function PATCH(request: NextRequest) {
       });
 
       if (!appointment) {
-        console.log('❌ Appointment not found');
         return NextResponse.json(
           { error: 'Appointment not found' },
           { status: 404 }
@@ -383,7 +346,6 @@ export async function PATCH(request: NextRequest) {
 
       // Both client and trainer can cancel
       if (appointment.clientId !== actualUserId && appointment.trainerId !== actualUserId) {
-        console.log('❌ Authorization failed - Cannot cancel this appointment');
         return NextResponse.json(
           { error: 'Unauthorized to cancel this appointment' },
           { status: 403 }
@@ -416,13 +378,11 @@ export async function PATCH(request: NextRequest) {
         }
       });
 
-      console.log('✅ Appointment cancelled:', updatedAppointment.id);
       return NextResponse.json(updatedAppointment);
     }
 
     // Standard status updates (approve/reject/cancel)
     if (!appointmentId || !status) {
-      console.log('❌ Missing required fields');
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -434,15 +394,7 @@ export async function PATCH(request: NextRequest) {
       where: { id: appointmentId }
     });
 
-    console.log('📅 Appointment lookup:', { 
-      found: !!appointment, 
-      appointmentTrainerId: appointment?.trainerId,
-      actualUserId: actualUserId,
-      isMatch: appointment?.trainerId === actualUserId 
-    });
-
     if (!appointment) {
-      console.log('❌ Appointment not found');
       return NextResponse.json(
         { error: 'Appointment not found' },
         { status: 404 }
@@ -451,42 +403,21 @@ export async function PATCH(request: NextRequest) {
 
     // Check authorization (trainer can approve/reject, both can cancel)
     if (status === 'APPROVED' || status === 'REJECTED') {
-      console.log('🔍 Authorization check for approval/rejection:');
-      console.log('  Appointment trainer ID:', appointment.trainerId);
-      console.log('  Database user ID:', actualUserId);
-      console.log('  User role:', user.role);
-      console.log('  User email:', user.email);
-      console.log('  IDs match:', appointment.trainerId === actualUserId);
-      console.log('  Is trainer role:', user.role === 'TRAINER');
       
       // TEMPORARY COMPLETE BYPASS FOR BRENT - DEBUGGING ONLY
       if (user.email === 'Martinezfitness559@gmail.com') {
-        console.log('🚨 TEMPORARY BYPASS: Allowing Brent Martinez complete access for debugging');
       } else {
         // More detailed logging for debugging
-        console.log('  Appointment trainer ID type:', typeof appointment.trainerId);
-        console.log('  User ID type:', typeof actualUserId);
-        console.log('  Raw appointment trainer ID:', JSON.stringify(appointment.trainerId));
-        console.log('  Raw user ID:', JSON.stringify(actualUserId));
         
         // COMPREHENSIVE AUTHORIZATION CHECK
         const isBrentMartinez = user.email === 'Martinezfitness559@gmail.com';
         const hasTrainerRole = user.role === 'TRAINER';
         const isAssignedTrainer = appointment.trainerId === actualUserId;
         
-        console.log('  Is Brent Martinez:', isBrentMartinez);
-        console.log('  Has trainer role:', hasTrainerRole);
-        console.log('  Is assigned trainer:', isAssignedTrainer);
-        
         // Authorization: Must be trainer AND either assigned to appointment OR be main trainer
         const isAuthorized = hasTrainerRole && (isAssignedTrainer || isBrentMartinez);
         
-        console.log('  FINAL AUTHORIZATION RESULT:', isAuthorized);
-        
         if (!isAuthorized) {
-          console.log('❌ Authorization failed');
-          console.log('  Expected: TRAINER role + (assigned to appointment OR main trainer)');
-          console.log('  Actual: role=' + user.role + ', assigned=' + isAssignedTrainer + ', isBrent=' + isBrentMartinez);
           return NextResponse.json(
             { error: 'Only assigned trainer can approve/reject appointments' },
             { status: 403 }
@@ -494,10 +425,8 @@ export async function PATCH(request: NextRequest) {
         }
       }
       
-      console.log('✅ Authorization successful - proceeding with approval/rejection');
     } else if (status === 'CANCELLED') {
       if (appointment.trainerId !== actualUserId && appointment.clientId !== actualUserId) {
-        console.log('❌ Authorization failed - Cannot cancel this appointment');
         return NextResponse.json(
           { error: 'Unauthorized to cancel this appointment' },
           { status: 403 }
@@ -549,14 +478,12 @@ export async function PATCH(request: NextRequest) {
           }
         });
         
-        console.log(`✅ Cancellation notification created for user: ${notifyUserId}`);
       } catch (notificationError) {
         console.error('❌ Error creating cancellation notification:', notificationError);
         // Don't fail the whole request if notification fails
       }
     }
 
-    console.log('✅ Appointment updated:', updatedAppointment.id);
     return NextResponse.json(updatedAppointment);
 
   } catch (error) {

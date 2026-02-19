@@ -19,14 +19,14 @@
    Port: 5432
    Database: postgres
    Username: postgres
-   Password: iE27&+nQ7VdHp8#
+   Password: [REDACTED]
    ```
 
 ### 3. Alternative: Use Database URL
 
 You can also connect using the full connection string:
 ```
-postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:5432/postgres
+postgresql://postgres:[REDACTED]@db.[REDACTED].supabase.co:5432/postgres
 ```
 
 ## 🔍 Viewing Your Data
@@ -89,8 +89,8 @@ LIMIT 10;
 
 ### Login Credentials
 - **URL**: http://localhost:3000/admin
-- **Email**: admin@fitness-platform.com
-- **Password**: admin123!
+- **Email**: [REDACTED_EMAIL]
+- **Password**: [REDACTED]
 
 ### Admin Features Available
 - ✅ Platform statistics dashboard
@@ -106,7 +106,7 @@ LIMIT 10;
 npm run dev
 
 # Connect to database via CLI (optional)
-psql "postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:5432/postgres"
+psql "postgresql://postgres:[REDACTED]@db.[REDACTED].supabase.co:5432/postgres"
 
 # Generate Prisma client (if needed)
 npx prisma generate

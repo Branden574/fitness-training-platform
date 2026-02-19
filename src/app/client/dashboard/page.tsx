@@ -297,7 +297,6 @@ const ClientDashboard = () => {
   const updateSetting = (key: string, value: string | boolean) => {
     setUserSettings(prev => ({ ...prev, [key]: value }));
     // Here you could also make an API call to save settings
-    console.log(`Updated ${key} to:`, value);
   };
 
   const resetSettings = () => {
@@ -316,19 +315,10 @@ const ClientDashboard = () => {
 
   const fetchTrainerInfo = async () => {
     try {
-      console.log("🔍 Client - Fetching trainer info...");
       const response = await fetch("/api/profile");
       if (response.ok) {
         const profileData = await response.json();
-        console.log("✅ Client - Profile data received:", profileData);
-        console.log("🎯 Client - Trainer data:", profileData.trainer);
         setTrainerInfo(profileData.trainer);
-      } else {
-        console.log(
-          "❌ Client - Profile API error:",
-          response.status,
-          response.statusText,
-        );
       }
     } catch (error) {
       console.error("❌ Client - Error fetching trainer info:", error);
@@ -374,7 +364,6 @@ const ClientDashboard = () => {
 
       if (response.ok) {
         const newEntry = await response.json();
-        console.log("✅ Progress logged successfully:", newEntry);
 
         // Reset form
         setProgressFormData({
@@ -451,7 +440,6 @@ const ClientDashboard = () => {
 
       if (response.ok) {
         const newEntry = await response.json();
-        console.log("✅ Progress logged successfully:", newEntry);
 
         // Close modal
         setShowLogProgressModal(false);
@@ -556,15 +544,9 @@ const ClientDashboard = () => {
   const fetchFoodEntries = useCallback(
     async (date: string = selectedDate) => {
       try {
-        console.log("🍎 Client dashboard fetching food entries for date:", date);
-        console.log("🍎 Current selectedDate state:", selectedDate);
-        console.log("🍎 Session status:", session?.user?.email);
         const response = await fetch(`/api/food-entries?date=${date}`);
         if (response.ok) {
           const data = await response.json();
-          console.log("📊 Client received food entries response:", data);
-          console.log("📊 Setting food entries:", data.entries || []);
-          console.log("📊 Daily totals from API:", data.dailyTotals);
           setFoodEntries(data.entries || []);
           // Don't set dailyTotals here - we calculate them from entries in useMemo
         } else {
@@ -579,24 +561,12 @@ const ClientDashboard = () => {
 
   // Calculate selected date's totals directly from food entries
   const selectedDateTotals = useMemo(() => {
-    console.log("🧮 Calculating totals for selectedDate:", selectedDate);
-    console.log("🧮 Available food entries:", foodEntries.length);
-    console.log("🧮 Food entries details:", foodEntries.map(e => ({ 
-      name: e.foodName, 
-      date: e.date, 
-      dateString: new Date(e.date).toISOString().split("T")[0],
-      calories: e.calories 
-    })));
-    
     // Filter entries for the selected date
     const selectedDateEntries = foodEntries.filter(entry => {
       const entryDateString = new Date(entry.date).toISOString().split("T")[0];
       const matches = entryDateString === selectedDate;
-      console.log(`🧮 Entry ${entry.foodName}: ${entryDateString} === ${selectedDate} ? ${matches}`);
       return matches;
     });
-    
-    console.log("🧮 Filtered entries for selected date:", selectedDateEntries.length);
     
     const totals = selectedDateEntries.reduce((totals, entry) => ({
       calories: totals.calories + entry.calories,
@@ -621,14 +591,12 @@ const ClientDashboard = () => {
 
   useEffect(() => {
     if (session?.user) {
-      console.log("🚀 Client dashboard initializing with session:", session.user.email);
       fetchWorkouts();
       fetchWorkoutAnalytics();
       fetchProgress();
       fetchNutritionPlans();
       fetchTrainerInfo();
       fetchAppointments();
-      console.log("📞 About to call fetchFoodEntries for initial load");
       fetchFoodEntries();
       setLoading(false);
     }
@@ -637,15 +605,10 @@ const ClientDashboard = () => {
   // Update food entries when selected date changes
   useEffect(() => {
     if (session?.user) {
-      console.log("� Client dashboard date changed to:", selectedDate);
-      console.log("👤 Session user:", session.user.email);
       setFoodEntries([]); // Clear entries immediately when date changes
-      console.log("📞 Calling fetchFoodEntries for date change");
       fetchFoodEntries(selectedDate);
     }
   }, [selectedDate, session, fetchFoodEntries]);
-
-
 
   // Real-time updates for schedule tab
   useEffect(() => {
@@ -683,7 +646,6 @@ const ClientDashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setWorkoutAnalytics(data);
-        console.log("✅ Workout analytics loaded:", data);
       }
     } catch (error) {
       console.error("Failed to fetch workout analytics:", error);
@@ -692,11 +654,9 @@ const ClientDashboard = () => {
 
   const fetchProgress = async () => {
     try {
-      console.log("📊 Fetching progress data...");
       const response = await fetch("/api/progress?limit=30");
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Progress data loaded:", data);
         setProgressData(data);
       } else {
         console.error("❌ Failed to fetch progress data");
@@ -742,15 +702,11 @@ const ClientDashboard = () => {
         notes: foodEntryForm.notes || undefined,
       };
 
-      console.log("🍎 Submitting food entry:", entryData);
-
       const response = await fetch("/api/food-entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(entryData),
       });
-
-      console.log("📡 Response status:", response.status);
 
       if (response.ok) {
         // Reset form
@@ -1521,7 +1477,6 @@ const ClientDashboard = () => {
                       Food Entries -{" "}
                       <span className="text-black">
                         {(() => {
-                          console.log("📅 Header selectedDate:", selectedDate);
                           // Format date without timezone conversion
                           const [year, month, day] = selectedDate.split('-');
                           return `${month}/${day}/${year}`;
@@ -1530,15 +1485,6 @@ const ClientDashboard = () => {
                     </h3>
 
                     {(() => {
-                      // Filter entries for the selected date
-                      console.log("🔍 Client UI filtering - selectedDate:", selectedDate);
-                      console.log("🔍 Client UI filtering - foodEntries length:", foodEntries.length);
-                      console.log("🔍 Client UI filtering - foodEntries:", foodEntries.map(e => ({ 
-                        name: e.foodName, 
-                        date: e.date, 
-                        dateISO: new Date(e.date).toISOString().split("T")[0] 
-                      })));
-                      
                       const selectedDateEntries = foodEntries.filter((entry) => {
                         // Parse the selected date to get the date range in local timezone
                         const [year, month, day] = selectedDate.split('-').map(Number);
@@ -1549,11 +1495,8 @@ const ClientDashboard = () => {
                         const entryDate = new Date(entry.date);
                         const matches = entryDate >= startOfDay && entryDate < endOfDay;
                         
-                        console.log(`🔍 Entry ${entry.foodName}: ${entryDate.toISOString()} in range ${startOfDay.toISOString()} to ${endOfDay.toISOString()} ? ${matches}`);
                         return matches;
                       });
-                      
-                      console.log("🔍 Client UI filtering - selectedDateEntries length:", selectedDateEntries.length);
                       
                       return selectedDateEntries.length === 0 ? (
                         <div className="bg-gray-50 rounded-lg p-8 text-center">
@@ -3290,12 +3233,6 @@ const ClientDashboard = () => {
                         // Parse date in local timezone to avoid UTC conversion issues
                         const [year, month, day] = workoutLogDate.split('-').map(Number);
                         const localDate = new Date(year, month - 1, day);
-                        
-                        console.log('🏋️ Workout logging debug:');
-                        console.log('  Selected date:', workoutLogDate);
-                        console.log('  Local date object:', localDate);
-                        console.log('  ISO string:', localDate.toISOString());
-                        console.log('  Will display as:', localDate.toLocaleDateString());
                         
                         const sessionResponse = await fetch("/api/workout-sessions", {
                           method: "POST",

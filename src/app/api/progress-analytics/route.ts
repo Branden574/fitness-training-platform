@@ -121,8 +121,6 @@ export async function GET(request: Request) {
       }
     });
 
-    console.log(`Found ${workoutProgress.length} workout progress entries and ${progressEntries.length} daily progress entries`);    console.log(`📊 Found ${workoutProgress.length} workout progress entries for analytics`);
-
     // Process data for analytics
     const exerciseProgress: ExerciseProgress[] = workoutProgress.map(progress => {
       const volume = (progress.weight || 0) * (progress.sets || 0) * (progress.reps || 0);
@@ -300,7 +298,6 @@ export async function GET(request: Request) {
       overallMetrics
     };
 
-    console.log(`✅ Generated analytics with ${monthlyStats.length} months of data`);
     return NextResponse.json(analytics);
 
   } catch (error) {

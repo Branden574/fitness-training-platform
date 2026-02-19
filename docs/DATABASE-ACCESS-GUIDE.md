@@ -34,12 +34,12 @@ Host: db.zqgaogztrxzsevimqelr.supabase.co
 Port: 5432
 Database: postgres
 Username: postgres
-Password: iE27&+nQ7VdHp8#
+Password: [REDACTED]
 ```
 
 **Full Connection String:**
 ```
-postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:5432/postgres
+postgresql://postgres:[REDACTED]@db.[REDACTED].supabase.co:5432/postgres
 ```
 
 ---
@@ -65,7 +65,7 @@ postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:
 
 If you have PostgreSQL installed locally:
 ```bash
-psql "postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:5432/postgres"
+psql "postgresql://postgres:[REDACTED]@db.[REDACTED].supabase.co:5432/postgres"
 ```
 
 ---
@@ -79,7 +79,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: "postgresql://postgres:iE27%26%2BnQ7VdHp8%23@db.zqgaogztrxzsevimqelr.supabase.co:5432/postgres"
+      url: "postgresql://postgres:[REDACTED]@db.[REDACTED].supabase.co:5432/postgres"
     }
   }
 });

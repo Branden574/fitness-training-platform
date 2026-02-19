@@ -10,11 +10,9 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    console.log('🔔 Notifications API - Marking notification as read:', id);
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -23,7 +21,6 @@ export async function PATCH(
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -33,7 +30,6 @@ export async function PATCH(
     // Check if this is an appointment notification (ID starts with "appointment-")
     if (id.startsWith('appointment-')) {
       const appointmentId = id.replace('appointment-', '');
-      console.log('📋 Handling appointment notification for appointment:', appointmentId);
       
       // For appointment notifications, we mark the appointment as "acknowledged" 
       // by updating the appointment's updatedAt field to indicate it's been seen
@@ -50,7 +46,6 @@ export async function PATCH(
         });
 
         if (!appointment) {
-          console.log('❌ Appointment not found or access denied');
           return NextResponse.json(
             { error: 'Appointment notification not found or access denied' },
             { status: 404 }
@@ -87,8 +82,6 @@ export async function PATCH(
           });
         }
 
-        console.log('✅ Appointment notification marked as read:', id);
-        
         return NextResponse.json({ 
           success: true, 
           read: read,
@@ -115,8 +108,6 @@ export async function PATCH(
       }
     });
 
-    console.log('✅ Notification marked as read in database:', id);
-    
     return NextResponse.json({ 
       success: true, 
       read: updatedNotification.read,
@@ -148,11 +139,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    console.log('🗑️ Notifications API - Deleting notification:', id);
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -161,14 +150,12 @@ export async function DELETE(
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Check if this is an appointment notification (ID starts with "appointment-")
     if (id.startsWith('appointment-')) {
       const appointmentId = id.replace('appointment-', '');
-      console.log('📋 Handling appointment notification deletion for appointment:', appointmentId);
       
       try {
         const appointment = await prisma.appointment.findFirst({
@@ -182,7 +169,6 @@ export async function DELETE(
         });
 
         if (!appointment) {
-          console.log('❌ Appointment not found or access denied');
           return NextResponse.json(
             { error: 'Appointment notification not found or access denied' },
             { status: 404 }
@@ -201,8 +187,6 @@ export async function DELETE(
           }
         });
 
-        console.log('✅ Appointment notification dismissed:', id);
-        
         return NextResponse.json({ 
           success: true,
           message: 'Appointment notification dismissed successfully'
@@ -225,8 +209,6 @@ export async function DELETE(
       }
     });
 
-    console.log('✅ Notification deleted from database:', id);
-    
     return NextResponse.json({ 
       success: true,
       message: 'Notification deleted successfully'

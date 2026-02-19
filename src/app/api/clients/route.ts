@@ -19,7 +19,6 @@ const addClientSchema = z.object({
 // Get all clients for a trainer
 export async function GET() {
   try {
-    console.log('🔍 Clients API - Getting clients for authenticated trainer');
     
     // Check database connection first
     const isConnected = await checkDatabaseConnection();
@@ -34,7 +33,6 @@ export async function GET() {
     // Get session to verify user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -49,17 +47,13 @@ export async function GET() {
     });
     
     if (!trainer) {
-      console.log('❌ Trainer not found for email:', session.user.email);
       return NextResponse.json(
         { message: 'Trainer not found' },
         { status: 404 }
       );
     }
     
-    console.log('✅ Found trainer:', trainer.id, 'fetching clients...');
-
     const whereClause = { trainerId: trainer.id, role: 'CLIENT' as const };
-    console.log('🔍 Database query where clause:', whereClause);
 
     // Get all clients assigned to this trainer with retry
     const clients = await withDatabaseRetry(async () => {
@@ -113,7 +107,6 @@ export async function GET() {
       }
     }));
 
-    console.log(`✅ Found ${transformedClients.length} clients for trainer ${trainer.name}`);
     return NextResponse.json(transformedClients);
     
   } catch (error) {
@@ -138,7 +131,6 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     // TEMPORARY: Skip authentication for debugging
-    console.log('🔍 Clients POST API - Skipping authentication temporarily');
     
     const body = await request.json();
     const { clientId, workoutId, notes } = body;
@@ -205,7 +197,6 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     // TEMPORARY: Skip authentication for debugging
-    console.log('🔍 Clients PUT API - Skipping authentication temporarily');
     
     // Use the correct business trainer account
     const trainer = await prisma.user.findUnique({
@@ -315,7 +306,6 @@ export async function PUT(request: Request) {
 export async function PATCH(request: Request) {
   try {
     // TEMPORARY: Skip authentication for debugging
-    console.log('🔍 Clients PATCH API - Skipping authentication temporarily');
     
     // Use Brent Martinez's trainer email that has the client relationship
     const trainer = await prisma.user.findUnique({
@@ -389,7 +379,6 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     // TEMPORARY: Skip authentication for debugging
-    console.log('🔍 Clients DELETE API - Skipping authentication temporarily');
     
     // Use Brent Martinez's trainer email that has the client relationship
     const trainer = await prisma.user.findUnique({

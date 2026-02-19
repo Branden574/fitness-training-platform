@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fitness Training Platform
+
+A full-stack web application for personal trainers to manage clients, schedule appointments, track workouts, and monitor nutrition and progress — all in one place.
+
+## Features
+
+- **Trainer Dashboard** — Manage clients, view appointments, assign workouts and meal plans
+- **Client Dashboard** — Log daily nutrition, track progress, view assigned workouts
+- **Appointment Booking** — Clients request sessions; trainers approve or reject
+- **Workout Management** — Create templates, assign sessions, track exercise progress
+- **Nutrition Tracking** — Log food entries, track macros, manage meal plans
+- **Progress Analytics** — Body measurements, weight trends, goal tracking
+- **Notifications** — Real-time alerts for appointments, messages, and updates
+- **Admin Panel** — User management, platform oversight
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 15 (App Router) |
+| Language | TypeScript |
+| Database | PostgreSQL (via Prisma ORM) |
+| Auth | NextAuth.js |
+| Hosting | Railway |
+| DNS / CDN | Cloudflare |
+| Email | Resend |
+| Styling | Tailwind CSS |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database (local or Railway)
+
+### Local Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your DATABASE_URL, NEXTAUTH_SECRET, etc.
+
+# Generate Prisma client and run migrations
+npx prisma generate
+npx prisma migrate deploy
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `NEXTAUTH_SECRET` | Random secret for NextAuth session signing |
+| `NEXTAUTH_URL` | Full URL of the app (e.g. `https://martinezfitness559.com`) |
+| `RESEND_API_KEY` | API key for Resend email service |
 
-## Learn More
+See `.env.example` for a full list.
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+fitness-training-platform/
+├── src/
+│   ├── app/              # Next.js App Router pages and API routes
+│   │   ├── api/          # API endpoints
+│   │   ├── trainer/      # Trainer-facing pages
+│   │   ├── client/       # Client-facing pages
+│   │   ├── admin/        # Admin panel
+│   │   └── auth/         # Authentication pages
+│   ├── components/       # Shared React components
+│   └── lib/              # Utilities (auth, prisma, email, etc.)
+├── prisma/               # Database schema and migrations
+├── scripts/              # Utility and maintenance scripts
+├── docs/                 # Project documentation
+└── public/               # Static assets
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+The app is deployed on [Railway](https://railway.app) with automatic deployments from the `main` branch.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Production URL:** [martinezfitness559.com](https://martinezfitness559.com)
+- **Health Check:** `/api/health`
+- **Database:** Railway PostgreSQL
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [docs/DEPLOYMENT_SETUP.md](docs/DEPLOYMENT_SETUP.md) for detailed deployment instructions.
+
+## Scripts
+
+Utility and maintenance scripts are in the `/scripts` directory. Most require a valid `DATABASE_URL` environment variable.
+
+```bash
+# Seed the database with initial data
+npx tsx prisma/seed.ts
+```
+
+## Documentation
+
+Extended documentation is in the `/docs` directory:
+
+- [Deployment Setup](docs/DEPLOYMENT_SETUP.md)
+- [Railway Migration](docs/RAILWAY_MIGRATION.md)
+- [Security Overview](docs/SECURITY.md)
+- [Admin Dashboard Guide](docs/ADMIN_DASHBOARD_GUIDE.md)
+- [Daily Progress Guide](docs/DAILY_PROGRESS_GUIDE.md)

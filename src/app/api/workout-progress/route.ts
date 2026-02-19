@@ -34,19 +34,12 @@ export async function POST(request: NextRequest) {
         // Handle YYYY-MM-DD format
         const [year, month, day] = date.split('-').map(Number);
         workoutDate = new Date(year, month - 1, day);
-        console.log('📅 Workout Progress API - Date parsing debug:');
-        console.log('  Received date:', date);
-        console.log('  Parsed as local date:', workoutDate);
-        console.log('  ISO string:', workoutDate.toISOString());
-        console.log('  Will display as:', workoutDate.toLocaleDateString());
       } else {
         // Handle ISO string or Date object
         workoutDate = new Date(date);
-        console.log('📅 Workout Progress API - ISO date handling:', workoutDate);
       }
     } else {
       workoutDate = workoutSession.startTime || new Date();
-      console.log('📅 Workout Progress API - Using session date:', workoutDate);
     }
 
     // Save progress for each exercise

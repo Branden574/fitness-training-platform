@@ -19,7 +19,6 @@ const progressSchema = z.object({
 // Get progress entries for the current user or trainer's clients
 export async function GET(request: NextRequest) {
   try {
-    console.log('📊 Progress API - Fetching progress entries');
     
     const session = await getServerSession(authOptions);
     
@@ -100,13 +99,9 @@ export async function GET(request: NextRequest) {
       take: limit
     });
 
-    console.log(`✅ Found ${progressEntries.length} progress entries`);
-    
     // Debug: Log the actual dates returned from database
     if (progressEntries.length > 0) {
-      console.log('📅 Debug - Raw dates from database:');
       progressEntries.forEach((entry, index) => {
-        console.log(`  ${index + 1}. ID: ${entry.id}, Date: ${entry.date.toISOString()}, Weight: ${entry.weight || 'N/A'}`);
       });
     }
     
@@ -259,7 +254,6 @@ function calculateAverage(values: (number | null)[]): number | null {
 // Create a new progress entry
 export async function POST(request: NextRequest) {
   try {
-    console.log('📊 Progress API - Creating progress entry');
     
     const session = await getServerSession(authOptions);
     
@@ -289,17 +283,11 @@ export async function POST(request: NextRequest) {
         // Handle YYYY-MM-DD format in local timezone
         const [year, month, day] = validatedData.date.split('-').map(Number);
         entryDate = new Date(year, month - 1, day);
-        console.log('📅 Progress API - Date parsing debug:');
-        console.log('  Received date:', validatedData.date);
-        console.log('  Parsed as local date:', entryDate);
-        console.log('  Local date string:', entryDate.toLocaleDateString());
       } else {
         entryDate = new Date(validatedData.date);
-        console.log('📅 Progress API - Using Date object:', entryDate);
       }
     } else {
       entryDate = new Date();
-      console.log('📅 Progress API - Using current date:', entryDate);
     }
     
     // Get the date in YYYY-MM-DD format preserving the local timezone
@@ -313,16 +301,7 @@ export async function POST(request: NextRequest) {
     // Using noon (12:00) instead of midnight to prevent date boundary issues
     const normalizedDate = new Date(localDateString + 'T12:00:00.000Z');
     
-    console.log('📅 Progress API - Normalization debug:');
-    console.log('  Entry date object:', entryDate);
-    console.log('  Local date string:', localDateString);
-    console.log('  Normalized date:', normalizedDate);
-    console.log('  Normalized ISO:', normalizedDate.toISOString());
-
     // Check if entry already exists for this date
-    console.log('🔍 Progress API - Checking for existing entry:');
-    console.log('  User ID:', user.id);
-    console.log('  Looking for date:', normalizedDate.toISOString());
     
     const existingEntry = await prisma.progressEntry.findUnique({
       where: {
@@ -333,9 +312,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('  Found existing entry:', existingEntry ? 'YES' : 'NO');
     if (existingEntry) {
-      console.log('  Existing entry date:', existingEntry.date.toISOString());
     }
 
     if (existingEntry) {
@@ -372,7 +349,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('✅ Progress entry created:', progressEntry.id);
     return NextResponse.json(progressEntry, { status: 201 });
     
   } catch (error) {
@@ -398,7 +374,6 @@ export async function POST(request: NextRequest) {
 // Update existing progress entry
 export async function PATCH(request: NextRequest) {
   try {
-    console.log('📊 Progress API - Updating progress entry');
     
     const session = await getServerSession(authOptions);
     
@@ -438,13 +413,8 @@ export async function PATCH(request: NextRequest) {
         // Handle YYYY-MM-DD format in local timezone
         const [year, month, day] = date.split('-').map(Number);
         entryDate = new Date(year, month - 1, day);
-        console.log('📅 Progress API PATCH - Date parsing debug:');
-        console.log('  Received date:', date);
-        console.log('  Parsed as local date:', entryDate);
-        console.log('  Local date string:', entryDate.toLocaleDateString());
       } else {
         entryDate = new Date(date);
-        console.log('📅 Progress API PATCH - Using Date object:', entryDate);
       }
       // Get the date in YYYY-MM-DD format preserving the local timezone
       const year = entryDate.getFullYear();
@@ -507,7 +477,6 @@ export async function PATCH(request: NextRequest) {
       }
     });
 
-    console.log('✅ Progress entry updated:', updatedEntry.id);
     return NextResponse.json(updatedEntry);
     
   } catch (error) {

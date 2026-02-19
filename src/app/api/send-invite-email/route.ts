@@ -145,7 +145,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Invite email sent successfully:', data);
     return NextResponse.json(
       { success: true, data },
       { status: 200 }

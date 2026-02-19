@@ -5,7 +5,6 @@ import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Toggle User - Processing user status change');
     
     // Check database connection first
     const isConnected = await checkDatabaseConnection();
@@ -29,8 +28,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and isActive status are required' }, { status: 400 });
     }
 
-    console.log(`🎯 Updating user ${userId} to isActive: ${isActive}`);
-
     // Update the user's active status with retry
     const updatedUser = await withDatabaseRetry(async () => {
       return await prisma.user.update({
@@ -46,9 +43,6 @@ export async function POST(request: NextRequest) {
         }
       });
     });
-
-    console.log(`✅ User ${updatedUser.name} (${updatedUser.email}) status changed to: ${updatedUser.isActive ? 'Active' : 'Inactive'}`);
-    console.log(`Admin ${session.user.id} ${isActive ? 'activated' : 'deactivated'} user ${userId}`);
 
     return NextResponse.json({ 
       success: true, 

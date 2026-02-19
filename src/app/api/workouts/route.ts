@@ -5,12 +5,10 @@ import { authOptions } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
-    console.log('🔍 Workouts API - GET request');
     
     // Get session to verify user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -23,7 +21,6 @@ export async function GET(request: Request) {
     });
 
     if (!user) {
-      console.log('❌ User not found');
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -36,7 +33,6 @@ export async function GET(request: Request) {
 
     // Handle CLIENT requests - return their assigned workouts
     if (user.role === 'CLIENT') {
-      console.log('📝 Client requesting their assigned workouts');
       const workoutSessions = await prisma.workoutSession.findMany({
         where: {
           userId: user.id
@@ -59,13 +55,11 @@ export async function GET(request: Request) {
           startTime: 'desc'
         }
       });
-      console.log(`✅ Found ${workoutSessions.length} assigned workouts for client`);
       return NextResponse.json(workoutSessions);
     }
 
     // Handle TRAINER requests
     if (user.role !== 'TRAINER') {
-      console.log('❌ User is not a trainer or client');
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -142,12 +136,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    console.log('🔍 Workouts POST API - Assignment request');
     
     // Get session to verify user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      console.log('❌ No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -160,7 +152,6 @@ export async function POST(request: Request) {
     });
 
     if (!trainer) {
-      console.log('❌ Trainer not found');
       return NextResponse.json(
         { error: 'Trainer not found' },
         { status: 404 }
@@ -171,8 +162,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { workoutTemplateId, clientId, scheduledDate, notes } = body;
 
-    console.log('🔍 Assignment data:', { workoutTemplateId, clientId });
-
     const workoutTemplate = await prisma.workout.findFirst({
       where: {
         id: workoutTemplateId,
@@ -181,7 +170,6 @@ export async function POST(request: Request) {
     });
 
     if (!workoutTemplate) {
-      console.log('❌ Workout template not found');
       return NextResponse.json(
         { message: 'Workout template not found or not authorized' },
         { status: 404 }
@@ -196,7 +184,6 @@ export async function POST(request: Request) {
     });
 
     if (!client) {
-      console.log('❌ Client not found or not assigned to trainer');
       return NextResponse.json(
         { message: 'Client not found or not assigned to you' },
         { status: 404 }
@@ -238,7 +225,6 @@ export async function POST(request: Request) {
       }
     });
 
-    console.log('✅ Workout assigned successfully');
     return NextResponse.json(workoutSession, { status: 201 });
     
   } catch (error) {
