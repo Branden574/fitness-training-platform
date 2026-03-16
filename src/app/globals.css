@@ -1,36 +1,38 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #212529;
 }
 
 .dark {
   --background: #0f1117;
-  --foreground: #ededed;
+  --foreground: #e9ecef;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Global Dark Mode Overrides ─── */
-/* These apply dark theme colors to common patterns so we don't
-   need to add dark: variants to every class across all pages. */
-
-.dark .bg-gray-50 { background-color: #0f1117 !important; }
-.dark .bg-white { background-color: #1a1d27 !important; }
+/* ── Dark Mode Surface Overrides ── */
+.dark .bg-gray-50,
+.dark .bg-surface-50 { background-color: #0f1117 !important; }
+.dark .bg-white,
+.dark .bg-surface-0 { background-color: #1a1d27 !important; }
 .dark .bg-gray-100 { background-color: #1e2130 !important; }
 
 .dark .text-gray-900 { color: #f1f1f1 !important; }
@@ -49,11 +51,9 @@ body {
 .dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.3) !important; }
 .dark .shadow-lg { box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; }
 
-.dark .bg-gray-50.hover\:bg-gray-50:hover,
 .dark .hover\:bg-gray-50:hover { background-color: #252838 !important; }
 .dark .hover\:bg-gray-100:hover { background-color: #2a2d3a !important; }
 
-/* Form inputs in dark mode */
 .dark input,
 .dark select,
 .dark textarea {
@@ -63,21 +63,15 @@ body {
 }
 
 .dark input::placeholder,
-.dark textarea::placeholder {
-  color: #6e6e6e !important;
-}
+.dark textarea::placeholder { color: #6e6e6e !important; }
 
 .dark input:focus,
 .dark select:focus,
-.dark textarea:focus {
-  border-color: #5b6abf !important;
-}
+.dark textarea:focus { border-color: #5b6abf !important; }
 
-/* Table header backgrounds */
-.dark .bg-gray-50 th,
-.dark thead.bg-gray-50 { background-color: #1e2130 !important; }
+.dark thead.bg-gray-50,
+.dark .bg-gray-50 th { background-color: #1e2130 !important; }
 
-/* Keep colored elements visible */
 .dark .bg-blue-50 { background-color: rgba(59,130,246,0.1) !important; }
 .dark .bg-green-50 { background-color: rgba(34,197,94,0.1) !important; }
 .dark .bg-red-50 { background-color: rgba(239,68,68,0.1) !important; }
@@ -86,3 +80,4 @@ body {
 .dark .bg-purple-50 { background-color: rgba(168,85,247,0.1) !important; }
 .dark .bg-indigo-50 { background-color: rgba(99,102,241,0.1) !important; }
 .dark .bg-orange-50 { background-color: rgba(249,115,22,0.1) !important; }
+.dark .bg-emerald-50 { background-color: rgba(16,185,129,0.1) !important; }
