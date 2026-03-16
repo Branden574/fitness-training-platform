@@ -11,8 +11,8 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'light',
-  resolvedTheme: 'light',
+  theme: 'dark',
+  resolvedTheme: 'dark',
   setTheme: () => {},
 });
 
@@ -21,7 +21,7 @@ export function useTheme() {
 }
 
 function getSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'dark';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
@@ -35,14 +35,14 @@ function applyTheme(resolved: 'light' | 'dark') {
 }
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
   const [mounted, setMounted] = useState(false);
 
   // Load saved theme on mount
   useEffect(() => {
     const saved = localStorage.getItem('theme') as Theme | null;
-    const t = saved || 'light';
+    const t = saved || 'dark';
     setThemeState(t);
     const resolved = t === 'auto' ? getSystemTheme() : t;
     setResolvedTheme(resolved);

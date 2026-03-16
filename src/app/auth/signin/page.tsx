@@ -48,35 +48,35 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0f1219] flex items-center justify-center p-4">
       <div className="max-w-sm w-full">
         <div className="mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-surface-700 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-[#6b7280] hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to home
           </Link>
         </div>
 
-        <div className="bg-white border border-surface-200 rounded-card shadow-card p-8">
+        <div className="bg-[#1e2433] border border-[#2d3548] rounded-xl p-8">
           <div className="mb-6">
-            <h1 className="text-xl font-bold text-surface-900">Sign in</h1>
-            <p className="text-sm text-surface-500 mt-1">
+            <h1 className="text-xl font-bold text-white">Sign in</h1>
+            <p className="text-sm text-[#9ca3af] mt-1">
               Access your dashboard and training programs.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-input px-3 py-2.5">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2.5">
+                <p className="text-sm text-red-400">{error}</p>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-sm font-medium text-surface-700">
+              <label htmlFor="email" className="block text-sm font-medium text-[#9ca3af]">
                 Email
               </label>
               <input
@@ -84,7 +84,7 @@ export default function SignInPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full rounded-input border border-surface-300 px-3.5 py-2.5 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                className="block w-full rounded-lg border border-[#2d3548] bg-[#0f1219] px-3.5 py-2.5 text-sm text-white placeholder:text-[#4b5563] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
                 placeholder="you@example.com"
                 required
                 autoComplete="email"
@@ -92,7 +92,7 @@ export default function SignInPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="password" className="block text-sm font-medium text-surface-700">
+              <label htmlFor="password" className="block text-sm font-medium text-[#9ca3af]">
                 Password
               </label>
               <div className="relative">
@@ -101,7 +101,7 @@ export default function SignInPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-input border border-surface-300 px-3.5 py-2.5 pr-10 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="block w-full rounded-lg border border-[#2d3548] bg-[#0f1219] px-3.5 py-2.5 pr-10 text-sm text-white placeholder:text-[#4b5563] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
                   placeholder="Enter your password"
                   required
                   autoComplete="current-password"
@@ -109,7 +109,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b5563] hover:text-[#9ca3af]"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -119,15 +119,15 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-brand-600 text-white font-semibold py-2.5 rounded-btn hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="w-full bg-[#6366f1] text-white font-semibold py-2.5 rounded-lg hover:bg-[#5558e3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          <p className="text-sm text-surface-500 text-center mt-5">
+          <p className="text-sm text-[#6b7280] text-center mt-5">
             Don&apos;t have an account?{' '}
-            <Link href="/register-with-code" className="text-brand-600 hover:text-brand-700 font-medium">
+            <Link href="/register-with-code" className="text-[#818cf8] hover:text-[#6366f1] font-medium">
               Register with invite code
             </Link>
           </p>

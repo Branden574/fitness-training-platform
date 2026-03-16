@@ -14,7 +14,7 @@ const STORAGE_KEY = 'user-settings';
 const DEFAULT_SETTINGS: UserSettings = {
   notifications: true,
   emailUpdates: true,
-  theme: 'light',
+  theme: 'dark',
   units: 'imperial',
 };
 

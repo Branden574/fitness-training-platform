@@ -246,7 +246,7 @@ export default function AdminPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f1219] flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -254,10 +254,10 @@ export default function AdminPage() {
 
   if (!session?.user || session.user.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f1219] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You need admin privileges to access this page.</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <p className="text-[#9ca3af]">You need admin privileges to access this page.</p>
         </div>
       </div>
     );
@@ -271,28 +271,31 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f1219]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-[#1a1f2e] border-b border-[#2d3548]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-5">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">Platform management &amp; monitoring</p>
+              <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+              <p className="text-sm text-[#6b7280] mt-1">Platform management &amp; monitoring</p>
             </div>
             <div className="flex items-center gap-3">
+              <a href="/" className="px-3 py-1.5 text-sm font-medium text-[#9ca3af] border border-[#2d3548] rounded-lg hover:bg-white/5 transition-colors">
+                View Site
+              </a>
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{session?.user?.name}</p>
-                <p className="text-xs text-gray-500">Administrator</p>
+                <p className="text-sm font-medium text-white">{session?.user?.name}</p>
+                <p className="text-xs text-[#6b7280]">Administrator</p>
               </div>
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
+              <div className="h-9 w-9 rounded-full bg-[#6366f1] flex items-center justify-center">
                 <span className="text-white text-sm font-semibold">
                   {session?.user?.name?.charAt(0) || 'A'}
                 </span>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="px-3 py-1.5 text-sm font-medium text-surface-600 bg-surface-100 rounded-btn hover:bg-surface-200 transition-colors"
+                className="px-3 py-1.5 text-sm font-medium text-[#9ca3af] bg-[#252d3d] rounded-lg hover:bg-[#2d3548] transition-colors"
               >
                 Sign Out
               </button>
@@ -302,7 +305,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-[#1a1f2e] border-b border-[#2d3548]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex gap-6 -mb-px">
             {tabs.map(tab => (
@@ -311,8 +314,8 @@ export default function AdminPage() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`py-3 px-1 border-b-2 text-sm font-medium transition-colors ${
                   activeTab === tab.key
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-[#6366f1] text-[#818cf8]'
+                    : 'border-transparent text-[#6b7280] hover:text-[#9ca3af] hover:border-[#4b5563]'
                 }`}
               >
                 {tab.label}
@@ -356,17 +359,17 @@ export default function AdminPage() {
             {/* Quick Actions + System Info side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Quick Actions */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="bg-[#1e2433] rounded-xl border border-[#2d3548] p-6">
+                <h3 className="text-base font-semibold text-white mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setActiveTab('contacts')}
-                    className="flex items-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-[#6366f1]/10 transition-colors text-sm font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     View Contacts
                     {adminStats.newContactSubmissions > 0 && (
-                      <span className="ml-auto bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">{adminStats.newContactSubmissions}</span>
+                      <span className="ml-auto bg-[#6366f1] text-white text-xs px-1.5 py-0.5 rounded-full">{adminStats.newContactSubmissions}</span>
                     )}
                   </button>
                   <button
@@ -388,7 +391,7 @@ export default function AdminPage() {
                   </button>
                   <a
                     href="/trainer/dashboard"
-                    className="flex items-center gap-2 px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-3 bg-[#0f1219] text-[#9ca3af] rounded-lg hover:bg-[#252d3d] transition-colors text-sm font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                     Trainer View
@@ -397,42 +400,42 @@ export default function AdminPage() {
               </div>
 
               {/* System Info */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-base font-semibold text-gray-900 mb-4">System Information</h3>
+              <div className="bg-[#1e2433] rounded-xl border border-[#2d3548] p-6">
+                <h3 className="text-base font-semibold text-white mb-4">System Information</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">Database</p>
-                    <p className="text-sm font-semibold text-gray-900">PostgreSQL</p>
+                  <div className="bg-[#0f1219] rounded-lg p-3">
+                    <p className="text-xs text-[#6b7280] mb-1">Database</p>
+                    <p className="text-sm font-semibold text-white">PostgreSQL</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">Hosting</p>
-                    <p className="text-sm font-semibold text-gray-900">Railway</p>
+                  <div className="bg-[#0f1219] rounded-lg p-3">
+                    <p className="text-xs text-[#6b7280] mb-1">Hosting</p>
+                    <p className="text-sm font-semibold text-white">Railway</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">Status</p>
+                  <div className="bg-[#0f1219] rounded-lg p-3">
+                    <p className="text-xs text-[#6b7280] mb-1">Status</p>
                     <p className="text-sm font-semibold text-green-600 flex items-center gap-1">
                       <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
                       Online
                     </p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">Framework</p>
-                    <p className="text-sm font-semibold text-gray-900">Next.js</p>
+                  <div className="bg-[#0f1219] rounded-lg p-3">
+                    <p className="text-xs text-[#6b7280] mb-1">Framework</p>
+                    <p className="text-sm font-semibold text-white">Next.js</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Users Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="bg-[#1e2433] rounded-xl border border-[#2d3548]">
+              <div className="px-6 py-4 border-b border-[#2d3548] flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">All Users</h3>
-                  <p className="text-sm text-gray-500">Manage accounts, passwords, and access</p>
+                  <h3 className="text-base font-semibold text-white">All Users</h3>
+                  <p className="text-sm text-[#6b7280]">Manage accounts, passwords, and access</p>
                 </div>
                 <button
                   onClick={() => setActiveTab('users')}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-sm text-[#818cf8] hover:text-[#818cf8] font-medium"
                 >
                   View all &rarr;
                 </button>
@@ -451,10 +454,10 @@ export default function AdminPage() {
         {activeTab === 'users' && adminStats && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             {/* Search and Filters */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="bg-[#1e2433] rounded-xl border border-[#2d3548] p-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4b5563]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
@@ -462,13 +465,13 @@ export default function AdminPage() {
                     placeholder="Search by name or email..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6366f1] bg-[#0f1219] text-white"
                 >
                   <option value="ALL">All Roles</option>
                   <option value="ADMIN">Admin</option>
@@ -478,18 +481,18 @@ export default function AdminPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6366f1] bg-[#0f1219] text-white"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
                 </select>
               </div>
-              <p className="text-xs text-gray-500 mt-2">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''} found</p>
+              <p className="text-xs text-[#6b7280] mt-2">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''} found</p>
             </div>
 
             {/* Users Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-[#1e2433] rounded-xl border border-[#2d3548]">
               <UserTable
                 users={filteredUsers}
                 onResetPassword={resetPassword}
@@ -498,7 +501,7 @@ export default function AdminPage() {
                 showActivity
               />
               {filteredUsers.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-[#6b7280]">
                   <p>No users match your filters.</p>
                 </div>
               )}
@@ -510,46 +513,46 @@ export default function AdminPage() {
         {activeTab === 'contacts' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             {/* Filter Bar */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3">
-              <span className="text-sm text-gray-600">Filter:</span>
+            <div className="bg-[#1e2433] rounded-xl border border-[#2d3548] p-4 flex items-center gap-3">
+              <span className="text-sm text-[#9ca3af]">Filter:</span>
               {['ALL', 'NEW', 'IN_PROGRESS', 'INVITED', 'COMPLETED'].map(s => (
                 <button
                   key={s}
                   onClick={() => setContactStatusFilter(s)}
                   className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                     contactStatusFilter === s
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-[#6366f1] text-white'
+                      : 'bg-[#252d3d] text-[#9ca3af] hover:bg-gray-200'
                   }`}
                 >
                   {s === 'ALL' ? 'All' : s.replace('_', ' ')}
                 </button>
               ))}
-              <span className="ml-auto text-xs text-gray-500">{filteredContacts.length} submission{filteredContacts.length !== 1 ? 's' : ''}</span>
+              <span className="ml-auto text-xs text-[#6b7280]">{filteredContacts.length} submission{filteredContacts.length !== 1 ? 's' : ''}</span>
             </div>
 
             {/* Submissions */}
             <div className="space-y-3">
               {filteredContacts.map((submission) => (
-                <div key={submission.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:border-gray-300 transition-colors">
+                <div key={submission.id} className="bg-[#1e2433] rounded-xl border border-[#2d3548] p-5 hover:border-[#2d3548] transition-colors">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-sm font-semibold text-gray-900">{submission.name}</h3>
+                        <h3 className="text-sm font-semibold text-white">{submission.name}</h3>
                         <StatusBadge status={submission.status} />
                       </div>
-                      <div className="text-xs text-gray-500 mb-2 flex flex-wrap gap-3">
+                      <div className="text-xs text-[#6b7280] mb-2 flex flex-wrap gap-3">
                         <span>{submission.email}</span>
                         {submission.phone && <span>{submission.phone}</span>}
                         <span>{new Date(submission.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <p className="text-sm text-gray-700 line-clamp-2">{submission.message}</p>
+                      <p className="text-sm text-[#9ca3af] line-clamp-2">{submission.message}</p>
                     </div>
                   </div>
                 </div>
               ))}
               {filteredContacts.length === 0 && (
-                <div className="text-center py-12 text-gray-500 bg-white rounded-lg border border-gray-200">
+                <div className="text-center py-12 text-[#6b7280] bg-[#1e2433] rounded-xl border border-[#2d3548]">
                   <p>No contact submissions match this filter.</p>
                 </div>
               )}
@@ -561,21 +564,21 @@ export default function AdminPage() {
         {activeTab === 'invitations' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             {/* Send Invitation */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-              <h3 className="text-base font-semibold text-gray-900 mb-3">Send New Invitation</h3>
+            <div className="bg-[#1e2433] rounded-xl border border-[#2d3548] p-5">
+              <h3 className="text-base font-semibold text-white mb-3">Send New Invitation</h3>
               <form onSubmit={sendInvitation} className="flex gap-3">
                 <input
                   type="email"
                   value={newInviteEmail}
                   onChange={(e) => setNewInviteEmail(e.target.value)}
                   placeholder="Enter email address..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
                 <button
                   type="submit"
                   disabled={sendingInvite}
-                  className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-5 py-2 bg-[#6366f1] text-white rounded-lg text-sm font-medium hover:bg-[#5558e3] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {sendingInvite ? 'Sending...' : 'Send Invite'}
                 </button>
@@ -583,30 +586,30 @@ export default function AdminPage() {
             </div>
 
             {/* Invitation List */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-200">
-                <h3 className="text-base font-semibold text-gray-900">Invitation History</h3>
+            <div className="bg-[#1e2433] rounded-xl border border-[#2d3548] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#2d3548]">
+                <h3 className="text-base font-semibold text-white">Invitation History</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-[#0f1219]">
                     <tr>
-                      <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invited By</th>
-                      <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent</th>
-                      <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
-                      <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Email</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Status</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Invited By</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Sent</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Expires</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {adminData?.invitations?.map((invitation) => (
-                      <tr key={invitation.id} className="hover:bg-gray-50">
-                        <td className="px-5 py-3 text-sm text-gray-900">{invitation.email}</td>
+                      <tr key={invitation.id} className="hover:bg-[#0f1219]">
+                        <td className="px-5 py-3 text-sm text-white">{invitation.email}</td>
                         <td className="px-5 py-3"><StatusBadge status={invitation.status} /></td>
-                        <td className="px-5 py-3 text-sm text-gray-500">{invitation.inviter.name}</td>
-                        <td className="px-5 py-3 text-sm text-gray-500">{new Date(invitation.createdAt).toLocaleDateString()}</td>
-                        <td className="px-5 py-3 text-sm text-gray-500">{new Date(invitation.expiresAt).toLocaleDateString()}</td>
+                        <td className="px-5 py-3 text-sm text-[#6b7280]">{invitation.inviter.name}</td>
+                        <td className="px-5 py-3 text-sm text-[#6b7280]">{new Date(invitation.createdAt).toLocaleDateString()}</td>
+                        <td className="px-5 py-3 text-sm text-[#6b7280]">{new Date(invitation.expiresAt).toLocaleDateString()}</td>
                         <td className="px-5 py-3">
                           {invitation.status === 'PENDING' && (
                             <button
@@ -615,7 +618,7 @@ export default function AdminPage() {
                                 navigator.clipboard.writeText(inviteUrl);
                                 alert('Invitation link copied to clipboard!');
                               }}
-                              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                              className="text-sm text-[#818cf8] hover:text-[#818cf8] font-medium"
                             >
                               Copy Link
                             </button>
@@ -627,7 +630,7 @@ export default function AdminPage() {
                 </table>
               </div>
               {(!adminData?.invitations || adminData.invitations.length === 0) && (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-[#6b7280]">
                   <p>No invitations sent yet.</p>
                 </div>
               )}
@@ -654,10 +657,10 @@ function StatCard({ label, value, color, icon }: { label: string; value: number;
     <div className={`${c.bg} border ${c.border} rounded-lg p-5`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
+          <p className="text-xs font-medium text-[#6b7280] uppercase tracking-wide">{label}</p>
           <p className={`text-2xl font-bold ${c.text} mt-1`}>{value}</p>
         </div>
-        <div className={`p-2.5 rounded-lg bg-white/70`}>
+        <div className={`p-2.5 rounded-lg bg-[#252d3d]`}>
           <svg className={`w-5 h-5 ${c.icon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {icon}
           </svg>
@@ -669,25 +672,25 @@ function StatCard({ label, value, color, icon }: { label: string; value: number;
 
 function MiniStat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className={`bg-white rounded-lg border p-4 ${highlight ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
-      <p className={`text-xl font-bold ${highlight ? 'text-blue-700' : 'text-gray-900'}`}>{value}</p>
-      <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+    <div className={`bg-[#1e2433] rounded-xl border p-4 ${highlight ? 'border-[#6366f1]/40 bg-[#6366f1]/5' : 'border-[#2d3548]'}`}>
+      <p className={`text-xl font-bold ${highlight ? 'text-blue-700' : 'text-white'}`}>{value}</p>
+      <p className="text-xs text-[#6b7280] mt-0.5">{label}</p>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    NEW: 'bg-blue-100 text-blue-700',
+    NEW: 'bg-[#6366f1]/10 text-blue-700',
     IN_PROGRESS: 'bg-yellow-100 text-yellow-700',
     INVITED: 'bg-purple-100 text-purple-700',
     COMPLETED: 'bg-green-100 text-green-700',
     PENDING: 'bg-yellow-100 text-yellow-700',
     ACCEPTED: 'bg-green-100 text-green-700',
-    EXPIRED: 'bg-red-100 text-red-700',
+    EXPIRED: 'bg-red-100 text-red-400',
   };
   return (
-    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
+    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${styles[status] || 'bg-[#252d3d] text-[#9ca3af]'}`}>
       {status.replace('_', ' ')}
     </span>
   );
@@ -695,12 +698,12 @@ function StatusBadge({ status }: { status: string }) {
 
 function RoleBadge({ role }: { role: string }) {
   const styles: Record<string, string> = {
-    ADMIN: 'bg-red-100 text-red-700',
+    ADMIN: 'bg-red-100 text-red-400',
     TRAINER: 'bg-indigo-100 text-indigo-700',
     CLIENT: 'bg-emerald-100 text-emerald-700',
   };
   return (
-    <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${styles[role] || 'bg-gray-100 text-gray-700'}`}>
+    <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${styles[role] || 'bg-[#252d3d] text-[#9ca3af]'}`}>
       {role}
     </span>
   );
@@ -722,34 +725,34 @@ function UserTable({
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-[#0f1219]">
           <tr>
-            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            {showActivity && <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activity</th>}
-            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
-            <th className="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+            <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">User</th>
+            <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Role</th>
+            <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Status</th>
+            {showActivity && <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Activity</th>}
+            <th className="px-5 py-3 text-left text-xs font-medium text-[#6b7280] uppercase">Last Login</th>
+            <th className="px-5 py-3 text-right text-xs font-medium text-[#6b7280] uppercase">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
           {users.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-50">
+            <tr key={user.id} className="hover:bg-[#0f1219]">
               <td className="px-5 py-3">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{user.name || 'No name'}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-sm font-medium text-white">{user.name || 'No name'}</p>
+                  <p className="text-xs text-[#6b7280]">{user.email}</p>
                 </div>
               </td>
               <td className="px-5 py-3"><RoleBadge role={user.role} /></td>
               <td className="px-5 py-3">
                 <div className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-red-400'}`}></span>
-                  <span className="text-sm text-gray-700">{user.isActive ? 'Active' : 'Inactive'}</span>
+                  <span className="text-sm text-[#9ca3af]">{user.isActive ? 'Active' : 'Inactive'}</span>
                 </div>
               </td>
               {showActivity && (
-                <td className="px-5 py-3 text-xs text-gray-500">
+                <td className="px-5 py-3 text-xs text-[#6b7280]">
                   <div className="flex gap-3">
                     <span title="Workouts">{user._count.workoutSessions || 0} workouts</span>
                     <span title="Food entries">{user._count.foodEntries || 0} meals</span>
@@ -757,17 +760,17 @@ function UserTable({
                   </div>
                 </td>
               )}
-              <td className="px-5 py-3 text-sm text-gray-500">
+              <td className="px-5 py-3 text-sm text-[#6b7280]">
                 {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
               </td>
               <td className="px-5 py-3">
                 {user.role === 'ADMIN' ? (
-                  <span className="text-xs text-gray-400">Protected account</span>
+                  <span className="text-xs text-[#4b5563]">Protected account</span>
                 ) : (
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => onResetPassword(user.id, user.name || user.email)}
-                    className="px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                    className="px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-[#6366f1]/10 transition-colors"
                   >
                     Reset PW
                   </button>
@@ -783,7 +786,7 @@ function UserTable({
                   </button>
                   <button
                     onClick={() => onDelete(user.id, user.name || 'Unknown', user.email)}
-                    className="px-2.5 py-1 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                    className="px-2.5 py-1 text-xs font-medium text-red-400 bg-red-500/10 rounded-md hover:bg-red-100 transition-colors"
                   >
                     Delete
                   </button>
