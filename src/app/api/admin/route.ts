@@ -26,26 +26,27 @@ export async function GET() {
       );
     }
 
-    // Get all users with their profiles using retry logic
+    // Get all users with their profiles using retry logic (capped at 200)
     const users = await withDatabaseRetry(async () => {
       return await prisma.user.findMany({
         include: {
           clientProfile: true,
           trainer: true,
-          accounts: true,
         },
         orderBy: { createdAt: 'desc' },
+        take: 200,
       });
     });
 
-    // Get contact submissions with retry
+    // Get contact submissions with retry (capped at 200)
     const contactSubmissions = await withDatabaseRetry(async () => {
       return await prisma.contactSubmission.findMany({
         orderBy: { createdAt: 'desc' },
+        take: 200,
       });
     });
 
-    // Get invitations with retry
+    // Get invitations with retry (capped at 200)
     const invitations = await withDatabaseRetry(async () => {
       return await prisma.invitation.findMany({
         include: {
@@ -57,6 +58,7 @@ export async function GET() {
           }
         },
         orderBy: { createdAt: 'desc' },
+        take: 200,
       });
     });
 

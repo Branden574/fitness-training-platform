@@ -4,10 +4,15 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 // POST /api/clients/reset-password - Reset client password (trainer only)
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 password resets per 15 minutes per IP
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`client-reset-pw:${ip}`, { maxRequests: 10, windowSeconds: 900 });
+    if (!rl.allowed) return rateLimitResponse(rl.resetIn);
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {

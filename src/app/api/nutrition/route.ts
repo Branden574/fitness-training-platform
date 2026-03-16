@@ -48,13 +48,14 @@ export async function GET(request: Request) {
         },
         orderBy: {
           createdAt: 'desc'
-        }
+        },
+        take: 50,
       });
     } else {
       // Original logic for templates and client's own plans
       nutritionPlans = await prisma.mealPlan.findMany({
-        where: session.user.role === 'TRAINER' 
-          ? { 
+        where: session.user.role === 'TRAINER'
+          ? {
               trainerId: userId,
               userId: userId // Only show templates (plans assigned to trainer themselves)
             }
@@ -78,7 +79,8 @@ export async function GET(request: Request) {
         },
         orderBy: {
           createdAt: 'desc'
-        }
+        },
+        take: 50,
       });
     }
 

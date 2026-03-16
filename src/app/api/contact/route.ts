@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { ContactStatus } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -21,8 +22,13 @@ const contactSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 3 contact form submissions per 15 minutes per IP
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`contact:${ip}`, { maxRequests: 3, windowSeconds: 900 });
+    if (!rl.allowed) return rateLimitResponse(rl.resetIn);
+
     const body = await request.json();
-    
+
     // Validate the request body
     const validatedData = contactSchema.parse(body);
     
@@ -94,6 +100,7 @@ export async function GET(request: Request) {
     const submissions = await prisma.contactSubmission.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
     
     return NextResponse.json(submissions);

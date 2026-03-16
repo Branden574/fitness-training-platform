@@ -53,7 +53,8 @@ export async function GET(request: Request) {
         },
         orderBy: {
           startTime: 'desc'
-        }
+        },
+        take: 100,
       });
       return NextResponse.json(workoutSessions);
     }
@@ -95,7 +96,8 @@ export async function GET(request: Request) {
         },
         orderBy: {
           startTime: 'desc'
-        }
+        },
+        take: 100,
       });
       return NextResponse.json(workoutSessions);
     } else {
@@ -120,7 +122,8 @@ export async function GET(request: Request) {
         },
         orderBy: {
           createdAt: 'desc'
-        }
+        },
+        take: 100,
       });
       return NextResponse.json(workouts);
     }

@@ -56,7 +56,7 @@ export async function GET() {
     
     const whereClause = { trainerId: trainer.id, role: 'CLIENT' as const };
 
-    // Get all clients assigned to this trainer with retry
+    // Get all clients assigned to this trainer with retry (capped at 100)
     const clients = await withDatabaseRetry(async () => {
       return await prisma.user.findMany({
         where: whereClause,
@@ -84,7 +84,8 @@ export async function GET() {
               email: true
             }
           }
-        }
+        },
+        take: 100,
       });
     });
 

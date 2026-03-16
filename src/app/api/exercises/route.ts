@@ -10,7 +10,8 @@ export async function GET() {
       orderBy: [
         { difficulty: 'asc' },
         { name: 'asc' }
-      ]
+      ],
+      take: 200,
     });
 
     return NextResponse.json(exercises);

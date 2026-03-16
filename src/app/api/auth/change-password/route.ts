@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -18,8 +19,13 @@ const changePasswordSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 5 password change attempts per 15 minutes per IP
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`change-pw:${ip}`, { maxRequests: 5, windowSeconds: 900 });
+    if (!rl.allowed) return rateLimitResponse(rl.resetIn);
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: 'Unauthorized' },

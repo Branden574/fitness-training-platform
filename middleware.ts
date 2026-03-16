@@ -1,12 +1,42 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Ultra-minimal middleware that only adds security headers
-// and lets NextAuth handle ALL authentication routing
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
 export function middleware(request: NextRequest) {
   // Skip ALL middleware logic for NextAuth routes - let them be completely untouched
   if (request.nextUrl.pathname.startsWith('/api/auth/')) {
     return NextResponse.next()
+  }
+
+  // CSRF / Origin validation for state-changing API requests
+  if (
+    request.nextUrl.pathname.startsWith('/api/') &&
+    !SAFE_METHODS.has(request.method)
+  ) {
+    const origin = request.headers.get('origin')
+    const host = request.headers.get('host')
+
+    // Allow requests with no origin (same-origin fetch, server-side calls)
+    // but block requests where origin doesn't match host
+    if (origin) {
+      let originHost: string
+      try {
+        originHost = new URL(origin).host
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid origin' },
+          { status: 403 }
+        )
+      }
+
+      if (originHost !== host) {
+        return NextResponse.json(
+          { error: 'Cross-origin request blocked' },
+          { status: 403 }
+        )
+      }
+    }
   }
 
   // For all other routes, add security headers and continue
