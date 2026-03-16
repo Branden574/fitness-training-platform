@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -290,6 +290,12 @@ export default function AdminPage() {
                   {session?.user?.name?.charAt(0) || 'A'}
                 </span>
               </div>
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="px-3 py-1.5 text-sm font-medium text-surface-600 bg-surface-100 rounded-btn hover:bg-surface-200 transition-colors"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </div>
