@@ -1,265 +1,155 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Star, Users, Trophy, Calendar } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Dumbbell, Calendar, Award, Star } from 'lucide-react';
 import Link from 'next/link';
-import OptimizedImage from './OptimizedImage';
-import { imagePlaceholders } from '@/lib/imagePlaceholders';
+import Image from 'next/image';
 
-const HeroSection = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+const slides = [
+  { src: '/images/hero-slide-1.jpg', alt: 'Brent Martinez Training Session' },
+  { src: '/images/hero-slide-2.jpg', alt: 'Personal Training at Synergy' },
+  { src: '/images/hero-slide-3.jpg', alt: 'Professional Fitness Studio' },
+  { src: '/images/homescreen-slide-4.jpg', alt: 'Client Training Results' },
+];
 
-  // Sample trainer/gym images (you'll replace these with actual images)
-  const slides = [
-    {
-      type: 'image',
-      src: imagePlaceholders.heroSlides[0],
-      alt: 'Brent Martinez Fitness Training - Professional Personal Training',
-      title: 'Transform Your Life',
-      subtitle: 'With Expert Personal Training & Nutrition Coaching'
-    },
-    {
-      type: 'image',
-      src: imagePlaceholders.heroSlides[1],
-      alt: 'Personal Training Sessions with Brent Martinez',
-      title: 'One-on-One Training',
-      subtitle: 'Personalized Workouts That Deliver Real Results'
-    },
-    {
-      type: 'image',
-      src: imagePlaceholders.heroSlides[2], 
-      alt: 'Professional Fitness Studio and Equipment',
-      title: 'Professional Environment',
-      subtitle: 'State-of-the-Art Equipment & Proven Methods'
-    },
-    {
-      type: 'image',
-      src: imagePlaceholders.heroSlides[3],
-      alt: 'Fitness Training Results',
-      title: 'Real Results',
-      subtitle: 'Proven Track Record of Client Success'
-    }
-  ];
+const stats = [
+  { icon: Dumbbell, value: '150+', label: 'Clients Trained' },
+  { icon: Calendar, value: '10+', label: 'Years Experience' },
+  { icon: Award, value: 'NASM', label: 'Certified Trainer' },
+  { icon: Star, value: '4.9', label: 'Client Rating' },
+];
 
-  const stats = [
-    { icon: Users, number: '150+', label: 'Happy Clients' },
-    { icon: Trophy, number: '98%', label: 'Success Rate' },
-    { icon: Calendar, number: '10+', label: 'Years Experience' },
-    { icon: Star, number: '4.9', label: 'Client Rating' }
-  ];
+const avatars = [
+  '/images/client-1.jpg',
+  '/images/client-2.jpg',
+  '/images/client-3.jpg',
+  '/images/client-4.jpg',
+];
+
+export default function HeroSection() {
+  const [current, setCurrent] = useState(0);
+
+  const next = useCallback(() => {
+    setCurrent((prev) => (prev + 1) % slides.length);
+  }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-
+    const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
-  }, [slides.length]);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
+  }, [next]);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Slideshow */}
-      <div className="absolute inset-0 z-0">
-        <AnimatePresence mode="wait">
-          {slides.map((slide, index) => (
-            index === currentSlide && (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 1 }}
-                className="absolute inset-0"
-              >
-                <div className="relative w-full h-full">
-                  <img
-                    src={slide.src}
-                    alt={slide.alt}
-                    className="w-full h-full object-cover"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-                
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-              </motion.div>
-            )
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 lg:left-8 z-10 p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all duration-200"
-      >
-        <ChevronLeft className="w-6 h-6 text-white" />
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 lg:right-8 z-10 p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all duration-200"
-      >
-        <ChevronRight className="w-6 h-6 text-white" />
-      </button>
-
-      {/* Slide Indicators */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 flex space-x-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-200 ${
-              index === currentSlide 
-                ? 'bg-white scale-125' 
-                : 'bg-white/50 hover:bg-white/75'
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center lg:text-left">
-        <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
-          {/* Text Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-1"
-          >
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight"
-            >
-              Transform Your Life
-              <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                With Brent Martinez
-              </span>
-            </motion.h1>
-            
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="mt-6 text-xl text-gray-200 max-w-2xl"
-            >
-              Get personalized training programs, expert nutrition coaching, and real-time progress tracking 
-              with certified personal trainer Brent Martinez. Start your transformation journey today.
-            </motion.p>
-
-            {/* CTA Buttons */}
+    <section className="relative bg-[#0f1219]">
+      {/* ── Hero Area ── */}
+      <div className="relative min-h-[90vh] flex items-center overflow-hidden">
+        {/* Background slideshow */}
+        <div className="absolute inset-0">
+          <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              key={current}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2, ease: 'easeInOut' }}
+              className="absolute inset-0"
             >
-              <motion.div
-                whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(59, 130, 246, 0.4)' }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link
-                  href="/auth/signup"
-                  className="block px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
-                >
-                  Start Your Journey
-                </Link>
-              </motion.div>
-              
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <button className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  Watch Demo
-                </button>
-              </motion.div>
+              <Image
+                src={slides[current].src}
+                alt={slides[current].alt}
+                fill
+                className="object-cover"
+                priority={current === 0}
+              />
             </motion.div>
+          </AnimatePresence>
+          {/* Gradient overlay — stronger on left for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f1219] via-[#0f1219]/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f1219] via-transparent to-[#0f1219]/30" />
+        </div>
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1 }}
-              className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05 }}
-                  className="text-center lg:text-left"
-                >
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <stat.icon className="w-6 h-6 text-blue-400 mr-2" />
-                    <span className="text-2xl font-bold text-white">{stat.number}</span>
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-32 w-full">
+          <div className="max-w-xl">
+            {/* Social proof avatars */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="flex -space-x-2">
+                {avatars.map((src, i) => (
+                  <div
+                    key={i}
+                    className="w-9 h-9 rounded-full border-2 border-[#1a1f2e] overflow-hidden relative"
+                  >
+                    <Image src={src} alt="" fill className="object-cover" />
                   </div>
-                  <p className="text-gray-300 text-sm">{stat.label}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
-
-          {/* Feature Cards */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="hidden lg:block lg:col-span-1"
-          >
-            <div className="grid gap-6">
-              {[
-                {
-                  title: 'Personal Training',
-                  description: 'One-on-one sessions with certified trainer Brent Martinez',
-                  icon: '💪'
-                },
-                {
-                  title: 'Nutrition Coaching',
-                  description: 'Custom meal plans and nutrition guidance',
-                  icon: '🥗'
-                },
-                {
-                  title: 'Progress Tracking',
-                  description: 'Advanced analytics and progress monitoring',
-                  icon: '📊'
-                }
-              ].map((feature, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05, x: 10 }}
-                  transition={{ duration: 0.2 }}
-                  className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20"
-                >
-                  <div className="flex items-center mb-3">
-                    <span className="text-2xl mr-3">{feature.icon}</span>
-                    <h3 className="text-lg font-semibold text-white">{feature.title}</h3>
-                  </div>
-                  <p className="text-gray-300 text-sm">{feature.description}</p>
-                </motion.div>
-              ))}
+                ))}
+              </div>
+              <p className="text-sm text-[#9ca3af]">
+                Trusted by <span className="font-semibold text-white">150+</span> clients in Fresno and beyond
+              </p>
             </div>
-          </motion.div>
+
+            {/* Heading */}
+            <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold text-white leading-[1.1] tracking-tight mb-6">
+              Build the body you&apos;ve been working toward.
+            </h1>
+
+            {/* Description */}
+            <p className="text-base text-[#9ca3af] leading-relaxed mb-8 max-w-lg">
+              Personalized training programs, expert nutrition coaching, and real accountability
+              with certified trainer Brent Martinez. In-person in Fresno or online anywhere.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 bg-[#6366f1] text-white font-medium px-6 py-3.5 rounded-lg hover:bg-[#5558e3] hover:shadow-[0_10px_15px_-3px_rgba(99,102,241,0.3)] transition-all duration-200 text-sm"
+              >
+                Start Free Consultation
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/programs"
+                className="inline-flex items-center justify-center border border-[#4b5563] text-white font-medium px-6 py-3.5 rounded-lg hover:bg-white/5 hover:border-[#6b7280] transition-all duration-200 text-sm"
+              >
+                View Programs
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Carousel dots — bottom right */}
+        <div className="absolute bottom-6 right-8 lg:right-12 z-10 flex gap-2">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                i === current ? 'bg-white w-6' : 'bg-[#4b5563] hover:bg-[#6b7280]'
+              }`}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
         </div>
       </div>
 
-
+      {/* ── Stats Section ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pb-16 -mt-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-[#1e2433] border border-[#2d3548] rounded-xl p-6"
+            >
+              <div className="w-12 h-12 bg-[#252d3d] rounded-xl flex items-center justify-center mb-4">
+                <stat.icon className="w-6 h-6 text-[#818cf8]" />
+              </div>
+              <p className="text-[32px] font-bold text-white leading-tight">{stat.value}</p>
+              <p className="text-sm text-[#9ca3af] mt-1">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
-};
-
-export default HeroSection;
+}

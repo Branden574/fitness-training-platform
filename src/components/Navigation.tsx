@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Dumbbell, User, MessageCircle, TrendingUp, Home } from 'lucide-react';
+import { Menu, X, Dumbbell, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
@@ -12,23 +11,11 @@ const Navigation = () => {
   const { data: session } = useSession();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Base navigation items available to everyone
-  const baseNavItems = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/about', label: 'About', icon: User },
-    { href: '/programs', label: 'Programs', icon: Dumbbell },
-    { href: '/contact', label: 'Contact', icon: MessageCircle },
-  ];
-
-  // Add role-appropriate Dashboard link for authenticated users
   const getDashboardHref = () => {
     const role = session?.user?.role;
     if (role === 'ADMIN') return '/admin';
@@ -36,262 +23,134 @@ const Navigation = () => {
     return '/client/dashboard';
   };
 
-  const navItems = session
+  const baseLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/about', label: 'About' },
+    { href: '/programs', label: 'Programs' },
+  ];
+
+  const navLinks = session
     ? [
-        ...baseNavItems.slice(0, 3), // Home, About, Programs
+        ...baseLinks,
         { href: getDashboardHref(), label: 'Dashboard', icon: TrendingUp },
-        ...baseNavItems.slice(3) // Contact
+        { href: '/contact', label: 'Contact' },
       ]
-    : baseNavItems;
-
-  const navVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
-  const mobileMenuVariants = {
-    closed: {
-      opacity: 0,
-      x: '100%',
-      transition: {
-        duration: 0.3
-      }
-    },
-    open: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.3,
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const mobileItemVariants = {
-    closed: { opacity: 0, x: 50 },
-    open: { opacity: 1, x: 0 }
-  };
+    : [...baseLinks, { href: '/contact', label: 'Contact' }];
 
   return (
     <>
-      <motion.nav
-        initial="hidden"
-        animate="visible"
-        variants={navVariants}
+      <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled 
-            ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50' 
-            : 'bg-transparent'
+          scrolled
+            ? 'bg-[#1a1f2e]/95 backdrop-blur-md shadow-lg border-b border-[#2d3548]'
+            : 'bg-[#1a1f2e] border-b border-[#2d3548]'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+          <div className="flex items-center justify-between h-[72px]">
             {/* Logo */}
-            <motion.div
-              variants={itemVariants}
-              className="flex items-center space-x-2"
-            >
-              <motion.div
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.6 }}
-                className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center"
-              >
-                <Dumbbell className="w-6 h-6 text-white" />
-              </motion.div>
-              <div className="flex flex-col justify-center">
-                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Brent Martinez Fitness
-                </span>
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#6366f1] rounded-lg flex items-center justify-center">
+                <Dumbbell className="w-5 h-5 text-white" />
               </div>
-            </motion.div>
+              <span className="text-lg font-semibold text-white">
+                Brent Martinez Fitness
+              </span>
+            </Link>
 
-            {/* Desktop Navigation */}
-            <motion.div
-              variants={itemVariants}
-              className="hidden md:flex items-center space-x-8"
-            >
-              {navItems.map((item) => (
-                <motion.div
-                  key={item.href}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-8">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center gap-1.5 text-sm font-medium text-[#9ca3af] hover:text-white transition-colors duration-200"
                 >
-                  <Link
-                    href={item.href}
-                    className="flex items-center space-x-1 px-3 py-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200"
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                </motion.div>
+                  {'icon' in link && link.icon && <link.icon className="w-4 h-4 text-[#6366f1]" />}
+                  {link.label}
+                </Link>
               ))}
-            </motion.div>
+            </div>
 
-            {/* Auth Buttons */}
-            <motion.div
-              variants={itemVariants}
-              className="hidden md:flex items-center space-x-4"
-            >
+            {/* Right side */}
+            <div className="hidden md:flex items-center gap-5">
               {session ? (
-                // Authenticated user - show user info or sign out
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <span className="px-4 py-2 text-gray-700 font-medium">
-                    Welcome, {session.user?.name || 'Client'}
-                  </span>
-                </motion.div>
+                <span className="text-sm text-[#9ca3af]">
+                  Welcome, {session.user?.name || 'User'}
+                </span>
               ) : (
-                // Non-authenticated user - show sign in and get started
-                <>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link
-                      href="/auth/signin"
-                      className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
-                    >
-                      Sign In
-                    </Link>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)' }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link
-                      href="/auth/signup"
-                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    >
-                      Get Started
-                    </Link>
-                  </motion.div>
-                </>
+                <Link
+                  href="/auth/signin"
+                  className="text-sm font-medium text-[#9ca3af] hover:text-white transition-colors"
+                >
+                  Sign In
+                </Link>
               )}
-            </motion.div>
+              <Link
+                href={session ? getDashboardHref() : '/contact'}
+                className="px-5 py-2.5 bg-[#6366f1] text-white text-sm font-medium rounded-lg hover:bg-[#5558e3] transition-all duration-200"
+              >
+                {session ? 'Dashboard' : 'Get Started'}
+              </Link>
+            </div>
 
-            {/* Mobile Menu Button */}
-            <motion.button
-              variants={itemVariants}
-              whileTap={{ scale: 0.95 }}
+            {/* Mobile menu button */}
+            <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="md:hidden p-2 text-[#9ca3af] hover:text-white transition-colors"
             >
-              <AnimatePresence mode="wait">
-                {isOpen ? (
-                  <motion.div
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <X className="w-6 h-6" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Menu className="w-6 h-6" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
-              onClick={() => setIsOpen(false)}
-            />
-
-            {/* Mobile Menu Panel */}
-            <motion.div
-              variants={mobileMenuVariants}
-              initial="closed"
-              animate="open"
-              exit="closed"
-              className="fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-white shadow-2xl z-50 md:hidden"
-            >
-              <div className="p-6 pt-20">
-                <div className="flex flex-col space-y-6">
-                  {navItems.map((item) => (
-                    <motion.div
-                      key={item.href}
-                      variants={mobileItemVariants}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Link
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                      >
-                        <item.icon className="w-5 h-5 text-gray-500" />
-                        <span className="text-lg font-medium text-gray-700">{item.label}</span>
-                      </Link>
-                    </motion.div>
-                  ))}
-
-                  <motion.div variants={mobileItemVariants} className="pt-6 border-t border-gray-200">
-                    <div className="flex flex-col space-y-3">
-                      {session ? (
-                        // Authenticated user - show welcome message
-                        <div className="p-3 text-lg font-medium text-gray-700">
-                          Welcome, {session.user?.name || 'Client'}
-                        </div>
-                      ) : (
-                        // Non-authenticated user - show sign in and get started
-                        <>
-                          <motion.div whileTap={{ scale: 0.95 }}>
-                            <Link
-                              href="/auth/signin"
-                              onClick={() => setIsOpen(false)}
-                              className="w-full p-3 text-left text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200 block"
-                            >
-                              Sign In
-                            </Link>
-                          </motion.div>
-                          <motion.div whileTap={{ scale: 0.95 }}>
-                            <Link
-                              href="/auth/signup"
-                              onClick={() => setIsOpen(false)}
-                              className="w-full p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-center block"
-                            >
-                              Get Started
-                            </Link>
-                          </motion.div>
-                        </>
-                      )}
-                    </div>
-                  </motion.div>
-                </div>
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-40 md:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="fixed top-0 right-0 h-full w-72 bg-[#1a1f2e] border-l border-[#2d3548] z-50 md:hidden">
+            <div className="p-6 pt-20 flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-3 text-[#9ca3af] hover:text-white hover:bg-[#252d3d] rounded-lg transition-colors text-sm font-medium"
+                >
+                  {'icon' in link && link.icon && <link.icon className="w-4 h-4 text-[#6366f1]" />}
+                  {link.label}
+                </Link>
+              ))}
+              <div className="border-t border-[#2d3548] mt-4 pt-4">
+                {session ? (
+                  <div className="px-3 py-2 text-sm text-[#9ca3af]">
+                    Welcome, {session.user?.name || 'User'}
+                  </div>
+                ) : (
+                  <Link
+                    href="/auth/signin"
+                    onClick={() => setIsOpen(false)}
+                    className="block px-3 py-3 text-sm text-[#9ca3af] hover:text-white transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                )}
+                <Link
+                  href={session ? getDashboardHref() : '/contact'}
+                  onClick={() => setIsOpen(false)}
+                  className="block mt-2 px-4 py-3 bg-[#6366f1] text-white text-sm font-medium rounded-lg text-center hover:bg-[#5558e3] transition-colors"
+                >
+                  {session ? 'Dashboard' : 'Get Started'}
+                </Link>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };
