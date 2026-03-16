@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-  ArrowLeft, Plus, Edit2, Trash2, Eye, EyeOff, Star, StarOff,
+  ArrowLeft, Plus, Edit2, Eye, EyeOff, Star, StarOff,
   Package, ShoppingBag, DollarSign, AlertTriangle, Search, Loader2,
   X, ChevronDown, Clock, MapPin, CheckCircle2, XCircle, TruckIcon
 } from 'lucide-react';
@@ -137,13 +137,7 @@ export default function AdminShopPage() {
     } catch (err) { console.error(err); }
   }
 
-  async function deleteProduct(product: Product) {
-    if (!confirm(`Archive "${product.name}"? It will be hidden from the store.`)) return;
-    try {
-      await fetch(`/api/shop/products/${product.id}`, { method: 'DELETE' });
-      fetchProducts();
-    } catch (err) { console.error(err); }
-  }
+  // No hard delete — products are hidden/shown via toggleProductActive
 
   async function updateOrderStatus(orderId: string, field: string, value: string) {
     try {
@@ -323,9 +317,6 @@ export default function AdminShopPage() {
                             </button>
                             <button onClick={() => toggleProductFeatured(product)} className="p-1.5 text-[#6b7280] hover:text-amber-400 transition-colors" title={product.isFeatured ? 'Unfeature' : 'Feature'}>
                               {product.isFeatured ? <StarOff className="w-4 h-4" /> : <Star className="w-4 h-4" />}
-                            </button>
-                            <button onClick={() => deleteProduct(product)} className="p-1.5 text-[#6b7280] hover:text-red-400 transition-colors" title="Archive">
-                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </td>
