@@ -52,13 +52,19 @@ const Navigation = () => {
           <div className="flex items-center justify-between h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3">
-              <Image
-                src="/images/bm-logo.png"
-                alt="Brent Martinez Fitness"
-                width={40}
-                height={40}
-                className="w-10 h-10 object-contain"
-              />
+              <div className="relative w-10 h-10">
+                <Image
+                  src="/images/bm-logo.png"
+                  alt="Brent Martinez Fitness"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 object-contain"
+                  style={{
+                    filter: 'brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(225deg) brightness(1.1)',
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded pointer-events-none" />
+              </div>
               <span className="text-lg font-semibold text-white">
                 Brent Martinez Fitness
               </span>
