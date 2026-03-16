@@ -28,11 +28,18 @@ const Navigation = () => {
     { href: '/contact', label: 'Contact', icon: MessageCircle },
   ];
 
-  // Add Dashboard only for authenticated users
-  const navItems = session 
+  // Add role-appropriate Dashboard link for authenticated users
+  const getDashboardHref = () => {
+    const role = session?.user?.role;
+    if (role === 'ADMIN') return '/admin';
+    if (role === 'TRAINER') return '/trainer/dashboard';
+    return '/client/dashboard';
+  };
+
+  const navItems = session
     ? [
         ...baseNavItems.slice(0, 3), // Home, About, Programs
-        { href: '/client/dashboard', label: 'Dashboard', icon: TrendingUp },
+        { href: getDashboardHref(), label: 'Dashboard', icon: TrendingUp },
         ...baseNavItems.slice(3) // Contact
       ]
     : baseNavItems;
