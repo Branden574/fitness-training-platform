@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Dumbbell, Calendar, Award, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Counter, StaggerContainer, StaggerItem } from '@/components/ScrollAnimations';
 
 const slides = [
   { src: '/images/hero-slide-1.jpg', alt: 'Brent Martinez Training Session' },
@@ -14,10 +15,10 @@ const slides = [
 ];
 
 const stats = [
-  { icon: Dumbbell, value: '150+', label: 'Clients Trained' },
-  { icon: Calendar, value: '10+', label: 'Years Experience' },
-  { icon: Award, value: 'NASM', label: 'Certified Trainer' },
-  { icon: Star, value: '4.9', label: 'Client Rating' },
+  { icon: Dumbbell, value: '150+', label: 'Clients Trained', counter: 150, suffix: '+' },
+  { icon: Calendar, value: '10+', label: 'Years Experience', counter: 10, suffix: '+' },
+  { icon: Award, value: 'NASM', label: 'Certified Trainer', counter: 0, suffix: '' },
+  { icon: Star, value: '4.9', label: 'Client Rating', counter: 0, suffix: '' },
 ];
 
 const avatars = [
@@ -70,7 +71,12 @@ export default function HeroSection() {
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-32 w-full">
-          <div className="max-w-xl">
+          <motion.div
+            className="max-w-xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
+          >
             {/* Social proof avatars */}
             <div className="flex items-center gap-3 mb-8">
               <div className="flex -space-x-2">
@@ -115,7 +121,7 @@ export default function HeroSection() {
                 View Programs
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Carousel dots — bottom right */}
@@ -135,20 +141,25 @@ export default function HeroSection() {
 
       {/* ── Stats Section ── */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pb-16 -mt-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6" staggerDelay={0.1}>
           {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-[#1e2433] border border-[#2d3548] rounded-xl p-6"
-            >
-              <div className="w-12 h-12 bg-[#252d3d] rounded-xl flex items-center justify-center mb-4">
-                <stat.icon className="w-6 h-6 text-[#818cf8]" />
+            <StaggerItem key={stat.label}>
+              <div className="bg-[#1e2433] border border-[#2d3548] rounded-xl p-6">
+                <div className="w-12 h-12 bg-[#252d3d] rounded-xl flex items-center justify-center mb-4">
+                  <stat.icon className="w-6 h-6 text-[#818cf8]" />
+                </div>
+                <p className="text-[32px] font-bold text-white leading-tight">
+                  {stat.counter ? (
+                    <Counter target={stat.counter} suffix={stat.suffix} className="" />
+                  ) : (
+                    stat.value
+                  )}
+                </p>
+                <p className="text-sm text-[#9ca3af] mt-1">{stat.label}</p>
               </div>
-              <p className="text-[32px] font-bold text-white leading-tight">{stat.value}</p>
-              <p className="text-sm text-[#9ca3af] mt-1">{stat.label}</p>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   );

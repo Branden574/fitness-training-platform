@@ -52,13 +52,13 @@ const Navigation = () => {
           <div className="flex items-center justify-between h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3">
-              <div className="relative w-10 h-10 group/logo">
+              <div className="relative w-12 h-12 group/logo">
                 <Image
                   src="/images/bm-logo.png"
                   alt="Brent Martinez Fitness"
-                  width={40}
-                  height={40}
-                  className="w-10 h-10 object-contain transition-transform duration-300 group-hover/logo:scale-110"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 object-contain transition-transform duration-300 group-hover/logo:scale-110"
                   style={{
                     filter: 'brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(225deg) brightness(1.1)',
                   }}
