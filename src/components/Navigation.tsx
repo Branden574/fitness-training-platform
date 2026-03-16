@@ -52,18 +52,20 @@ const Navigation = () => {
           <div className="flex items-center justify-between h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3">
-              <div className="relative w-10 h-10">
+              <div className="relative w-10 h-10 group/logo">
                 <Image
                   src="/images/bm-logo.png"
                   alt="Brent Martinez Fitness"
                   width={40}
                   height={40}
-                  className="w-10 h-10 object-contain"
+                  className="w-10 h-10 object-contain transition-transform duration-300 group-hover/logo:scale-110"
                   style={{
                     filter: 'brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(225deg) brightness(1.1)',
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded pointer-events-none" />
+                <div className="absolute inset-0 overflow-hidden rounded pointer-events-none">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                </div>
               </div>
               <span className="text-lg font-semibold text-white">
                 Brent Martinez Fitness
