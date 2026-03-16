@@ -937,15 +937,12 @@ const TrainerDashboard = () => {
       const response = await fetch('/api/clients/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          clientId,
-          newPassword: newPassword || 'Changemetoday1234!' // Default password if none provided
-        })
+        body: JSON.stringify({ clientId })
       });
 
       if (response.ok) {
         const result = await response.json();
-        alert(`Password reset successful! New password: ${result.newPassword}\n\nThe client will be prompted to change this password on their next login.`);
+        alert(`Password reset successful! Temporary password: ${result.tempPassword}\n\nShare this securely with the client. They will be required to change it on next login.`);
         setShowPasswordResetModal(null);
         setNewPassword('');
         setShowClientMenu(null);
@@ -3687,18 +3684,8 @@ const TrainerDashboard = () => {
             </p>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Password (leave blank for default)
-              </label>
-              <input
-                type="text"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Changemetoday1234!"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Default password: <code className="bg-gray-100 px-1 rounded">Changemetoday1234!</code>
+              <p className="text-sm text-gray-600">
+                A secure random temporary password will be generated. You will see it once after reset to share with the client.
               </p>
             </div>
 
@@ -5828,8 +5815,8 @@ const TrainerDashboard = () => {
                     <p className="font-medium mb-1">Account Setup Information:</p>
                     <ul className="space-y-1 text-blue-600">
                       <li>• Client will receive an email with login instructions</li>
-                      <li>• Default password: <code className="bg-blue-100 px-1 rounded">Changemetoday1234!</code></li>
-                      <li>• They will be prompted to change password on first login</li>
+                      <li>• A secure temporary password will be generated and shown to you once</li>
+                      <li>• They will be required to change their password on first login</li>
                       <li>• Automatically assigned to you as their trainer</li>
                     </ul>
                   </div>

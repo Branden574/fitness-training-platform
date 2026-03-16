@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
@@ -238,9 +239,9 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Hash the default password
-    const defaultPassword = 'Changemetoday1234!';
-    const hashedPassword = await bcrypt.hash(defaultPassword, 12);
+    // Generate a cryptographically secure random temporary password
+    const tempPassword = crypto.randomBytes(16).toString('base64url');
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
     // Convert fitness level to match database enum
     const fitnessLevelMap: Record<string, 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'> = {
@@ -276,12 +277,12 @@ export async function PUT(request: Request) {
       }
     });
 
-    // Create welcome notification
+    // Create welcome notification (never include passwords in notifications)
     await prisma.notification.create({
       data: {
         userId: newClient.id,
         title: 'Welcome to Your Fitness Journey!',
-        message: `You've been assigned to trainer ${trainer.name}. Login with your email and password: ${defaultPassword}`,
+        message: `You've been assigned to trainer ${trainer.name}. Please check your email for login instructions.`,
         type: 'GENERAL',
         actionUrl: '/client/dashboard'
       }
@@ -291,7 +292,8 @@ export async function PUT(request: Request) {
       id: newClient.id,
       name: newClient.name,
       email: newClient.email,
-      message: 'Client created successfully'
+      tempPassword,
+      message: 'Client created successfully. Share the temporary password securely with the client — they will be required to change it on first login.'
     }, { status: 201 });
     
   } catch (error) {

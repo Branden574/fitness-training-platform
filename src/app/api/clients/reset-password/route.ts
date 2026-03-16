@@ -3,11 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 // POST /api/clients/reset-password - Reset client password (trainer only)
 export async function POST(request: NextRequest) {
   try {
-    
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientId, newPassword } = body;
+    const { clientId } = body;
 
     if (!clientId) {
       return NextResponse.json({ error: 'Client ID is required' }, { status: 400 });
@@ -47,37 +48,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Client is not assigned to you' }, { status: 403 });
     }
 
-    // Use provided password or default
-    const passwordToSet = newPassword || 'Changemetoday1234!';
-    
+    // Generate a cryptographically secure temporary password
+    const tempPassword = crypto.randomBytes(16).toString('base64url');
+
     // Hash the new password
-    const hashedPassword = await bcrypt.hash(passwordToSet, 12);
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
     // Update client password and set passwordChangeRequired to true
-    const updatedClient = await prisma.user.update({
+    await prisma.user.update({
       where: { id: clientId },
       data: {
         password: hashedPassword,
         passwordChangeRequired: true,
         updatedAt: new Date()
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        passwordChangeRequired: true
       }
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Password reset successfully',
-      client: updatedClient,
-      newPassword: passwordToSet // Return the password so trainer can inform client
+      message: 'Password has been reset. Share the temporary password securely with the client — they will be required to change it on next login.',
+      tempPassword
     });
 
   } catch (error) {
-    console.error('❌ Error resetting password:', error);
+    console.error('Error resetting password:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

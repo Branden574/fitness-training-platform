@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,9 +19,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Generate a new password
-    const newPassword = Math.random().toString(36).slice(-8) + '!'; // Random password with special char
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    // Generate a cryptographically secure temporary password
+    const tempPassword = crypto.randomBytes(16).toString('base64url');
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
     // Update the user's password and mark as requiring change
     await prisma.user.update({
@@ -33,10 +32,10 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      newPassword,
-      message: 'Password reset successfully. User must change password on next login.' 
+    return NextResponse.json({
+      success: true,
+      tempPassword,
+      message: 'Password reset successfully. Share the temporary password securely — user must change it on next login.'
     });
   } catch (error) {
     console.error('Password reset error:', error);

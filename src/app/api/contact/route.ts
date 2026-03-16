@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { ContactStatus } from '@prisma/client';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -75,7 +77,15 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    // This endpoint is for admin to view contact submissions
+    // Require authentication - only trainers and admins can view submissions
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !['TRAINER', 'ADMIN'].includes(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     
@@ -99,6 +109,15 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    // Require authentication - only trainers and admins can update submissions
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !['TRAINER', 'ADMIN'].includes(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { id, status } = body;
     

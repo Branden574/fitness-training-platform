@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions);
-    
+
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
@@ -17,45 +17,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
 
-    // Simplified security endpoint - avoid build-time issues
     switch (action) {
       case 'metrics':
         return NextResponse.json({
           success: true,
-          message: 'Security monitoring metrics endpoint available',
-          data: {
-            totalThreats: 0,
-            blockedRequests: 0,
-            rateLimitHits: 0,
-            authFailures: 0,
-            status: 'operational'
-          }
+          message: 'Security monitoring is not yet configured. Integrate a real monitoring service to populate this data.',
+          data: null
         });
 
       case 'summary':
         return NextResponse.json({
           success: true,
-          message: 'Security summary endpoint available',
-          data: {
-            overallStatus: 'secure',
-            activeThreats: 0,
-            lastUpdated: new Date().toISOString()
-          }
+          message: 'Security summary is not yet configured. Integrate a real monitoring service to populate this data.',
+          data: null
         });
 
       case 'run-security-audit':
         return NextResponse.json({
           success: true,
-          message: 'Security audit completed',
-          data: {
-            overallSecurityScore: 95,
-            criticalIssues: 0,
-            highIssues: 0,
-            mediumIssues: 1,
-            lowIssues: 2,
-            status: 'good',
-            timestamp: new Date().toISOString()
-          }
+          message: 'Automated security auditing is not yet configured. Integrate a real security scanning service.',
+          data: null
         });
 
       default:
@@ -79,7 +60,7 @@ export async function POST(request: NextRequest) {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions);
-    
+
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
