@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { useTheme } from '@/components/ThemeProvider';
+import { useSettings } from '@/lib/useSettings';
 import { 
   Calendar, 
   Activity, 
@@ -329,11 +331,13 @@ const TrainerDashboard = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  const { theme, setTheme } = useTheme();
+  const { settings: persistedSettings, updateSetting: updatePersistedSetting, resetSettings: resetPersistedSettings, saveSettings } = useSettings();
   const [userSettings, setUserSettings] = useState({
     notifications: true,
     emailUpdates: true,
     autoApproval: false,
-    theme: 'light',
+    theme: 'light' as string,
     units: 'imperial',
     clientVisibility: 'all'
   });
@@ -1811,8 +1815,26 @@ const TrainerDashboard = () => {
     signOut({ callbackUrl: '/' });
   };
 
+  // Sync persisted settings on load
+  useEffect(() => {
+    setUserSettings(prev => ({
+      ...prev,
+      notifications: persistedSettings.notifications,
+      emailUpdates: persistedSettings.emailUpdates,
+      theme: persistedSettings.theme,
+      units: persistedSettings.units,
+    }));
+  }, [persistedSettings]);
+
   const updateTrainerSetting = (key: string, value: string | boolean) => {
     setUserSettings((prev) => ({ ...prev, [key]: value }));
+    if (key === 'theme') {
+      const t = value as 'light' | 'dark' | 'auto';
+      setTheme(t);
+      updatePersistedSetting('theme', t);
+    } else if (key === 'notifications' || key === 'emailUpdates' || key === 'units') {
+      updatePersistedSetting(key as keyof typeof persistedSettings, value as never);
+    }
   };
 
   const resetTrainerSettings = () => {
@@ -1824,6 +1846,8 @@ const TrainerDashboard = () => {
       units: 'imperial',
       clientVisibility: 'all'
     });
+    resetPersistedSettings();
+    setTheme('light');
   };
 
   const handleGoHome = () => {
@@ -3411,27 +3435,13 @@ const TrainerDashboard = () => {
                             Theme
                           </label>
                           <select
-                            value={userSettings.theme}
+                            value={theme}
                             onChange={(e) => updateTrainerSetting('theme', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black"
                           >
                             <option value="light">Light</option>
                             <option value="dark">Dark</option>
                             <option value="auto">Auto</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2">
-                            Client Data Visibility
-                          </label>
-                          <select
-                            value={userSettings.clientVisibility}
-                            onChange={(e) => updateTrainerSetting('clientVisibility', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black"
-                          >
-                            <option value="all">Show all client data</option>
-                            <option value="summary">Show summary only</option>
-                            <option value="minimal">Show minimal data</option>
                           </select>
                         </div>
                       </div>
@@ -3447,7 +3457,8 @@ const TrainerDashboard = () => {
                       </button>
                       <button
                         onClick={() => {
-                          alert('Trainer settings saved successfully!');
+                          saveSettings();
+                          alert('Settings saved successfully!');
                         }}
                         className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                       >

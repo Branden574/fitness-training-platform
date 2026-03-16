@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+.dark {
+  --background: #0f1117;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,15 +19,70 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ─── Global Dark Mode Overrides ─── */
+/* These apply dark theme colors to common patterns so we don't
+   need to add dark: variants to every class across all pages. */
+
+.dark .bg-gray-50 { background-color: #0f1117 !important; }
+.dark .bg-white { background-color: #1a1d27 !important; }
+.dark .bg-gray-100 { background-color: #1e2130 !important; }
+
+.dark .text-gray-900 { color: #f1f1f1 !important; }
+.dark .text-gray-800 { color: #e0e0e0 !important; }
+.dark .text-gray-700 { color: #c8c8c8 !important; }
+.dark .text-gray-600 { color: #a0a0a0 !important; }
+.dark .text-gray-500 { color: #8a8a8a !important; }
+.dark .text-gray-400 { color: #6e6e6e !important; }
+.dark .text-black { color: #f1f1f1 !important; }
+
+.dark .border-gray-200 { border-color: #2a2d3a !important; }
+.dark .border-gray-300 { border-color: #363a4a !important; }
+.dark .divide-gray-200 > :not(:last-child) { border-color: #2a2d3a !important; }
+
+.dark .shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+.dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.3) !important; }
+.dark .shadow-lg { box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; }
+
+.dark .bg-gray-50.hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-50:hover { background-color: #252838 !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #2a2d3a !important; }
+
+/* Form inputs in dark mode */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1e2130 !important;
+  border-color: #363a4a !important;
+  color: #e0e0e0 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6e6e6e !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #5b6abf !important;
+}
+
+/* Table header backgrounds */
+.dark .bg-gray-50 th,
+.dark thead.bg-gray-50 { background-color: #1e2130 !important; }
+
+/* Keep colored elements visible */
+.dark .bg-blue-50 { background-color: rgba(59,130,246,0.1) !important; }
+.dark .bg-green-50 { background-color: rgba(34,197,94,0.1) !important; }
+.dark .bg-red-50 { background-color: rgba(239,68,68,0.1) !important; }
+.dark .bg-yellow-50,
+.dark .bg-amber-50 { background-color: rgba(245,158,11,0.1) !important; }
+.dark .bg-purple-50 { background-color: rgba(168,85,247,0.1) !important; }
+.dark .bg-indigo-50 { background-color: rgba(99,102,241,0.1) !important; }
+.dark .bg-orange-50 { background-color: rgba(249,115,22,0.1) !important; }

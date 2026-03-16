@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { ReactNode } from 'react';
+import ThemeProvider from './ThemeProvider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -9,12 +10,14 @@ interface ProvidersProps {
 
 export default function Providers({ children }: ProvidersProps) {
   return (
-    <SessionProvider 
+    <SessionProvider
       basePath="/api/auth"
-      refetchInterval={5 * 60} // Refetch session every 5 minutes
-      refetchOnWindowFocus={true} // Refetch when window gains focus
+      refetchInterval={5 * 60}
+      refetchOnWindowFocus={true}
     >
-      {children}
+      <ThemeProvider>
+        {children}
+      </ThemeProvider>
     </SessionProvider>
   );
 }

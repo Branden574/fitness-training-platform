@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useTheme } from "@/components/ThemeProvider";
+import { useSettings } from "@/lib/useSettings";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -205,13 +207,8 @@ const ClientDashboard = () => {
   const [workoutAnalytics, setWorkoutAnalytics] = useState<WorkoutAnalytics | null>(null);
   const [currentWorkoutPage, setCurrentWorkoutPage] = useState(1);
   const workoutsPerPage = 20;
-  const [userSettings, setUserSettings] = useState({
-    notifications: true,
-    emailUpdates: true,
-    theme: 'light',
-    units: 'imperial', // imperial or metric
-    privacy: 'private'
-  });
+  const { theme, setTheme } = useTheme();
+  const { settings: userSettings, updateSetting: updateSettingValue, resetSettings: resetSettingsValues, saveSettings } = useSettings();
   const [nutritionPlans, setNutritionPlans] = useState<NutritionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLogProgressModal, setShowLogProgressModal] = useState(false);
@@ -295,18 +292,18 @@ const ClientDashboard = () => {
   };
 
   const updateSetting = (key: string, value: string | boolean) => {
-    setUserSettings(prev => ({ ...prev, [key]: value }));
-    // Here you could also make an API call to save settings
+    if (key === 'theme') {
+      const t = value as 'light' | 'dark' | 'auto';
+      setTheme(t);
+      updateSettingValue('theme', t);
+    } else {
+      updateSettingValue(key as keyof typeof userSettings, value as never);
+    }
   };
 
   const resetSettings = () => {
-    setUserSettings({
-      notifications: true,
-      emailUpdates: true,
-      theme: 'light',
-      units: 'imperial',
-      privacy: 'private'
-    });
+    resetSettingsValues();
+    setTheme('light');
   };
 
   const handleGoHome = () => {
@@ -1997,7 +1994,7 @@ const ClientDashboard = () => {
                             Theme
                           </label>
                           <select
-                            value={userSettings.theme}
+                            value={theme}
                             onChange={(e) => updateSetting('theme', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                           >
@@ -2009,39 +2006,27 @@ const ClientDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Privacy Settings */}
+                    {/* Privacy Info */}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                         Privacy
                       </h3>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2">
-                            Profile Visibility
-                          </label>
-                          <select
-                            value={userSettings.privacy}
-                            onChange={(e) => updateSetting('privacy', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                          >
-                            <option value="private">Private - Only visible to your trainer</option>
-                            <option value="public">Public - Visible to other users</option>
-                          </select>
-                        </div>
-                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Your profile and data are only visible to your trainer, Brent Martinez. This is a private platform.
+                      </p>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex space-x-4 pt-6 border-t">
+                    <div className="flex space-x-4 pt-6 border-t dark:border-gray-700">
                       <button
                         onClick={resetSettings}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         Reset to Defaults
                       </button>
                       <button
                         onClick={() => {
-                          // Here you would typically save to API
+                          saveSettings();
                           alert('Settings saved successfully!');
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
