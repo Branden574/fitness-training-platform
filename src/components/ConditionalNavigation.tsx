@@ -7,8 +7,9 @@ const ConditionalNavigation = () => {
   const pathname = usePathname();
   
   // Hide main navigation on dashboard pages
-  const shouldHideNavigation = pathname?.startsWith('/trainer/') || 
-                              pathname?.startsWith('/client/dashboard') || 
+  const shouldHideNavigation = pathname?.startsWith('/trainer/') ||
+                              pathname?.startsWith('/client/dashboard') ||
+                              pathname === '/admin' ||
                               pathname?.startsWith('/admin/');
 
   // Only show main navigation on public pages
