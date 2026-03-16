@@ -444,11 +444,24 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    if (existingEntry.userId !== user.id && user.role !== 'TRAINER') {
-      return NextResponse.json(
-        { error: 'Unauthorized to modify this entry' },
-        { status: 403 }
-      );
+    if (existingEntry.userId !== user.id) {
+      // Trainers can only edit entries for their own assigned clients
+      if (user.role === 'TRAINER') {
+        const isMyClient = await prisma.user.findFirst({
+          where: { id: existingEntry.userId, trainerId: user.id },
+        });
+        if (!isMyClient) {
+          return NextResponse.json(
+            { error: 'Unauthorized to modify this entry' },
+            { status: 403 }
+          );
+        }
+      } else if (user.role !== 'ADMIN') {
+        return NextResponse.json(
+          { error: 'Unauthorized to modify this entry' },
+          { status: 403 }
+        );
+      }
     }
 
     // Validate update data

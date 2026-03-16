@@ -25,9 +25,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // HTML-escape user input to prevent injection in email template
+    const escapeHtml = (str: string) =>
+      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+    const safeClientName = escapeHtml(clientName);
+    const safeInviteCode = escapeHtml(inviteCode);
+
     // Get the base URL for the invite link
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const inviteLink = `${baseUrl}/invite/${inviteCode}`;
+    const inviteLink = `${baseUrl}/invite/${encodeURIComponent(inviteCode)}`;
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
@@ -57,7 +64,7 @@ export async function POST(request: NextRequest) {
               <!-- Content -->
               <div style="background: white; padding: 40px 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 24px;">
-                  Welcome, ${clientName}! 👋
+                  Welcome, ${safeClientName}! 👋
                 </h2>
                 
                 <p style="color: #4b5563; line-height: 1.6; margin: 0 0 20px 0; font-size: 16px;">
@@ -81,7 +88,7 @@ export async function POST(request: NextRequest) {
                     Your Invite Code
                   </p>
                   <p style="color: #1f2937; margin: 0; font-size: 24px; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 2px;">
-                    ${inviteCode}
+                    ${safeInviteCode}
                   </p>
                 </div>
 

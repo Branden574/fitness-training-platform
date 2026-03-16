@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
@@ -9,7 +10,22 @@ export async function POST(request: NextRequest) {
     const rl = checkRateLimit(`signup:${ip}`, { maxRequests: 5, windowSeconds: 900 });
     if (!rl.allowed) return rateLimitResponse(rl.resetIn);
 
-    const { name, email, role, fitnessLevel, goals } = await request.json();
+    const { name, email, password, fitnessLevel, goals } = await request.json();
+
+    if (!email || !name || !password) {
+      return NextResponse.json(
+        { error: 'Name, email, and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters' },
+        { status: 400 }
+      );
+    }
 
     // Normalize email to lowercase for consistency
     const normalizedEmail = email.toLowerCase().trim();
@@ -26,33 +42,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user (password hashing would be implemented when adding password field to schema)
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Always create as CLIENT — role escalation must go through admin
     const user = await prisma.user.create({
       data: {
         name,
         email: normalizedEmail,
-        role: role || 'CLIENT',
+        password: hashedPassword,
+        role: 'CLIENT',
       }
     });
 
-    // Create role-specific profiles
-    if (role === 'CLIENT') {
-      await prisma.clientProfile.create({
-        data: {
-          userId: user.id,
-          fitnessLevel: fitnessLevel || 'BEGINNER',
-          fitnessGoals: goals ? JSON.stringify([goals]) : null,
-        }
-      });
-    } else if (role === 'TRAINER') {
-      await prisma.trainer.create({
-        data: {
-          userId: user.id,
-          bio: '',
-          experience: 0,
-        }
-      });
-    }
+    // Create client profile
+    await prisma.clientProfile.create({
+      data: {
+        userId: user.id,
+        fitnessLevel: fitnessLevel || 'BEGINNER',
+        fitnessGoals: goals ? JSON.stringify([goals]) : null,
+      }
+    });
 
     return NextResponse.json(
       { message: 'User created successfully', userId: user.id },

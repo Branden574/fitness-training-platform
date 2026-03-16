@@ -11,13 +11,19 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const sort = searchParams.get('sort');
     const slug = searchParams.get('slug');
-    const admin = searchParams.get('admin');
+    const showAll = searchParams.get('admin') === 'true';
 
     // Build where clause
     const where: Record<string, unknown> = {};
 
-    // Only show active products for public requests
-    if (admin !== 'true') {
+    // Only show inactive products if the user is an authenticated admin/trainer
+    if (showAll) {
+      const session = await getServerSession(authOptions);
+      const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'TRAINER';
+      if (!isAdmin) {
+        where.isActive = true; // Non-admin users always see active only
+      }
+    } else {
       where.isActive = true;
     }
 

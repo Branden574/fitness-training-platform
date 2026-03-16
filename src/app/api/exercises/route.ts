@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
-// Get all available exercises
+// Get all available exercises (public)
 export async function GET() {
   try {
-    
     const exercises = await prisma.exercise.findMany({
       orderBy: [
         { difficulty: 'asc' },
@@ -15,7 +15,6 @@ export async function GET() {
     });
 
     return NextResponse.json(exercises);
-    
   } catch (error) {
     console.error('Get exercises error:', error);
     return NextResponse.json(
@@ -25,16 +24,15 @@ export async function GET() {
   }
 }
 
-// Create a new exercise
+// Create a new exercise (TRAINER/ADMIN only)
 export async function POST(request: Request) {
   try {
-    
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+    if (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -50,16 +48,15 @@ export async function POST(request: Request) {
     const exercise = await prisma.exercise.create({
       data: {
         name,
-        muscleGroups: targetMuscle, // Map targetMuscle to muscleGroups field
+        muscleGroups: targetMuscle,
         difficulty: difficulty || 'BEGINNER',
         instructions: instructions || '',
         equipment: equipment || 'BODYWEIGHT',
-        description: category || 'STRENGTH' // Map category to description for now
+        description: category || 'STRENGTH'
       }
     });
 
     return NextResponse.json(exercise);
-    
   } catch (error) {
     console.error('Create exercise error:', error);
     return NextResponse.json(
@@ -69,16 +66,15 @@ export async function POST(request: Request) {
   }
 }
 
-// Update an existing exercise
+// Update an existing exercise (TRAINER/ADMIN only)
 export async function PUT(request: Request) {
   try {
-    
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+    if (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -95,16 +91,15 @@ export async function PUT(request: Request) {
       where: { id },
       data: {
         name,
-        muscleGroups: targetMuscle, // Map targetMuscle to muscleGroups field
+        muscleGroups: targetMuscle,
         difficulty: difficulty || 'BEGINNER',
         instructions: instructions || '',
         equipment: equipment || 'BODYWEIGHT',
-        description: category || 'STRENGTH' // Map category to description for now
+        description: category || 'STRENGTH'
       }
     });
 
     return NextResponse.json(exercise);
-    
   } catch (error) {
     console.error('Update exercise error:', error);
     return NextResponse.json(
@@ -114,16 +109,15 @@ export async function PUT(request: Request) {
   }
 }
 
-// Delete an exercise
+// Delete an exercise (TRAINER/ADMIN only)
 export async function DELETE(request: Request) {
   try {
-    
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+    if (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -153,7 +147,6 @@ export async function DELETE(request: Request) {
     });
 
     return NextResponse.json({ message: 'Exercise deleted successfully' });
-    
   } catch (error) {
     console.error('Delete exercise error:', error);
     return NextResponse.json(

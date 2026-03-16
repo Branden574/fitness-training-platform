@@ -186,10 +186,8 @@ export async function POST(request: Request) {
     }
     
     return NextResponse.json(
-      { 
+      {
         message: 'Internal server error',
-        error: errorObj?.message || 'Unknown error',
-        details: process.env.NODE_ENV === 'development' ? errorObj?.stack : undefined
       },
       { status: 500 }
     );

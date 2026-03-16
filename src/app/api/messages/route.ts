@@ -118,6 +118,28 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = messageSchema.parse(body);
 
+    // Validate sender-receiver relationship
+    const sender = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, trainerId: true } });
+    const receiver = await prisma.user.findUnique({ where: { id: validatedData.receiverId }, select: { id: true, role: true, trainerId: true } });
+
+    if (!receiver) {
+      return NextResponse.json({ message: 'Recipient not found' }, { status: 404 });
+    }
+
+    // Clients can only message their assigned trainer
+    if (sender?.role === 'CLIENT') {
+      if (sender.trainerId !== validatedData.receiverId) {
+        return NextResponse.json({ message: 'You can only message your assigned trainer' }, { status: 403 });
+      }
+    }
+
+    // Trainers can only message their assigned clients or admins
+    if (sender?.role === 'TRAINER') {
+      if (receiver.role === 'CLIENT' && receiver.trainerId !== session.user.id) {
+        return NextResponse.json({ message: 'You can only message your assigned clients' }, { status: 403 });
+      }
+    }
+
     const message = await prisma.message.create({
       data: {
         senderId: session.user.id,

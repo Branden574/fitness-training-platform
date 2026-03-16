@@ -8,19 +8,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     // Public: fetch order by Stripe session ID (for checkout success page)
+    // Only allow access within 30 minutes of order creation to limit exposure
     const sessionId = searchParams.get('session_id');
     if (sessionId) {
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
       const order = await prisma.order.findFirst({
-        where: { stripeSessionId: sessionId },
+        where: {
+          stripeSessionId: sessionId,
+          createdAt: { gte: thirtyMinutesAgo },
+        },
         include: { items: true },
       });
       if (!order) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
-      // Return limited data for public access
+      // Return limited data — no email for public access
       return NextResponse.json({
         orderNumber: order.orderNumber,
-        customerEmail: order.customerEmail,
         pickupDate: order.pickupDate,
         pickupTime: order.pickupTime,
         pickupName: order.pickupName,

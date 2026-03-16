@@ -143,6 +143,14 @@ export async function POST(request: NextRequest) {
     const actualTrainerId = isTrainerCreating ? user.id : trainerId;
     const actualClientId = isTrainerCreating ? (clientId || user.id) : user.id;
 
+    // Clients can only create appointments with their assigned trainer
+    if (!isTrainerCreating && user.trainerId && user.trainerId !== actualTrainerId) {
+      return NextResponse.json(
+        { error: 'You can only book appointments with your assigned trainer' },
+        { status: 403 }
+      );
+    }
+
     // Validate required fields
     if (!actualTrainerId || !title || !type || !startTime || !endTime || !duration) {
       return NextResponse.json(
