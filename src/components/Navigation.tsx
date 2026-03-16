@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Menu, X, Dumbbell, TrendingUp } from 'lucide-react';
+import { Menu, X, Dumbbell, TrendingUp, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
@@ -27,6 +27,7 @@ const Navigation = () => {
     { href: '/', label: 'Home' },
     { href: '/about', label: 'About' },
     { href: '/programs', label: 'Programs' },
+    { href: '/shop', label: 'Shop', icon: ShoppingBag },
   ];
 
   const navLinks = session

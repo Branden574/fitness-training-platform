@@ -636,12 +636,14 @@ model Order {
   fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
   subtotal          Int         // Cents
   tax               Int         @default(0)
-  shipping          Int         @default(0)
   total             Int         // Cents
   stripeSessionId   String?     @unique
   stripePaymentIntentId String? @unique
   notes             String?
-  shippingAddress   Json?
+  pickupDate        DateTime?
+  pickupTime        String?       // e.g. "10:00 AM - 11:00 AM"
+  pickupName        String?       // Name for pickup
+  pickupPhone       String?       // Phone for pickup contact
   items             OrderItem[]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -671,8 +673,8 @@ enum OrderStatus {
   PENDING
   CONFIRMED
   PROCESSING
-  SHIPPED
-  DELIVERED
+  READY_FOR_PICKUP
+  PICKED_UP
   CANCELLED
   REFUNDED
 }
@@ -687,7 +689,6 @@ enum PaymentStatus {
 
 enum FulfillmentStatus {
   UNFULFILLED
-  PARTIALLY_FULFILLED
-  FULFILLED
-  RETURNED
+  READY_FOR_PICKUP
+  PICKED_UP
 }
