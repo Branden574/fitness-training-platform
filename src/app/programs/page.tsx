@@ -1,340 +1,252 @@
-'use client';
-
-import { motion } from 'framer-motion';
-import { Check, Clock, Users, Star, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import OptimizedImage from '@/components/OptimizedImage';
-import { imagePlaceholders } from '@/lib/imagePlaceholders';
+import { Check, ArrowRight, Clock, Users, Zap } from 'lucide-react';
 
 interface Program {
   id: string;
   name: string;
   subtitle: string;
   description: string;
-  duration: string;
-  sessions: string;
-  maxClients: string;
   price: string;
+  priceDetail?: string;
+  duration: string;
+  format: string;
   features: string[];
-  bestFor: string[];
-  image: string;
   popular?: boolean;
+  bestValue?: boolean;
 }
 
 const programs: Program[] = [
   {
     id: 'personal-training',
     name: '1-on-1 Personal Training',
-    subtitle: 'In-Person Training (Fresno Clients Only)',
-    description: 'Customized workouts designed for your goals with hands-on coaching and proper form & technique guidance. Best for those who want maximum attention and accountability.',
-    duration: '60 minutes',
-    sessions: 'Flexible scheduling',
-    maxClients: '1 client',
-    price: '$75/session',
-    image: imagePlaceholders.training,
-    popular: false,
+    subtitle: 'In-Person (Fresno Only)',
+    description: 'Customized workouts with hands-on coaching, form correction, and maximum accountability.',
+    price: '$75',
+    priceDetail: 'per session',
+    duration: '60 min sessions',
+    format: '1 client',
     features: [
-      'Customized workouts designed for your goals',
-      'Hands-on coaching with proper form & technique',
+      'Customized workouts for your goals',
+      'Hands-on coaching & form correction',
       'Flexible scheduling',
-      'Maximum attention and accountability'
+      'Maximum personal attention',
     ],
-    bestFor: [
-      'Maximum attention needed',
-      'Form correction important',
-      'Flexible schedule required',
-      'Fresno area clients'
-    ]
   },
   {
     id: 'semi-private',
     name: 'Semi-Private Training',
-    subtitle: 'In-Person Training (2–4 clients)',
-    description: 'Train with a small group for extra motivation while still getting personal guidance. Cost-effective community-style environment that\'s fun and results-focused.',
-    duration: '60 minutes',
-    sessions: 'Group sessions',
-    maxClients: '2-4 clients',
-    price: '$50/session per person',
-    image: imagePlaceholders.workout,
+    subtitle: 'In-Person (2-4 clients)',
+    description: 'Small group training with personal guidance. All the benefits at a reduced cost.',
+    price: '$50',
+    priceDetail: 'per session / person',
+    duration: '60 min sessions',
+    format: '2-4 clients',
     features: [
-      'Train with a small group for extra motivation',
-      'Cost-effective while still getting personal guidance',
-      'Fun, community-style environment',
-      'Personal attention in group setting'
+      'Small group for extra motivation',
+      'Personal guidance in group setting',
+      'Cost-effective training option',
+      'Community-style environment',
     ],
-    bestFor: [
-      'Friends or training partners',
-      'Want results together',
-      'Cost-effective option',
-      'Community motivation'
-    ]
   },
   {
     id: 'month-to-month',
     name: 'Month-to-Month',
     subtitle: 'Online Coaching',
-    description: 'Flexible, no long-term contract option. Perfect if you want to try things out or need flexibility.',
+    description: 'Flexible, no long-term contract. Perfect to try things out or if you need flexibility.',
+    price: '$200',
+    priceDetail: 'per month',
     duration: 'Monthly',
-    sessions: '2x weekly check-ins',
-    maxClients: 'Remote',
-    price: '$200/month',
-    image: imagePlaceholders.equipment,
+    format: 'Remote',
     features: [
-      'Flexible, no long-term contract',
       'Custom training & nutrition plan',
       '2x weekly accountability check-ins',
-      'Try before longer commitment'
-    ],
-    bestFor: [
-      'Want to try things out',
-      'Need flexibility',
       'No long-term commitment',
-      'Budget-conscious start'
-    ]
+      'Full app access',
+    ],
   },
   {
     id: 'three-month',
     name: '3-Month Package',
-    subtitle: 'Most Popular Online Coaching',
-    description: 'Save $100 compared to month-to-month with locked-in consistency & structure. Best for building momentum and sticking with it.',
+    subtitle: 'Online Coaching',
+    description: 'Save $100 vs month-to-month. Locked-in consistency and structure for real momentum.',
+    price: '$167',
+    priceDetail: 'per month ($500 total)',
     duration: '3 months',
-    sessions: '2x weekly check-ins',
-    maxClients: 'Remote',
-    price: '$500 total ($167/month)',
-    image: imagePlaceholders.training,
+    format: 'Remote',
     popular: true,
     features: [
-      'Save $100 compared to month-to-month',
-      'Locked-in consistency & structure',
+      'Save $100 vs month-to-month',
       'Custom training & nutrition plan',
-      '2x weekly accountability check-ins'
+      '2x weekly accountability check-ins',
+      'Full app access',
     ],
-    bestFor: [
-      'Building momentum',
-      'Sticking with routine',
-      'Structured approach',
-      'Best value option'
-    ]
   },
   {
     id: 'six-month',
     name: '6-Month Package',
-    subtitle: 'Best Value Online Coaching',
-    description: 'Save $300 compared to month-to-month for serious, long-term results. Includes monthly strategy calls to adjust & optimize your plan.',
+    subtitle: 'Online Coaching',
+    description: 'Save $300 vs month-to-month. Serious commitment with monthly strategy calls to optimize your plan.',
+    price: '$150',
+    priceDetail: 'per month ($900 total)',
     duration: '6 months',
-    sessions: '2x weekly check-ins + monthly calls',
-    maxClients: 'Remote',
-    price: '$900 total ($150/month)',
-    image: imagePlaceholders.studio,
+    format: 'Remote',
+    bestValue: true,
     features: [
-      'Save $300 compared to month-to-month',
-      'Serious, long-term results focus',
+      'Save $300 vs month-to-month',
       'Custom training & nutrition plan',
       '2x weekly accountability check-ins',
-      'Monthly strategy call to adjust & optimize'
+      'Monthly strategy call',
+      'Full app access',
     ],
-    bestFor: [
-      'Committed to transformation',
-      'Long-term results focus',
-      'Maximum value',
-      'Comprehensive support'
-    ]
-  }
+  },
 ];
 
-const ProgramsPage = () => {
+export default function ProgramsPage() {
   return (
-    <main className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-blue-50 to-purple-50">
+    <main>
+      {/* Hero */}
+      <section className="pt-28 pb-16 bg-surface-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-              Training Programs
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-brand-600 font-semibold text-sm tracking-wide uppercase mb-3">Programs &amp; Pricing</p>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-surface-900 leading-tight mb-6">
+              Find the right program for your goals.
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Choose the perfect training program tailored to your goals, schedule, and fitness level. 
-              Each program is designed by Brent Martinez to deliver maximum results.
+            <p className="text-lg text-surface-500 leading-relaxed">
+              Every program is designed by Brent Martinez and tailored to your specific goals,
+              schedule, and fitness level. Train in-person in Fresno or online from anywhere.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
-              <div className="bg-white px-6 py-3 rounded-full shadow-sm">
-                <span className="text-sm font-medium text-blue-600">✓ NASM Certified</span>
-              </div>
-              <div className="bg-white px-6 py-3 rounded-full shadow-sm">
-                <span className="text-sm font-medium text-purple-600">✓ Hundreds of Clients</span>
-              </div>
-              <div className="bg-white px-6 py-3 rounded-full shadow-sm">
-                <span className="text-sm font-medium text-green-600">✓ Proven Results</span>
-              </div>
-            </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Programs Grid */}
+      {/* In-Person Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {programs.map((program, index) => (
-              <motion.div
-                key={program.id}
-                className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${
-                  program.popular ? 'ring-2 ring-blue-500' : ''
-                }`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-              >
-                {program.popular && (
-                  <div className="absolute top-4 right-4 z-10">
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Most Popular
-                    </div>
-                  </div>
-                )}
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 rounded-lg bg-surface-900 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-surface-900">In-Person Training</h2>
+            <span className="text-sm text-surface-500 ml-auto">Fresno, CA</span>
+          </div>
 
-                {/* Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <OptimizedImage
-                    src={program.image}
-                    alt={program.name}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute bottom-4 left-4 text-white">
-                    <h3 className="text-2xl font-bold">{program.name}</h3>
-                    <p className="text-blue-200">{program.subtitle}</p>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    {program.description}
-                  </p>
-
-                  {/* Program Details */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm text-gray-600">{program.duration}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-purple-500" />
-                      <span className="text-sm text-gray-600">{program.maxClients}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Star className="w-4 h-4 text-green-500" />
-                      <span className="text-sm text-gray-600">{program.sessions}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-blue-600">{program.price}</span>
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-800 mb-3">Includes:</h4>
-                    <ul className="space-y-2">
-                      {program.features.slice(0, 4).map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-center space-x-2">
-                          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-600">{feature}</span>
-                        </li>
-                      ))}
-                      {program.features.length > 4 && (
-                        <li className="text-sm text-blue-600 font-medium">
-                          +{program.features.length - 4} more features
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-
-                  {/* Best For */}
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-800 mb-3">Best For:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {program.bestFor.map((item, itemIndex) => (
-                        <span 
-                          key={itemIndex}
-                          className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* CTA Button */}
-                  <Link href="/contact">
-                    <motion.button
-                      className={`w-full py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2 ${
-                        program.popular
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <span>Get Started</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </motion.button>
-                  </Link>
-                </div>
-              </motion.div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {programs.filter(p => p.id === 'personal-training' || p.id === 'semi-private').map((program) => (
+              <ProgramCard key={program.id} program={program} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Consultation CTA */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl font-bold text-white sm:text-4xl mb-6">
-              Not Sure Which Program is Right for You?
-            </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Schedule a free consultation with Brent to discuss your goals and find the perfect program for your needs.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/contact">
-                <motion.button 
-                  className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-200"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Schedule Free Consultation
-                </motion.button>
-              </Link>
-              <Link href="/about">
-                <motion.button 
-                  className="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-xl hover:bg-white hover:text-blue-600 transition-all duration-200"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Learn About Brent
-                </motion.button>
-              </Link>
+      {/* Online Section */}
+      <section className="py-20 bg-surface-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
             </div>
-          </motion.div>
+            <h2 className="text-2xl font-bold text-surface-900">Online Coaching</h2>
+            <span className="text-sm text-surface-500 ml-auto">Train from anywhere</span>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {programs.filter(p => !['personal-training', 'semi-private'].includes(p.id)).map((program) => (
+              <ProgramCard key={program.id} program={program} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 bg-surface-900">
+        <div className="max-w-3xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+            Not sure which program is right for you?
+          </h2>
+          <p className="text-surface-400 mb-6">
+            Schedule a free consultation with Brent to discuss your goals and find the perfect fit.
+          </p>
+          <Link
+            href="/contact"
+            className="inline-flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-6 py-3 rounded-btn hover:bg-brand-700 transition-colors"
+          >
+            Schedule Free Consultation <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
     </main>
   );
-};
+}
 
-export default ProgramsPage;
+function ProgramCard({ program }: { program: Program }) {
+  return (
+    <div
+      className={`relative bg-white border rounded-card p-6 flex flex-col transition-all duration-200 hover:shadow-elevated ${
+        program.popular
+          ? 'border-brand-300 ring-1 ring-brand-200'
+          : program.bestValue
+          ? 'border-emerald-300 ring-1 ring-emerald-200'
+          : 'border-surface-200 hover:border-surface-300'
+      }`}
+    >
+      {/* Badge */}
+      {(program.popular || program.bestValue) && (
+        <div className="absolute -top-3 left-6">
+          <span
+            className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full ${
+              program.popular
+                ? 'bg-brand-600 text-white'
+                : 'bg-emerald-600 text-white'
+            }`}
+          >
+            {program.popular ? 'Most Popular' : 'Best Value'}
+          </span>
+        </div>
+      )}
+
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-surface-900">{program.name}</h3>
+        <p className="text-sm text-surface-500">{program.subtitle}</p>
+      </div>
+
+      <div className="mb-4">
+        <span className="text-3xl font-bold text-surface-900">{program.price}</span>
+        {program.priceDetail && (
+          <span className="text-sm text-surface-500 ml-1">/{program.priceDetail}</span>
+        )}
+      </div>
+
+      <p className="text-sm text-surface-600 leading-relaxed mb-5">{program.description}</p>
+
+      <div className="flex gap-4 text-xs text-surface-500 mb-5 pb-5 border-b border-surface-100">
+        <span className="inline-flex items-center gap-1">
+          <Clock className="w-3.5 h-3.5" /> {program.duration}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Users className="w-3.5 h-3.5" /> {program.format}
+        </span>
+      </div>
+
+      <ul className="space-y-2.5 mb-6 flex-1">
+        {program.features.map((f) => (
+          <li key={f} className="flex items-start gap-2 text-sm text-surface-600">
+            <Check className="w-4 h-4 text-brand-600 mt-0.5 shrink-0" />
+            {f}
+          </li>
+        ))}
+      </ul>
+
+      <Link
+        href="/contact"
+        className={`inline-flex items-center justify-center gap-2 w-full font-semibold py-2.5 rounded-btn transition-colors text-sm ${
+          program.popular
+            ? 'bg-brand-600 text-white hover:bg-brand-700'
+            : 'bg-surface-100 text-surface-700 hover:bg-surface-200'
+        }`}
+      >
+        Get Started <ArrowRight className="w-4 h-4" />
+      </Link>
+    </div>
+  );
+}
