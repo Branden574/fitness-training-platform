@@ -99,29 +99,29 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+      name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 30 * 24 * 60 * 60 // 30 days
       }
     },
     callbackUrl: {
-      name: process.env.NODE_ENV === 'production' ? `__Secure-next-auth.callback-url` : `next-auth.callback-url`,
+      name: `next-auth.callback-url`,
       options: {
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 30 * 24 * 60 * 60
       }
     },
     csrfToken: {
-      name: process.env.NODE_ENV === 'production' ? `__Host-next-auth.csrf-token` : `next-auth.csrf-token`,
+      name: `next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 30 * 24 * 60 * 60

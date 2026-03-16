@@ -755,6 +755,9 @@ function UserTable({
                 {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
               </td>
               <td className="px-5 py-3">
+                {user.role === 'ADMIN' ? (
+                  <span className="text-xs text-gray-400">Protected account</span>
+                ) : (
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => onResetPassword(user.id, user.name || user.email)}
@@ -779,6 +782,7 @@ function UserTable({
                     Delete
                   </button>
                 </div>
+                )}
               </td>
             </tr>
           ))}

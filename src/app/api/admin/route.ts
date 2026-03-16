@@ -122,6 +122,15 @@ export async function DELETE(request: Request) {
       );
     }
 
+    // Prevent deletion of admin accounts
+    const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (targetUser?.role === 'ADMIN') {
+      return NextResponse.json(
+        { message: 'Cannot delete admin accounts' },
+        { status: 403 }
+      );
+    }
+
     // Delete user and all related data (CASCADE should handle this)
     await prisma.user.delete({
       where: { id: userId },
