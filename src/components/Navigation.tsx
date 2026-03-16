@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Menu, X, Dumbbell, TrendingUp, ShoppingBag } from 'lucide-react';
+import { Menu, X, TrendingUp, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 
 const Navigation = () => {
@@ -51,9 +52,13 @@ const Navigation = () => {
           <div className="flex items-center justify-between h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#6366f1] rounded-lg flex items-center justify-center">
-                <Dumbbell className="w-5 h-5 text-white" />
-              </div>
+              <Image
+                src="/images/bm-logo.png"
+                alt="Brent Martinez Fitness"
+                width={40}
+                height={40}
+                className="w-10 h-10 object-contain"
+              />
               <span className="text-lg font-semibold text-white">
                 Brent Martinez Fitness
               </span>
