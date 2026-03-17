@@ -4,6 +4,7 @@ import HeroSection from "@/components/HeroSection";
 import { Phone, Mail, MapPin, ArrowRight, CheckCircle2, Star, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import HomeAnimations from "@/components/HomeAnimations";
+import FloatingScene from "@/components/FloatingScene";
 
 const services = [
   {
@@ -52,6 +53,7 @@ export default function Home() {
   return (
     <main className="bg-[#0f1219]">
       <HeroSection />
+      <FloatingScene />
       <HomeAnimations
         services={services}
         results={results}

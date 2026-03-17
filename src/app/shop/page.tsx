@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, SlidersHorizontal, ShoppingBag, Tag, Package } from 'lucide-react';
 import { formatPrice } from '@/lib/cartUtils';
+import { FadeUp, StaggerContainer, StaggerItem, BlurReveal } from '@/components/ScrollAnimations';
 
 interface Product {
   id: string;
@@ -89,13 +90,17 @@ export default function ShopPage() {
       <section className="pt-28 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
-            <p className="text-[#6366f1] font-semibold text-sm tracking-wide uppercase mb-2">Shop</p>
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-4">
-              Supplements &amp; Products
-            </h1>
-            <p className="text-lg text-[#9ca3af]">
-              Hand-picked supplements and fitness products recommended by Brent. Available for pickup at Synergy Personal Training in Fresno.
-            </p>
+            <FadeUp>
+              <p className="text-[#6366f1] font-semibold text-sm tracking-wide uppercase mb-2">Shop</p>
+              <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-4">
+                Supplements &amp; Products
+              </h1>
+            </FadeUp>
+            <FadeUp delay={0.15}>
+              <p className="text-lg text-[#9ca3af]">
+                Hand-picked supplements and fitness products recommended by Brent. Available for pickup at Synergy Personal Training in Fresno.
+              </p>
+            </FadeUp>
           </div>
         </div>
       </section>
@@ -104,15 +109,19 @@ export default function ShopPage() {
       {featuredProducts.length > 0 && (
         <section className="pb-12 border-b border-[#2d3548]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2 mb-6">
-              <Tag className="w-4 h-4 text-[#818cf8]" />
-              <h2 className="text-lg font-semibold text-white">Featured</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <FadeUp>
+              <div className="flex items-center gap-2 mb-6">
+                <Tag className="w-4 h-4 text-[#818cf8]" />
+                <h2 className="text-lg font-semibold text-white">Featured</h2>
+              </div>
+            </FadeUp>
+            <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {featuredProducts.slice(0, 4).map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <StaggerItem key={product.id}>
+                  <ProductCard product={product} />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerContainer>
           </div>
         </section>
       )}
@@ -121,7 +130,7 @@ export default function ShopPage() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <FadeUp><div className="flex flex-col sm:flex-row gap-4 mb-8">
             <form onSubmit={handleSearch} className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4b5563]" />
@@ -156,7 +165,7 @@ export default function ShopPage() {
                 <option value="name">Name A-Z</option>
               </select>
             </div>
-          </div>
+          </div></FadeUp>
 
           {/* Products Grid */}
           {loading ? (
@@ -181,27 +190,31 @@ export default function ShopPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {allProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <StaggerItem key={product.id}>
+                  <ProductCard product={product} />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerContainer>
           )}
         </div>
       </section>
 
       {/* Pickup Info */}
       <section className="py-12 border-t border-[#2d3548]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-xl font-bold text-white mb-3">Pickup Only</h2>
-          <p className="text-[#9ca3af] mb-4">
-            All orders are available for pickup at Synergy Personal Training.
-            Select your preferred pickup time during checkout.
-          </p>
-          <p className="text-sm text-[#6b7280]">
-            4774 N Blackstone Ave, Fresno, CA 93726 &middot; Mon-Fri 5:00 AM - 8:00 PM
-          </p>
-        </div>
+        <BlurReveal>
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-xl font-bold text-white mb-3">Pickup Only</h2>
+            <p className="text-[#9ca3af] mb-4">
+              All orders are available for pickup at Synergy Personal Training.
+              Select your preferred pickup time during checkout.
+            </p>
+            <p className="text-sm text-[#6b7280]">
+              4774 N Blackstone Ave, Fresno, CA 93726 &middot; Mon-Fri 5:00 AM - 8:00 PM
+            </p>
+          </div>
+        </BlurReveal>
       </section>
     </main>
   );

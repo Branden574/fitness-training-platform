@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Dumbbell, Calendar, Award, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -40,12 +40,17 @@ export default function HeroSection() {
     return () => clearInterval(timer);
   }, [next]);
 
+  const { scrollY } = useScroll();
+  const bgY = useTransform(scrollY, [0, 600], ['0%', '25%']);
+  const textY = useTransform(scrollY, [0, 600], ['0%', '10%']);
+  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0]);
+
   return (
     <section className="relative bg-[#0f1219]">
       {/* ── Hero Area ── */}
       <div className="relative min-h-[90vh] flex items-center overflow-hidden">
         {/* Background slideshow */}
-        <div className="absolute inset-0">
+        <motion.div className="absolute inset-0" style={{ y: bgY }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={current}
@@ -67,10 +72,10 @@ export default function HeroSection() {
           {/* Gradient overlay — stronger on left for text readability */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#0f1219] via-[#0f1219]/70 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0f1219] via-transparent to-[#0f1219]/30" />
-        </div>
+        </motion.div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-32 w-full">
+        <motion.div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-32 w-full" style={{ y: textY, opacity: heroOpacity }}>
           <motion.div
             className="max-w-xl"
             initial={{ opacity: 0, y: 30 }}
@@ -122,7 +127,7 @@ export default function HeroSection() {
               </Link>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Carousel dots — bottom right */}
         <div className="absolute bottom-6 right-8 lg:right-12 z-10 flex gap-2">

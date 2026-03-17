@@ -1,9 +1,11 @@
 'use client';
 
+import { useRef } from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import ContactForm from "@/components/ContactForm";
 import { Phone, Mail, MapPin, ArrowRight, CheckCircle2, Star, ChevronRight } from "lucide-react";
+import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   FadeUp,
   FadeLeft,
@@ -29,6 +31,43 @@ interface Testimonial {
   quote: string;
   name: string;
   detail: string;
+}
+
+function GallerySection({ results }: { results: Result[] }) {
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: galleryRef,
+    offset: ['start end', 'end start']
+  });
+  const y0 = useTransform(scrollYProgress, [0, 1], ['0%', '-14%']);
+  const y1 = useTransform(scrollYProgress, [0, 1], ['0%', '-6%']);
+  const y2 = useTransform(scrollYProgress, [0, 1], ['0%', '-20%']);
+  const y3 = useTransform(scrollYProgress, [0, 1], ['0%', '-9%']);
+  const yOffsets = [y0, y1, y2, y3];
+
+  return (
+    <div ref={galleryRef} className="relative grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {results.map((r, i) => (
+        <motion.div
+          key={i}
+          className="relative aspect-[3/4] rounded-xl overflow-hidden group"
+          style={{ y: yOffsets[i] }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.7, delay: i * 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+        >
+          <Image
+            src={r.image}
+            alt={r.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </motion.div>
+      ))}
+    </div>
+  );
 }
 
 export default function HomeAnimations({
@@ -61,7 +100,14 @@ export default function HomeAnimations({
           <StaggerContainer className="grid md:grid-cols-3 gap-6" staggerDelay={0.15}>
             {services.map((svc) => (
               <StaggerItem key={svc.title}>
-                <div className="group bg-[#1e2433] border border-[#2d3548] rounded-xl p-6 hover:border-[#6366f1]/40 hover:shadow-lg hover:shadow-[#6366f1]/5 transition-all duration-300 h-full">
+                <motion.div
+                  className="group bg-[#1e2433] border border-[#2d3548] rounded-xl p-6 hover:border-[#6366f1]/40 hover:shadow-lg hover:shadow-[#6366f1]/5 transition-all duration-300 h-full"
+                  style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
+                  initial={{ opacity: 0, rotateX: 20, y: 50 }}
+                  whileInView={{ opacity: 1, rotateX: 0, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.75, ease: [0.25, 0.4, 0.25, 1] }}
+                >
                   <h3 className="text-lg font-semibold text-white mb-2">{svc.title}</h3>
                   <p className="text-sm text-[#9ca3af] leading-relaxed mb-5">{svc.description}</p>
                   <div className="flex items-center justify-between">
@@ -73,7 +119,7 @@ export default function HomeAnimations({
                       Learn more <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
-                </div>
+                </motion.div>
               </StaggerItem>
             ))}
           </StaggerContainer>
@@ -145,21 +191,7 @@ export default function HomeAnimations({
               </p>
             </div>
           </FadeUp>
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-4" staggerDelay={0.12}>
-            {results.map((r, i) => (
-              <StaggerItem key={i}>
-                <div className="relative aspect-[3/4] rounded-xl overflow-hidden group">
-                  <Image
-                    src={r.image}
-                    alt={r.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+          <GallerySection results={results} />
         </div>
       </section>
 
@@ -177,7 +209,22 @@ export default function HomeAnimations({
           <StaggerContainer className="grid md:grid-cols-3 gap-6" staggerDelay={0.15}>
             {testimonials.map((t, i) => (
               <StaggerItem key={i}>
-                <div className="bg-[#1e2433] border border-[#2d3548] rounded-xl p-6 h-full hover:border-[#6366f1]/30 transition-colors duration-300">
+                <motion.div
+                  className="bg-[#1e2433] border border-[#2d3548] rounded-xl p-6 h-full cursor-default"
+                  style={{ perspective: '800px', transformStyle: 'preserve-3d' }}
+                  whileHover={{
+                    rotateX: -4,
+                    rotateY: 6,
+                    scale: 1.025,
+                    borderColor: 'rgba(99, 102, 241, 0.35)',
+                    transition: { duration: 0.25, ease: 'easeOut' }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+                >
                   <div className="flex gap-0.5 mb-4">
                     {[...Array(5)].map((_, j) => (
                       <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
@@ -188,7 +235,7 @@ export default function HomeAnimations({
                     <p className="font-semibold text-white">{t.name}</p>
                     <p className="text-sm text-[#6b7280]">{t.detail}</p>
                   </div>
-                </div>
+                </motion.div>
               </StaggerItem>
             ))}
           </StaggerContainer>
