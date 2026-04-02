@@ -44,34 +44,94 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
     if (detectedRef.current) return;
     detectedRef.current = true;
     setLookingUp(true);
+    setError(null);
 
     try {
-      const response = await fetch(
-        `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
-      );
-      const data = await response.json();
+      // Try 1: Open Food Facts
+      try {
+        const offRes = await fetch(
+          `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+        const offData = await offRes.json();
 
-      if (data.status === 1 && data.product) {
-        const product = data.product;
-        const nutriments = product.nutriments || {};
-        const servingSize = product.serving_quantity || 100;
-        const servingUnit = product.serving_quantity ? 'serving' : 'grams';
-        const ratio = servingSize / 100;
+        if (offData.status === 1 && offData.product?.product_name) {
+          const p = offData.product;
+          const n = p.nutriments || {};
+          const servingSize = p.serving_quantity || 100;
+          const ratio = servingSize / 100;
+          const cal100 = n['energy-kcal_100g'] || (n.energy_100g || 0) / 4.184;
 
-        onResult({
-          name: product.product_name || product.product_name_en || 'Unknown Product',
-          calories: Math.round((nutriments['energy-kcal_100g'] || (nutriments.energy_100g || 0) / 4.184) * ratio),
-          protein: Math.round((nutriments.proteins_100g || 0) * ratio * 10) / 10,
-          carbs: Math.round((nutriments.carbohydrates_100g || 0) * ratio * 10) / 10,
-          fat: Math.round((nutriments.fat_100g || 0) * ratio * 10) / 10,
-          servingSize,
-          servingUnit,
-        });
-        stopCamera();
-      } else {
-        setError('Product not found in database. Try manual entry.');
-        detectedRef.current = false;
-      }
+          if (cal100 > 0 || n.proteins_100g > 0) {
+            onResult({
+              name: p.product_name,
+              calories: Math.round(cal100 * ratio),
+              protein: Math.round((n.proteins_100g || 0) * ratio * 10) / 10,
+              carbs: Math.round((n.carbohydrates_100g || 0) * ratio * 10) / 10,
+              fat: Math.round((n.fat_100g || 0) * ratio * 10) / 10,
+              servingSize,
+              servingUnit: p.serving_quantity ? 'serving' : 'g',
+            });
+            stopCamera();
+            return;
+          }
+        }
+      } catch {}
+
+      // Try 2: USDA FoodData Central (search by UPC/GTIN)
+      try {
+        const usdaKey = 'DEMO_KEY'; // Server-side key is used for regular search; client-side uses DEMO_KEY for barcode
+        const usdaRes = await fetch(
+          `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}&query=${barcode}&dataType=Branded&pageSize=3`,
+          { signal: AbortSignal.timeout(6000) }
+        );
+        const usdaData = await usdaRes.json();
+
+        if (usdaData.foods && usdaData.foods.length > 0) {
+          const food = usdaData.foods[0];
+          const nutrients = food.foodNutrients || [];
+          const getVal = (id: number) => nutrients.find((n: any) => n.nutrientId === id)?.value || 0;
+          const servingSize = food.servingSize || 100;
+          const ratio = servingSize / 100;
+
+          onResult({
+            name: food.description || 'Unknown Product',
+            calories: Math.round(getVal(1008) * ratio),
+            protein: Math.round(getVal(1003) * ratio * 10) / 10,
+            carbs: Math.round(getVal(1005) * ratio * 10) / 10,
+            fat: Math.round(getVal(1004) * ratio * 10) / 10,
+            servingSize,
+            servingUnit: food.servingSizeUnit || 'g',
+          });
+          stopCamera();
+          return;
+        }
+      } catch {}
+
+      // Try 3: Use our own food search API as last resort
+      try {
+        const searchRes = await fetch(`/api/food-search?q=${barcode}&source=all`);
+        const searchData = await searchRes.json();
+
+        if (searchData.results && searchData.results.length > 0) {
+          const food = searchData.results[0];
+          onResult({
+            name: food.name,
+            calories: food.calories,
+            protein: food.protein,
+            carbs: food.carbs,
+            fat: food.fat,
+            servingSize: food.servingSize,
+            servingUnit: food.servingUnit,
+          });
+          stopCamera();
+          return;
+        }
+      } catch {}
+
+      // All sources failed
+      setError(`Product not found for barcode ${barcode}. Try searching by name instead.`);
+      detectedRef.current = false;
     } catch {
       setError('Failed to look up product. Check your connection.');
       detectedRef.current = false;
