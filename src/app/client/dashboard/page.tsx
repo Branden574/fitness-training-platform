@@ -25,6 +25,8 @@ import NotificationSystem from "@/components/NotificationSystem";
 import LogProgressModal from "@/components/LogProgressModal";
 import FoodEntryModal from "@/components/FoodEntryModal";
 import ChatPanel from "@/components/ChatPanel";
+import WorkoutLogModal from "@/components/WorkoutLogModal";
+import type { WorkoutLogSubmitData } from "@/components/WorkoutLogModal";
 import OverviewTab from "@/components/dashboard/OverviewTab";
 import WorkoutsTab from "@/components/dashboard/WorkoutsTab";
 import NutritionTab from "@/components/dashboard/NutritionTab";
@@ -258,17 +260,6 @@ const ClientDashboard = () => {
   // Workout logging states
   const [showWorkoutLogModal, setShowWorkoutLogModal] =
     useState<Workout | null>(null);
-  const [workoutLogData, setWorkoutLogData] = useState<{
-    [exerciseId: string]: { weight: number; reps: number; sets: number };
-  }>({});
-  const [workoutLogDate, setWorkoutLogDate] = useState(() => {
-    // Default to today's date for workout logging
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const day = today.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  });
   const [foodEntryForm, setFoodEntryForm] = useState({
     foodName: "",
     quantity: "",
@@ -1492,235 +1483,73 @@ const ClientDashboard = () => {
       )}
 
       {/* Workout Logging Modal */}
-      {showWorkoutLogModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Log Workout -{" "}
-                  {showWorkoutLogModal.workout?.title || "Workout"}
-                </h3>
-                <button
-                  onClick={() => setShowWorkoutLogModal(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
+      <WorkoutLogModal
+        isOpen={!!showWorkoutLogModal}
+        onClose={() => setShowWorkoutLogModal(null)}
+        workout={showWorkoutLogModal!}
+        onSubmit={async (data: WorkoutLogSubmitData) => {
+          try {
+            const [year, month, day] = data.logDate.split('-').map(Number);
+            const localDate = new Date(year, month - 1, day);
 
-              <div className="space-y-6">
-                {/* Date Selection */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Workout Date
-                  </label>
-                  <input
-                    type="date"
-                    value={workoutLogDate}
-                    onChange={(e) => setWorkoutLogDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white bg-white"
-                  />
-                  <p className="text-xs text-gray-600 mt-1">
-                    Select the date when you performed this workout
-                  </p>
-                </div>
+            const sessionResponse = await fetch("/api/workout-sessions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                workoutId: data.workout.workout?.id,
+                date: localDate.toISOString(),
+              }),
+            });
 
-                <div className="bg-indigo-50 dark:bg-indigo-500/10 p-4 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    Log your weights and reps for each exercise. This data
-                    helps track your progress and allows Brent to see how
-                    you&apos;re improving over time!
-                  </p>
-                </div>
+            if (!sessionResponse.ok) {
+              throw new Error("Failed to create workout session");
+            }
 
-                {showWorkoutLogModal.workout?.exercises?.length ? (
-                  showWorkoutLogModal.workout.exercises.map(
-                    (exercise, index: number) => (
-                      <div
-                        key={index}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <h4 className="font-semibold text-gray-900 mb-2">
-                          {exercise.exercise?.name || exercise.name || `Exercise ${index + 1}`}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Target: {exercise.sets} sets × {exercise.reps} reps
-                        </p>
+            const session = await sessionResponse.json();
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Weight (lbs)
-                            </label>
-                            <input
-                              type="number"
-                              step="0.5"
-                              min="0"
-                              value={
-                                workoutLogData[index]?.weight ||
-                                ""
-                              }
-                              onChange={(e) =>
-                                setWorkoutLogData((prev) => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...prev[index],
-                                    weight: parseFloat(e.target.value) || 0,
-                                  },
-                                }))
-                              }
-                              placeholder="e.g., 135"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-                            />
-                          </div>
+            const exercises = data.workout.workout?.exercises?.map(
+              (exercise, index) => {
+                const logData = data.logData[index];
+                if (!logData || (logData.weight === 0 && logData.sets === 0 && logData.reps === 0)) {
+                  return null;
+                }
+                return {
+                  exerciseId: exercise.exercise?.id || exercise.id || `temp_${index}`,
+                  exerciseName: exercise.exercise?.name || exercise.name || `Exercise ${index + 1}`,
+                  weight: logData.weight || 0,
+                  sets: logData.sets || 0,
+                  reps: logData.reps || 0,
+                };
+              }
+            ).filter(ex => ex !== null);
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Sets Completed
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={
-                                workoutLogData[index]?.sets || ""
-                              }
-                              onChange={(e) =>
-                                setWorkoutLogData((prev) => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...prev[index],
-                                    sets: parseInt(e.target.value) || 0,
-                                  },
-                                }))
-                              }
-                              placeholder={`Target: ${exercise.sets}`}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-                            />
-                          </div>
+            if (!exercises || exercises.length === 0) {
+              toast("Something went wrong", "error");
+              return;
+            }
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Average Reps
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={
-                                workoutLogData[index]?.reps || ""
-                              }
-                              onChange={(e) =>
-                                setWorkoutLogData((prev) => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...prev[index],
-                                    reps: parseInt(e.target.value) || 0,
-                                  },
-                                }))
-                              }
-                              placeholder={`Target: ${exercise.reps}`}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ),
-                  )
-                ) : (
-                  <div className="text-gray-500 text-center py-8">
-                    No exercises found in this workout
-                  </div>
-                )}
+            const response = await fetch("/api/workout-progress", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                workoutSessionId: session.id,
+                exercises,
+                date: data.logDate,
+              }),
+            });
 
-                <div className="flex gap-3 pt-4 border-t">
-                  <button
-                    onClick={() => setShowWorkoutLogModal(null)}
-                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        // Create a workout session for the selected date
-                        // Parse date in local timezone to avoid UTC conversion issues
-                        const [year, month, day] = workoutLogDate.split('-').map(Number);
-                        const localDate = new Date(year, month - 1, day);
-                        
-                        const sessionResponse = await fetch("/api/workout-sessions", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            workoutId: showWorkoutLogModal.workout?.id,
-                            date: localDate.toISOString(),
-                          }),
-                        });
-
-                        if (!sessionResponse.ok) {
-                          throw new Error("Failed to create workout session");
-                        }
-
-                        const session = await sessionResponse.json();
-
-                        // Prepare exercise data for submission
-                        const exercises = showWorkoutLogModal.workout?.exercises?.map(
-                          (exercise, index) => {
-                            const logData = workoutLogData[index];
-                            if (!logData || (logData.weight === 0 && logData.sets === 0 && logData.reps === 0)) {
-                              return null;
-                            }
-                            return {
-                              exerciseId: exercise.exercise?.id || exercise.id || `temp_${index}`,
-                              exerciseName: exercise.exercise?.name || exercise.name || `Exercise ${index + 1}`,
-                              weight: logData.weight || 0,
-                              sets: logData.sets || 0,
-                              reps: logData.reps || 0,
-                            };
-                          }
-                        ).filter(ex => ex !== null);
-
-                        if (!exercises || exercises.length === 0) {
-                          toast("Something went wrong", "error")
-                          return;
-                        }
-
-                        const response = await fetch("/api/workout-progress", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            workoutSessionId: session.id,
-                            exercises,
-                            date: workoutLogDate,
-                          }),
-                        });
-
-                        if (response.ok) {
-                          toast("Something went wrong", "error")
-                          setShowWorkoutLogModal(null);
-                          setWorkoutLogData({});
-                        } else {
-                          const error = await response.json();
-                          toast("Something went wrong", "error")
-                        }
-                      } catch (error) {
-                        console.error("Error saving workout progress:", error);
-                        toast("Something went wrong", "error")
-                      }
-                    }}
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                  >
-                    Log Workout
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            if (response.ok) {
+              toast("Something went wrong", "error");
+              setShowWorkoutLogModal(null);
+            } else {
+              toast("Something went wrong", "error");
+            }
+          } catch (error) {
+            console.error("Error saving workout progress:", error);
+            toast("Something went wrong", "error");
+          }
+        }}
+      />
     </div>
   );
 };

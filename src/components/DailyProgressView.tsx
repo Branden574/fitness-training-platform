@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Camera,
   Image as ImageIcon,
-  Trash2
+  Trash2,
+  Edit2
 } from 'lucide-react';
 
 interface ProgressEntry {
@@ -40,9 +41,10 @@ interface ProgressEntry {
 interface DailyProgressViewProps {
   isTrainer?: boolean;
   clientId?: string;
+  onEditEntry?: (entry: ProgressEntry) => void;
 }
 
-const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false, clientId }) => {
+const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false, clientId, onEditEntry }) => {
   const [entries, setEntries] = useState<ProgressEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['weight', 'bodyFat', 'mood', 'energy']);
@@ -397,16 +399,27 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                         ) : !entry.photos || (entry.photos as string[]).length === 0 ? (
                           <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                         ) : null}
-                        {/* Delete button */}
+                        {/* Edit & Delete buttons */}
                         {!isTrainer && (
-                          <button
-                            onClick={() => handleDeleteEntry(entry.id)}
-                            disabled={deletingId === entry.id}
-                            className="ml-auto p-1 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
-                            title="Delete entry"
-                          >
-                            <Trash2 className={`w-3.5 h-3.5 ${deletingId === entry.id ? 'animate-spin' : ''}`} />
-                          </button>
+                          <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+                            {onEditEntry && (
+                              <button
+                                onClick={() => onEditEntry(entry)}
+                                className="p-1 text-gray-300 dark:text-gray-600 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100"
+                                title="Edit entry"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteEntry(entry.id)}
+                              disabled={deletingId === entry.id}
+                              className="p-1 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                              title="Delete entry"
+                            >
+                              <Trash2 className={`w-3.5 h-3.5 ${deletingId === entry.id ? 'animate-spin' : ''}`} />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
