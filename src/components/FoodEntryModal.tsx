@@ -264,8 +264,8 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-[#1a1f2e] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4">
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[85dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-[#2a3042]">
           <div>

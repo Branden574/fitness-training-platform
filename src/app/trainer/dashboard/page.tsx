@@ -1888,98 +1888,102 @@ const TrainerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleGoHome}
-                className="p-2 text-gray-400 hover:text-indigo-600 transition-colors duration-200 mr-2"
-                title="Go to Homepage"
-              >
+      {/* Header — compact on mobile */}
+      <header className="bg-white dark:bg-[#1a1f2e] shadow-sm border-b border-gray-200 dark:border-[#2a3042] sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14">
+            <div className="flex items-center min-w-0">
+              <button onClick={handleGoHome} className="p-1.5 text-gray-400 hover:text-indigo-500 transition-colors mr-1.5 flex-shrink-0">
                 <Home className="w-5 h-5" />
-              </motion.button>
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3">
-                <Dumbbell className="w-5 h-5 text-white" />
+              </button>
+              <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center mr-2 flex-shrink-0">
+                <Dumbbell className="w-4 h-4 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Trainer Dashboard
+              <h1 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white truncate">
+                Trainer
               </h1>
             </div>
-            
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              {/* Notification System */}
-              <NotificationSystem 
-                userId={session?.user?.id || ''}
-                userRole={session?.user?.role || ''}
-              />
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveTab('settings')}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                title="Settings"
-              >
+
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <NotificationSystem userId={session?.user?.id || ''} userRole={session?.user?.role || ''} />
+              <button onClick={() => setActiveTab('settings')} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                 <Settings className="w-5 h-5" />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSignOut}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center gap-2"
+              </button>
+              <button onClick={handleSignOut}
+                className="p-2 text-gray-400 hover:text-red-500 transition-colors sm:px-3 sm:py-1.5 sm:bg-red-600 sm:hover:bg-red-700 sm:text-white sm:rounded-lg sm:text-sm sm:font-medium"
                 title="Sign Out"
               >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </motion.button>
+                <LogOut className="w-5 h-5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline ml-1.5">Sign Out</span>
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <div className="lg:w-64">
-            <div className="bg-white rounded-xl shadow-sm p-4 space-y-2">
-              <div className="flex items-center p-4">
-                <div className="w-12 h-12 mr-4 rounded-full bg-indigo-600 flex items-center justify-center overflow-hidden ring-2 ring-indigo-500/20 flex-shrink-0">
+      {/* Mobile Tab Bar */}
+      <div className="lg:hidden bg-white dark:bg-[#1a1f2e] border-b border-gray-200 dark:border-[#2a3042] sticky top-14 z-20">
+        <div className="flex overflow-x-auto no-scrollbar px-3 gap-1 py-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                activeTab === item.id
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#242938]'
+              }`}
+            >
+              <item.icon className="w-3.5 h-3.5" />
+              {item.label}
+              {item.id === 'contacts' && stats.newSubmissions > 0 && (
+                <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 ml-1">
+                  {stats.newSubmissions}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm border border-gray-100 dark:border-[#2a3042] p-4 space-y-2 sticky top-20">
+              <div className="flex items-center p-3">
+                <div className="w-10 h-10 mr-3 rounded-full bg-indigo-600 flex items-center justify-center overflow-hidden ring-2 ring-indigo-500/20 flex-shrink-0">
                   {session?.user?.image ? (
                     <img src={session.user.image} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-xl font-bold text-white">
-                      {(session?.user?.name || 'B').charAt(0).toUpperCase()}
+                    <span className="text-lg font-bold text-white">
+                      {(session?.user?.name || 'T').charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                     {session?.user?.name || 'Trainer'}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Certified Personal Trainer</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Trainer</p>
                 </div>
               </div>
-              
+
               <nav className="space-y-1">
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors duration-200 ${
                       activeTab === item.id
-                        ? 'bg-indigo-100 text-blue-700 border-r-2 border-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#242938]'
                     }`}
                   >
-                    <item.icon className="w-5 h-5 mr-3" />
+                    <item.icon className="w-4 h-4 mr-2.5" />
                     {item.label}
                     {item.id === 'contacts' && stats.newSubmissions > 0 && (
-                      <span className="ml-auto bg-red-600 text-white text-xs rounded-full px-2 py-1">
+                      <span className="ml-auto bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5">
                         {stats.newSubmissions}
                       </span>
                     )}

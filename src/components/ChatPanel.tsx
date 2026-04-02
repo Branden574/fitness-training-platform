@@ -165,7 +165,7 @@ export default function ChatPanel({ currentUserId, trainerId, trainerName }: Cha
   }
 
   return (
-    <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm border border-gray-200 dark:border-[#2a3042] flex flex-col h-[600px] lg:h-[640px]">
+    <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm border border-gray-200 dark:border-[#2a3042] flex flex-col h-[calc(100dvh-12rem)] sm:h-[600px] lg:h-[640px]">
       {/* Chat Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-[#2a3042]">
         <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">

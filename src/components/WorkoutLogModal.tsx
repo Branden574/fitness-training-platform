@@ -81,9 +81,9 @@ const WorkoutLogModal: React.FC<WorkoutLogModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-[#1a1f2e] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border-[#2a3042] border">
-        <div className="p-6">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4">
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-t-2xl sm:rounded-xl max-w-4xl w-full max-h-[85dvh] sm:max-h-[90vh] overflow-y-auto dark:border-[#2a3042] border">
+        <div className="p-4 sm:p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
               Log Workout - {workout.workout?.title || workout.title || "Workout"}

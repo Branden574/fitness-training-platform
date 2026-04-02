@@ -181,8 +181,8 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white dark:bg-[#1a1f2e] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4">
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-t-2xl sm:rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#2a3042]">
           <h3 className="font-semibold text-gray-900 dark:text-white">Scan Barcode</h3>
