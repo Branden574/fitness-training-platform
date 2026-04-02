@@ -173,7 +173,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center py-12 bg-gray-50 rounded-lg"
+        className="text-center py-12 bg-gray-50 dark:bg-[#111827] rounded-xl"
       >
         <Activity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-gray-900 mb-2">No Progress Data Yet</h3>
@@ -196,7 +196,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-sm p-6 border border-gray-200"
+        className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -214,7 +214,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 dark:border-[#2a3042] rounded-lg bg-white dark:bg-[#111827] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
             >
               <option value="3months">Last 3 Months</option>
               <option value="6months">Last 6 Months</option>
@@ -235,7 +235,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                   onClick={() => setActiveView(id as 'overview' | 'exercise' | 'monthly')}
                   className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
                     activeView === id
-                      ? 'bg-white text-blue-600 shadow-sm'
+                      ? 'bg-white dark:bg-[#1a1f2e] text-indigo-600 dark:text-indigo-400 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -292,7 +292,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + index * 0.05 }}
-            className="bg-white rounded-lg shadow-sm p-6 border border-gray-200"
+            className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -379,7 +379,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
             className="grid grid-cols-1 lg:grid-cols-2 gap-6"
           >
             {/* Monthly Volume Trend */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-500" />
                 Monthly Volume Progress
@@ -390,21 +390,21 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                   <XAxis 
                     dataKey="month" 
                     tickFormatter={formatMonth}
-                    stroke="#000000"
-                    tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                    stroke="#9ca3af"
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                   />
                   <YAxis 
-                    stroke="#000000" 
-                    tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                    stroke="#9ca3af" 
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                   />
                   <Tooltip 
                     labelFormatter={formatMonth}
                     formatter={(value: number) => [value.toLocaleString(), 'Total Volume']}
                     contentStyle={{ 
-                      backgroundColor: 'white', 
+                      backgroundColor: '#1a1f2e', 
                       border: '1px solid #e5e7eb', 
                       borderRadius: '8px',
-                      color: '#000000'
+                      color: '#e5e7eb'
                     }}
                   />
                   <Area 
@@ -420,7 +420,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
             </div>
 
             {/* Strength Gains */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Zap className="w-5 h-5 text-green-500" />
                 Monthly Strength Gains
@@ -431,21 +431,21 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                   <XAxis 
                     dataKey="month" 
                     tickFormatter={formatMonth}
-                    stroke="#000000"
-                    tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                    stroke="#9ca3af"
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                   />
                   <YAxis 
-                    stroke="#000000" 
-                    tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                    stroke="#9ca3af" 
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                   />
                   <Tooltip 
                     labelFormatter={formatMonth}
                     formatter={(value: number) => [`${value.toFixed(1)}%`, 'Strength Gain']}
                     contentStyle={{ 
-                      backgroundColor: 'white', 
+                      backgroundColor: '#1a1f2e', 
                       border: '1px solid #e5e7eb', 
                       borderRadius: '8px',
-                      color: '#000000'
+                      color: '#e5e7eb'
                     }}
                   />
                   <Bar 
@@ -465,7 +465,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white rounded-lg shadow-sm p-6 border border-gray-200"
+            className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]"
           >
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -477,7 +477,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                 <select
                   value={selectedExercise || ''}
                   onChange={(e) => setSelectedExercise(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2 border border-gray-300 dark:border-[#2a3042] rounded-lg bg-white dark:bg-[#111827] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                 >
                   {Object.keys(analytics.exerciseSpecificTrends).map(exerciseName => (
                     <option key={exerciseName} value={exerciseName}>
@@ -497,7 +497,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                       onClick={() => setChartType(id as 'volume' | 'weight' | 'strength')}
                       className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                         chartType === id
-                          ? 'bg-white text-blue-600 shadow-sm'
+                          ? 'bg-white dark:bg-[#1a1f2e] text-indigo-600 dark:text-indigo-400 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
@@ -523,12 +523,12 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                   <XAxis 
                     dataKey="date" 
                     tickFormatter={formatDate}
-                    stroke="#000000"
-                    tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                    stroke="#9ca3af"
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                   />
                   <YAxis 
-                    stroke="#000000" 
-                    tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                    stroke="#9ca3af" 
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                   />
                   <Tooltip 
                     labelFormatter={formatDate}
@@ -539,10 +539,10 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                         : '1RM (lbs)'
                     ]}
                     contentStyle={{ 
-                      backgroundColor: 'white', 
+                      backgroundColor: '#1a1f2e', 
                       border: '1px solid #e5e7eb', 
                       borderRadius: '8px',
-                      color: '#000000',
+                      color: '#e5e7eb',
                       fontWeight: '500'
                     }}
                   />
@@ -566,7 +566,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white rounded-lg shadow-sm p-6 border border-gray-200"
+            className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-indigo-500" />
@@ -579,19 +579,19 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                 <XAxis 
                   dataKey="month" 
                   tickFormatter={formatMonth}
-                  stroke="#000000"
-                  tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                  stroke="#9ca3af"
+                  tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                 />
                 <YAxis 
                   yAxisId="left" 
-                  stroke="#000000" 
-                  tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                  stroke="#9ca3af" 
+                  tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                 />
                 <YAxis 
                   yAxisId="right" 
                   orientation="right" 
-                  stroke="#000000" 
-                  tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }}
+                  stroke="#9ca3af" 
+                  tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                 />
                 <Tooltip 
                   labelFormatter={formatMonth}
@@ -606,10 +606,10 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                     return [value, name];
                   }}
                   contentStyle={{ 
-                    backgroundColor: 'white', 
+                    backgroundColor: '#1a1f2e', 
                     border: '1px solid #e5e7eb', 
                     borderRadius: '8px',
-                    color: '#000000',
+                    color: '#e5e7eb',
                     fontWeight: '500'
                   }}
                 />
@@ -695,7 +695,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
         transition={{ delay: 0.3 }}
         className="grid grid-cols-1 lg:grid-cols-2 gap-6"
       >
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Award className="w-5 h-5 text-yellow-500" />
             Strongest Exercises
@@ -707,7 +707,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#111827] rounded-xl"
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
@@ -723,7 +723,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-green-500" />
             Most Improved Exercises
@@ -735,7 +735,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#111827] rounded-xl"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">

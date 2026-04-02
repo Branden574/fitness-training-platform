@@ -116,6 +116,15 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
     });
   };
 
+  const metricColors: Record<string, { active: string; inactive: string }> = {
+    blue: { active: 'bg-blue-100 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/20', inactive: 'bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2a3042]' },
+    orange: { active: 'bg-orange-100 dark:bg-orange-500/15 border border-orange-200 dark:border-orange-500/20', inactive: 'bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2a3042]' },
+    green: { active: 'bg-green-100 dark:bg-green-500/15 border border-green-200 dark:border-green-500/20', inactive: 'bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2a3042]' },
+    pink: { active: 'bg-pink-100 dark:bg-pink-500/15 border border-pink-200 dark:border-pink-500/20', inactive: 'bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2a3042]' },
+    yellow: { active: 'bg-yellow-100 dark:bg-yellow-500/15 border border-yellow-200 dark:border-yellow-500/20', inactive: 'bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2a3042]' },
+    purple: { active: 'bg-purple-100 dark:bg-purple-500/15 border border-purple-200 dark:border-purple-500/20', inactive: 'bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2a3042]' },
+  };
+
   const metricOptions = [
     { id: 'weight', label: 'Weight', icon: Weight, unit: 'lbs', color: 'blue' },
     { id: 'bodyFat', label: 'Body Fat', icon: TrendingDown, unit: '%', color: 'orange' },
@@ -134,7 +143,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
   };
 
   const getTrendColor = (current: number, previous: number, metricId: string) => {
-    if (current === previous) return 'text-black';
+    if (current === previous) return 'text-gray-900 dark:text-white';
     
     // For mood, energy, and sleep, higher is better
     // For body fat, lower is better
@@ -192,15 +201,15 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-sm p-6 border border-gray-200"
+        className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm p-6 border border-gray-200 dark:border-[#2a3042]"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-black flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Calendar className="w-6 h-6 text-blue-500" />
               {isTrainer ? 'Client Daily Progress' : 'Your Daily Progress'}
             </h2>
-            <p className="text-black mt-1">
+            <p className="text-gray-900 dark:text-white mt-1">
               Track daily measurements and wellness metrics
             </p>
           </div>
@@ -222,7 +231,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-black focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             >
               <option value="7days">Last 7 Days</option>
               <option value="30days">Last 30 Days</option>
@@ -234,7 +243,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
 
         {/* Metric Filters */}
         <div className="mt-4">
-          <h3 className="text-sm font-medium text-black mb-2 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
             <Filter className="w-4 h-4" />
             Show Metrics:
           </h3>
@@ -245,10 +254,10 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => toggleMetric(metric.id)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors text-black ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors text-gray-900 dark:text-white ${
                   selectedMetrics.includes(metric.id)
-                    ? `bg-${metric.color}-100 border border-${metric.color}-200`
-                    : 'bg-gray-100 hover:bg-gray-200'
+                    ? metricColors[metric.color]?.active || ''
+                    : metricColors[metric.color]?.inactive || ''
                 }`}
               >
                 <metric.icon className="w-4 h-4" />
@@ -265,21 +274,21 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12 bg-gray-50 rounded-lg"
+          className="text-center py-12 bg-gray-50 dark:bg-[#111827] rounded-xl"
         >
           <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-black mb-2">No Progress Entries Yet</h3>
-          <p className="text-black">Start logging your daily progress to see your journey!</p>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Progress Entries Yet</h3>
+          <p className="text-gray-900 dark:text-white">Start logging your daily progress to see your journey!</p>
         </motion.div>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+          className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-sm border border-gray-200 dark:border-[#2a3042] overflow-hidden"
         >
           {/* Table Header */}
-          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <div className="grid grid-cols-12 gap-4 text-sm font-medium text-black">
+          <div className="bg-gray-50 dark:bg-[#111827] px-6 py-4 border-b border-gray-200 dark:border-[#2a3042]">
+            <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-900 dark:text-white">
               <div className="col-span-2">Date</div>
               {selectedMetrics.map(metricId => {
                 const metric = metricOptions.find(m => m.id === metricId);
@@ -304,15 +313,15 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ delay: index * 0.05 }}
-                  className="px-6 py-4 hover:bg-gray-50 transition-colors"
+                  className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-[#242938] transition-colors"
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     {/* Date */}
                     <div className="col-span-2">
-                      <div className="text-sm font-medium text-black">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {formatDate(entry.date)}
                       </div>
-                      <div className="text-xs text-black">
+                      <div className="text-xs text-gray-900 dark:text-white">
                         {formatSimpleDate(entry.date)}
                       </div>
                     </div>
@@ -328,7 +337,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                         <div key={metricId} className="col-span-2">
                           {value !== null ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-black">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
                                 {value}{metric?.unit}
                               </span>
                               {TrendIcon && (
@@ -338,7 +347,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                               )}
                             </div>
                           ) : (
-                            <span className="text-sm text-black">-</span>
+                            <span className="text-sm text-gray-900 dark:text-white">-</span>
                           )}
                         </div>
                       );
@@ -347,11 +356,11 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                     {/* Notes */}
                     <div className="col-span-2">
                       {entry.notes ? (
-                        <span className="text-sm text-black truncate">
+                        <span className="text-sm text-gray-900 dark:text-white truncate">
                           {entry.notes}
                         </span>
                       ) : (
-                        <span className="text-sm text-black">-</span>
+                        <span className="text-sm text-gray-900 dark:text-white">-</span>
                       )}
                     </div>
                   </div>
@@ -362,16 +371,16 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <div className="bg-gray-50 dark:bg-[#111827] px-6 py-4 border-t border-gray-200 dark:border-[#2a3042]">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-black">
+                <p className="text-sm text-gray-900 dark:text-white">
                   Showing {(currentPage - 1) * entriesPerPage + 1} to {Math.min(currentPage * entriesPerPage, entries.length)} of {entries.length} entries
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-lg border border-gray-300 bg-white text-black hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-lg border border-gray-300 bg-white text-gray-900 dark:text-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -384,7 +393,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                         className={`px-3 py-1 rounded-lg text-sm font-medium ${
                           currentPage === page
                             ? 'bg-blue-500 text-white'
-                            : 'bg-white text-black hover:bg-gray-50'
+                            : 'bg-white text-gray-900 dark:text-white hover:bg-gray-50'
                         }`}
                       >
                         {page}
@@ -395,7 +404,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg border border-gray-300 bg-white text-black hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-lg border border-gray-300 bg-white text-gray-900 dark:text-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>

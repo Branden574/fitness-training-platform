@@ -410,6 +410,7 @@ const ClientDashboard = () => {
     energy: string;
     sleep: string;
     notes: string;
+    photos?: File[];
   }) => {
     setProgressLoading(true);
 
@@ -427,9 +428,7 @@ const ClientDashboard = () => {
 
       const response = await fetch("/api/progress", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(progressData),
       });
@@ -437,24 +436,38 @@ const ClientDashboard = () => {
       if (response.ok) {
         const newEntry = await response.json();
 
-        // Close modal
+        // Upload photos if any
+        if (data.photos && data.photos.length > 0) {
+          const formData = new FormData();
+          formData.append('entryId', newEntry.id);
+          formData.append('date', data.date);
+          data.photos.forEach(photo => formData.append('photos', photo));
+
+          try {
+            await fetch('/api/progress/photos', {
+              method: 'POST',
+              body: formData,
+            });
+          } catch (photoError) {
+            console.error('Photo upload error:', photoError);
+            toast('Progress logged but photo upload failed', 'warning');
+          }
+        }
+
         setShowLogProgressModal(false);
-
-        // Refresh progress data
         fetchProgress();
-
-        toast("Progress logged successfully!", "success");
+        toast("Progress logged!", "success");
       } else {
         const error = await response.json();
         if (response.status === 409) {
-          toast("Something went wrong", "error")
+          toast("You already have an entry for this date", "warning");
         } else {
-          toast(error.message || "Something went wrong", "error");
+          toast(error.message || "Failed to log progress", "error");
         }
       }
     } catch (error) {
       console.error("Error logging progress:", error);
-      toast("Something went wrong", "error")
+      toast("Failed to log progress", "error");
     } finally {
       setProgressLoading(false);
     }
