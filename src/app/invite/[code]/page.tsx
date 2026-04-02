@@ -131,7 +131,7 @@ const InviteAcceptancePage = () => {
           <p className="text-gray-600 mb-6">{error}</p>
           <Link
             href="/"
-            className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+            className="inline-flex items-center text-indigo-600 hover:text-blue-700 font-medium"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
@@ -188,13 +188,13 @@ const InviteAcceptancePage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="bg-blue-50 rounded-lg p-4 mb-6"
+            className="bg-indigo-50 rounded-lg p-4 mb-6"
           >
             <div className="flex items-center space-x-2 text-blue-700">
               <Mail className="w-4 h-4" />
               <span className="font-medium">{invitation?.email}</span>
             </div>
-            <p className="text-blue-600 text-sm mt-1">
+            <p className="text-indigo-600 text-sm mt-1">
               Invitation expires: {invitation?.expiresAt ? new Date(invitation.expiresAt).toLocaleDateString() : 'N/A'}
             </p>
           </motion.div>
@@ -216,7 +216,7 @@ const InviteAcceptancePage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <label htmlFor="name" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                 Full Name
               </label>
               <div className="relative">
@@ -226,7 +226,7 @@ const InviteAcceptancePage = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => updateFormData('name', e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
                   placeholder="Enter your full name"
                   required
                 />
@@ -238,7 +238,7 @@ const InviteAcceptancePage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.8 }}
             >
-              <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                 Email Address
               </label>
               <div className="relative">
@@ -259,7 +259,7 @@ const InviteAcceptancePage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.9 }}
             >
-              <label htmlFor="password" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                 Password
               </label>
               <div className="relative">
@@ -269,7 +269,7 @@ const InviteAcceptancePage = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => updateFormData('password', e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
                   placeholder="Create a password"
                   required
                 />
@@ -288,7 +288,7 @@ const InviteAcceptancePage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 1.0 }}
             >
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                 Confirm Password
               </label>
               <div className="relative">
@@ -298,7 +298,7 @@ const InviteAcceptancePage = () => {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={(e) => updateFormData('confirmPassword', e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
                   placeholder="Confirm your password"
                   required
                 />
@@ -337,7 +337,7 @@ const InviteAcceptancePage = () => {
               Already have an account?{' '}
               <Link 
                 href="/auth/signin" 
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                className="text-indigo-600 hover:text-blue-700 font-medium transition-colors duration-200"
               >
                 Sign in
               </Link>

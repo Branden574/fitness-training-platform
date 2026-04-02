@@ -249,7 +249,7 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
       <div className="relative">
         <motion.button
           onClick={() => setShowNotifications(!showNotifications)}
-          className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200 focus:outline-none"
+          className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200 focus:outline-none"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -284,18 +284,18 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
+              className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#1a1f2e] rounded-xl shadow-xl border border-gray-200 dark:border-[#2a3042] z-50"
             >
-              <div className="p-4 border-b border-gray-200">
+              <div className="p-4 border-b border-gray-200 dark:border-[#2a3042]">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
                     Notifications {unreadCount > 0 && `(${unreadCount})`}
                   </h3>
                   <div className="flex space-x-2">
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center space-x-1"
                         title="Mark all as read"
                       >
                         <CheckCircle className="w-3 h-3" />
@@ -328,8 +328,8 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
                       key={notification.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
-                        !notification.read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      className={`p-4 border-b border-gray-100 dark:border-[#242938] hover:bg-gray-50 dark:hover:bg-[#242938] cursor-pointer transition-colors ${
+                        !notification.read ? 'bg-indigo-50 dark:bg-indigo-500/8 border-l-4 border-l-indigo-500' : ''
                       }`}
                       onClick={() => markAsRead(notification.id)}
                     >
@@ -361,10 +361,10 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
                           )}
                         </div>
                         <div className="flex-1">
-                          <h4 className={`font-medium text-sm ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                          <h4 className={`font-medium text-sm ${!notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                             {notification.title}
                           </h4>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             {notification.message}
                           </p>
                           <div className="flex items-center justify-between mt-2">
@@ -379,7 +379,7 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
                           </div>
                         </div>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                          <div className="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-2"></div>
                         )}
                       </div>
                     </motion.div>

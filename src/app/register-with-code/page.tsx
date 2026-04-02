@@ -159,13 +159,13 @@ export default function RegisterWithCode() {
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+              step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
             }`}>
               1
             </div>
-            <div className={`w-16 h-1 ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+            <div className={`w-16 h-1 ${step >= 2 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+              step >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
             }`}>
               2
             </div>
@@ -197,7 +197,7 @@ export default function RegisterWithCode() {
                 placeholder="Enter 6-character code (e.g., ABC123)"
                 value={formData.inviteCode}
                 onChange={(e) => handleInputChange('inviteCode', e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase text-center text-lg font-mono tracking-wider text-black"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase text-center text-lg font-mono tracking-wider text-gray-900 dark:text-white"
                 maxLength={6}
               />
             </div>
@@ -211,7 +211,7 @@ export default function RegisterWithCode() {
                 placeholder="Your email address"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white"
               />
             </div>
 
@@ -224,14 +224,14 @@ export default function RegisterWithCode() {
                 placeholder="Your phone number (optional)"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white"
               />
             </div>
 
             <button
               onClick={validateCode}
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Validating...' : 'Validate Code'}
             </button>
@@ -259,7 +259,7 @@ export default function RegisterWithCode() {
                 placeholder="Your full name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white"
               />
             </div>
 
@@ -272,7 +272,7 @@ export default function RegisterWithCode() {
                 placeholder="Create a secure password"
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white"
               />
               <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
             </div>
@@ -286,7 +286,7 @@ export default function RegisterWithCode() {
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white"
               />
             </div>
 
@@ -300,7 +300,7 @@ export default function RegisterWithCode() {
               <button
                 onClick={createAccount}
                 disabled={loading}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Creating...' : 'Create Account'}
               </button>
@@ -311,7 +311,7 @@ export default function RegisterWithCode() {
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             Don&apos;t have an invitation code?{' '}
-            <a href="/contact" className="text-blue-600 hover:text-blue-700 font-medium">
+            <a href="/contact" className="text-indigo-600 hover:text-blue-700 font-medium">
               Contact us
             </a>
           </p>

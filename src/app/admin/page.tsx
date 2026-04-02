@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/components/Toast';
 
 interface User {
   id: string;
@@ -69,6 +70,7 @@ interface AdminStats {
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
+  const { toast } = useToast();
   const [adminData, setAdminData] = useState<AdminData | null>(null);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,16 +159,16 @@ export default function AdminPage() {
     try {
       const response = await fetch(`/api/admin?userId=${userId}`, { method: 'DELETE' });
       if (response.ok) {
-        alert(`User ${userName} has been permanently deleted.`);
+        toast(`${userName} has been deleted`, 'success');
         fetchAdminData();
         fetchAdminStats();
       } else {
         const error = await response.json();
-        alert(`Failed to delete user: ${error.message || 'Unknown error'}`);
+        toast(error.message || 'Failed to delete user', 'error');
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert('Failed to delete user. Please try again.');
+      toast('Failed to delete user', 'error');
     }
   };
 
@@ -180,14 +182,14 @@ export default function AdminPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        alert(`Password reset successfully!\n\nTemporary password: ${data.tempPassword}\n\nShare this securely with the user. They must change it on next login.`);
+        toast(`Password reset! Temp password: ${data.tempPassword}`, 'success');
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to reset password');
+        toast(error.message || 'Failed to reset password', 'error');
       }
     } catch (error) {
       console.error('Failed to reset password:', error);
-      alert('Failed to reset password');
+      toast('Failed to reset password', 'error');
     }
   };
 
@@ -202,16 +204,16 @@ export default function AdminPage() {
         body: JSON.stringify({ userId, isActive: !currentStatus })
       });
       if (response.ok) {
-        alert(`${userName} has been ${currentStatus ? 'deactivated' : 'reactivated'} successfully.`);
+        toast(`${userName} ${currentStatus ? 'deactivated' : 'reactivated'}`, 'success');
         fetchAdminData();
         fetchAdminStats();
       } else {
         const error = await response.json();
-        alert(`Failed to ${action} user: ${error.message || 'Unknown error'}`);
+        toast(`Failed to ${action} user`, 'error');
       }
     } catch (error) {
       console.error(`Failed to ${action} user:`, error);
-      alert(`Failed to ${action} user. Please try again.`);
+      toast(`Failed to ${action} user`, 'error');
     }
   };
 
@@ -231,14 +233,14 @@ export default function AdminPage() {
         fetchAdminData();
         const inviteUrl = data.invitationUrl || `${window.location.origin}/invite/${data.code}`;
         navigator.clipboard.writeText(inviteUrl).catch(() => {});
-        alert(`Invitation created! Link copied to clipboard:\n\n${inviteUrl}`);
+        toast('Invitation created and link copied!', 'success');
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to send invitation');
+        toast(error.message || 'Failed to send invitation', 'error');
       }
     } catch (error) {
       console.error('Failed to send invitation:', error);
-      alert('Failed to send invitation');
+      toast('Failed to send invitation', 'error');
     } finally {
       setSendingInvite(false);
     }
@@ -364,7 +366,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setActiveTab('contacts')}
-                    className="flex items-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-[#6366f1]/10 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-3 bg-[#6366f1]/10 text-[#818cf8] rounded-lg hover:bg-[#6366f1]/20 transition-colors text-sm font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     View Contacts
@@ -374,7 +376,7 @@ export default function AdminPage() {
                   </button>
                   <button
                     onClick={() => setActiveTab('invitations')}
-                    className="flex items-center gap-2 px-4 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-3 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors text-sm font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                     Send Invitation
@@ -384,7 +386,7 @@ export default function AdminPage() {
                   </button>
                   <button
                     onClick={() => setActiveTab('users')}
-                    className="flex items-center gap-2 px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-3 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 transition-colors text-sm font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
                     Manage Users
@@ -472,7 +474,7 @@ export default function AdminPage() {
                     placeholder="Search by name or email..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
                 <select
@@ -579,7 +581,7 @@ export default function AdminPage() {
                   value={newInviteEmail}
                   onChange={(e) => setNewInviteEmail(e.target.value)}
                   placeholder="Enter email address..."
-                  className="flex-1 px-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-3 py-2 border border-[#2d3548] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   required
                 />
                 <button
@@ -623,7 +625,7 @@ export default function AdminPage() {
                               onClick={() => {
                                 const inviteUrl = `${window.location.origin}/invite/${invitation.code}`;
                                 navigator.clipboard.writeText(inviteUrl);
-                                alert('Invitation link copied to clipboard!');
+                                toast('Invitation link copied to clipboard!', 'info');
                               }}
                               className="text-sm text-[#818cf8] hover:text-[#818cf8] font-medium"
                             >
@@ -653,10 +655,10 @@ export default function AdminPage() {
 
 function StatCard({ label, value, color, icon }: { label: string; value: number; color: string; icon: React.ReactNode }) {
   const colors: Record<string, { bg: string; text: string; icon: string; border: string }> = {
-    blue:   { bg: 'bg-blue-50',   text: 'text-blue-700',   icon: 'text-blue-500',   border: 'border-blue-200' },
-    green:  { bg: 'bg-green-50',  text: 'text-green-700',  icon: 'text-green-500',  border: 'border-green-200' },
-    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', icon: 'text-indigo-500', border: 'border-indigo-200' },
-    yellow: { bg: 'bg-amber-50',  text: 'text-amber-700',  icon: 'text-amber-500',  border: 'border-amber-200' },
+    blue:   { bg: 'bg-indigo-500/10', text: 'text-indigo-300', icon: 'text-indigo-400', border: 'border-indigo-500/20' },
+    green:  { bg: 'bg-green-500/10',  text: 'text-green-300',  icon: 'text-green-400',  border: 'border-green-500/20' },
+    indigo: { bg: 'bg-indigo-500/10', text: 'text-indigo-300', icon: 'text-indigo-400', border: 'border-indigo-500/20' },
+    yellow: { bg: 'bg-amber-500/10',  text: 'text-amber-300',  icon: 'text-amber-400',  border: 'border-amber-500/20' },
   };
   const c = colors[color] || colors.blue;
 
@@ -680,7 +682,7 @@ function StatCard({ label, value, color, icon }: { label: string; value: number;
 function MiniStat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
     <div className={`bg-[#1e2433] rounded-xl border p-4 ${highlight ? 'border-[#6366f1]/40 bg-[#6366f1]/5' : 'border-[#2d3548]'}`}>
-      <p className={`text-xl font-bold ${highlight ? 'text-blue-700' : 'text-white'}`}>{value}</p>
+      <p className={`text-xl font-bold ${highlight ? 'text-indigo-400' : 'text-white'}`}>{value}</p>
       <p className="text-xs text-[#6b7280] mt-0.5">{label}</p>
     </div>
   );
@@ -688,7 +690,7 @@ function MiniStat({ label, value, highlight }: { label: string; value: number; h
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    NEW: 'bg-[#6366f1]/10 text-blue-700',
+    NEW: 'bg-[#6366f1]/10 text-indigo-400',
     IN_PROGRESS: 'bg-yellow-100 text-yellow-700',
     INVITED: 'bg-purple-100 text-purple-700',
     COMPLETED: 'bg-green-100 text-green-700',
@@ -777,7 +779,7 @@ function UserTable({
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => onResetPassword(user.id, user.name || user.email)}
-                    className="px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-[#6366f1]/10 transition-colors"
+                    className="px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-md hover:bg-[#6366f1]/10 transition-colors"
                   >
                     Reset PW
                   </button>
