@@ -98,7 +98,7 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({
-      results: results.slice(0, 30),
+      results: results.slice(0, 50),
       query,
       totalFound: results.length,
     });
@@ -112,11 +112,13 @@ export async function GET(request: Request) {
 // ── USDA FoodData Central API ──
 async function searchUSDA(query: string): Promise<FoodSearchResult[]> {
   // USDA FoodData Central API - free, no key required for demo key
+  // Get a free API key at https://fdc.nal.usda.gov/api-key-signup.html
+  // DEMO_KEY works but is rate-limited to 30 req/hour
   const apiKey = process.env.USDA_API_KEY || 'DEMO_KEY';
-  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}&dataType=Survey%20(FNDDS),Branded,SR%20Legacy&pageSize=15&sortBy=dataType.keyword&sortOrder=asc`;
+  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}&dataType=Survey%20(FNDDS),Branded,SR%20Legacy&pageSize=25&sortBy=dataType.keyword&sortOrder=asc`;
 
   const response = await fetch(url, {
-    signal: AbortSignal.timeout(5000), // 5s timeout
+    signal: AbortSignal.timeout(8000), // 8s timeout for slower connections
   });
 
   if (!response.ok) return [];
@@ -157,7 +159,7 @@ async function searchUSDA(query: string): Promise<FoodSearchResult[]> {
 
 // ── Open Food Facts API ──
 async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
-  const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=10&countries_tags=en:united-states`;
+  const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&countries_tags=en:united-states`;
 
   const response = await fetch(url, {
     signal: AbortSignal.timeout(5000),

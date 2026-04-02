@@ -177,37 +177,34 @@ export default function AdminShopPage() {
 
   return (
     <div className="min-h-screen bg-[#0f1219]">
-      {/* Header */}
-      <div className="bg-[#1a1f2e] border-b border-[#2d3548]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-5">
-            <div className="flex items-center gap-4">
-              <Link href="/admin" className="text-[#6b7280] hover:text-white transition-colors">
+      {/* Header — compact on mobile */}
+      <div className="bg-[#1a1f2e] border-b border-[#2d3548] sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-3 sm:py-5">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+              <Link href="/admin" className="text-[#6b7280] hover:text-white transition-colors flex-shrink-0">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Shop Management</h1>
-                <p className="text-sm text-[#6b7280] mt-1">Manage products, orders, and categories</p>
-              </div>
+              <h1 className="text-lg sm:text-2xl font-bold text-white truncate">Shop</h1>
             </div>
-            <div className="flex items-center gap-3">
-              <Link href="/shop" className="px-3 py-1.5 text-sm font-medium text-[#9ca3af] border border-[#2d3548] rounded-lg hover:bg-white/5 transition-colors">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link href="/shop" className="hidden sm:flex px-3 py-1.5 text-sm font-medium text-[#9ca3af] border border-[#2d3548] rounded-lg hover:bg-white/5 transition-colors">
                 View Store
               </Link>
               {activeTab === 'products' && (
                 <button
                   onClick={() => { setEditingProduct(null); setShowProductModal(true); }}
-                  className="px-4 py-2 bg-[#6366f1] text-white text-sm font-semibold rounded-lg hover:bg-[#5558e3] transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-[#6366f1] text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-[#5558e3] transition-colors flex items-center gap-1.5"
                 >
-                  <Plus className="w-4 h-4" /> Add Product
+                  <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Product</span><span className="sm:hidden">Add</span>
                 </button>
               )}
               {activeTab === 'categories' && (
                 <button
                   onClick={() => setShowCategoryModal(true)}
-                  className="px-4 py-2 bg-[#6366f1] text-white text-sm font-semibold rounded-lg hover:bg-[#5558e3] transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-[#6366f1] text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-[#5558e3] transition-colors flex items-center gap-1.5"
                 >
-                  <Plus className="w-4 h-4" /> Add Category
+                  <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Category</span><span className="sm:hidden">Add</span>
                 </button>
               )}
             </div>
@@ -215,15 +212,15 @@ export default function AdminShopPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-[#1a1f2e] border-b border-[#2d3548]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-6 -mb-px">
+      {/* Tabs — scrollable on mobile */}
+      <div className="bg-[#1a1f2e] border-b border-[#2d3548] sticky top-[52px] sm:top-[68px] z-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <nav className="flex gap-4 sm:gap-6 -mb-px overflow-x-auto no-scrollbar">
             {tabs.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`py-3 px-1 border-b-2 text-sm font-medium transition-colors ${
+                className={`py-3 px-1 border-b-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === tab.key
                     ? 'border-[#6366f1] text-[#818cf8]'
                     : 'border-transparent text-[#6b7280] hover:text-[#9ca3af]'

@@ -274,30 +274,26 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#0f1219]">
-      {/* Header */}
-      <div className="bg-[#1a1f2e] border-b border-[#2d3548]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-5">
-            <div>
-              <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-              <p className="text-sm text-[#6b7280] mt-1">Platform management &amp; monitoring</p>
+      {/* Header — compact on mobile */}
+      <div className="bg-[#1a1f2e] border-b border-[#2d3548] sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-3 sm:py-5">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold text-white truncate">Admin</h1>
+              <p className="text-xs text-[#6b7280] mt-0.5 hidden sm:block">Platform management</p>
             </div>
-            <div className="flex items-center gap-3">
-              <a href="/" className="px-3 py-1.5 text-sm font-medium text-[#9ca3af] border border-[#2d3548] rounded-lg hover:bg-white/5 transition-colors">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <a href="/" className="hidden sm:flex px-3 py-1.5 text-sm font-medium text-[#9ca3af] border border-[#2d3548] rounded-lg hover:bg-white/5 transition-colors">
                 View Site
               </a>
-              <div className="text-right">
-                <p className="text-sm font-medium text-white">{session?.user?.name}</p>
-                <p className="text-xs text-[#6b7280]">Administrator</p>
-              </div>
-              <div className="h-9 w-9 rounded-full bg-[#6366f1] flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">
+              <div className="h-8 w-8 rounded-full bg-[#6366f1] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-semibold">
                   {session?.user?.name?.charAt(0) || 'A'}
                 </span>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="px-3 py-1.5 text-sm font-medium text-[#9ca3af] bg-[#252d3d] rounded-lg hover:bg-[#2d3548] transition-colors"
+                className="px-2.5 py-1.5 text-xs sm:text-sm font-medium text-[#9ca3af] bg-[#252d3d] rounded-lg hover:bg-[#2d3548] transition-colors"
               >
                 Sign Out
               </button>
@@ -306,18 +302,18 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-[#1a1f2e] border-b border-[#2d3548]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-6 -mb-px">
+      {/* Tabs — scrollable on mobile */}
+      <div className="bg-[#1a1f2e] border-b border-[#2d3548] sticky top-[52px] sm:top-[68px] z-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <nav className="flex gap-4 sm:gap-6 -mb-px overflow-x-auto no-scrollbar">
             {tabs.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`py-3 px-1 border-b-2 text-sm font-medium transition-colors ${
+                className={`py-3 px-1 border-b-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === tab.key
                     ? 'border-[#6366f1] text-[#818cf8]'
-                    : 'border-transparent text-[#6b7280] hover:text-[#9ca3af] hover:border-[#4b5563]'
+                    : 'border-transparent text-[#6b7280] hover:text-[#9ca3af]'
                 }`}
               >
                 {tab.label}
@@ -327,7 +323,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
         {/* ─── OVERVIEW TAB ─── */}
         {activeTab === 'dashboard' && adminStats && (
