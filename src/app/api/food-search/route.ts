@@ -23,6 +23,41 @@ export async function GET(request: Request) {
 
     const results: FoodSearchResult[] = [];
 
+    // 0. Search community database first (user-contributed foods with barcodes)
+    if (source === 'all' && query.length >= 2) {
+      try {
+        const communityFoods = await prisma.communityFood.findMany({
+          where: {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { brand: { contains: query, mode: 'insensitive' } },
+            ],
+          },
+          orderBy: { useCount: 'desc' },
+          take: 10,
+        });
+        for (const food of communityFoods) {
+          results.push({
+            id: `community-${food.id}`,
+            name: food.name,
+            brand: food.brand,
+            category: food.category || 'other',
+            calories: food.calories,
+            protein: food.protein,
+            carbs: food.carbs,
+            fat: food.fat,
+            servingSize: food.servingSize,
+            servingUnit: food.servingUnit,
+            source: 'local' as const,
+            caloriesPer100g: food.calories,
+            proteinPer100g: food.protein,
+            carbsPer100g: food.carbs,
+            fatPer100g: food.fat,
+          });
+        }
+      } catch {}
+    }
+
     // 1. Search local database first (instant)
     if (source === 'all' || source === 'local') {
       const localResults = searchLocalFoods(query, category as any || undefined);

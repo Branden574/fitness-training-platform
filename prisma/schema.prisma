@@ -312,6 +312,33 @@ model Food {
   @@map("foods")
 }
 
+model CommunityFood {
+  id           String   @id @default(cuid())
+  barcode      String?  @unique
+  name         String
+  brand        String?
+  calories     Float
+  protein      Float
+  carbs        Float
+  fat          Float
+  fiber        Float?
+  sugar        Float?
+  servingSize  Float
+  servingUnit  String
+  category     String?
+  verified     Boolean  @default(false)
+  addedBy      String
+  useCount     Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([barcode])
+  @@index([name])
+  @@index([brand])
+  @@index([useCount])
+  @@map("community_foods")
+}
+
 model FoodEntry {
   id        String   @id @default(cuid())
   userId    String

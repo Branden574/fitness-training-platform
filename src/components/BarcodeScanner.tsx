@@ -13,7 +13,7 @@ interface BarcodeScannerProps {
     servingSize: number;
     servingUnit: string;
   }) => void;
-  onClose: () => void;
+  onClose: (scannedBarcode?: string) => void;
 }
 
 export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProps) {
@@ -24,6 +24,7 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
   const [error, setError] = useState<string | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
   const [manualBarcode, setManualBarcode] = useState('');
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const detectedRef = useRef(false);
   const quaggaRef = useRef<any>(null);
 
@@ -52,6 +53,25 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
       const data = await res.json();
 
       if (data.found && data.product) {
+        // Also save to community database for future lookups
+        if (data.source !== 'Community') {
+          fetch('/api/food-community', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              barcode,
+              name: data.product.name,
+              brand: data.product.brand,
+              calories: data.product.calories,
+              protein: data.product.protein,
+              carbs: data.product.carbs,
+              fat: data.product.fat,
+              servingSize: data.product.servingSize,
+              servingUnit: data.product.servingUnit,
+            }),
+          }).catch(() => {});
+        }
+
         onResult({
           name: data.product.name,
           calories: data.product.calories,
@@ -63,7 +83,8 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
         });
         stopCamera();
       } else {
-        setError(`Product not found for barcode ${barcode}. Try searching by name instead.`);
+        setScannedBarcode(barcode);
+        setError(`Not found for barcode ${barcode}. Enter the nutrition info from the label to add it for everyone.`);
         detectedRef.current = false;
       }
     } catch {
@@ -180,7 +201,7 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#2a3042]">
           <h3 className="font-semibold text-gray-900 dark:text-white">Scan Barcode</h3>
-          <button onClick={() => { stopCamera(); onClose(); }} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg">
+          <button onClick={() => { stopCamera(); onClose(scannedBarcode || undefined); }} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>

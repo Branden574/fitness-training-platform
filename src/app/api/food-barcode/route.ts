@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -16,6 +17,33 @@ export async function GET(request: Request) {
     if (!barcode) {
       return NextResponse.json({ error: 'Barcode required' }, { status: 400 });
     }
+
+    // Try 0: Check community database first (instant, no external API call)
+    try {
+      const communityFood = await prisma.communityFood.findUnique({
+        where: { barcode },
+      });
+      if (communityFood) {
+        await prisma.communityFood.update({
+          where: { id: communityFood.id },
+          data: { useCount: { increment: 1 } },
+        }).catch(() => {});
+        return NextResponse.json({
+          found: true,
+          source: 'Community',
+          product: {
+            name: communityFood.name,
+            brand: communityFood.brand,
+            calories: communityFood.calories,
+            protein: communityFood.protein,
+            carbs: communityFood.carbs,
+            fat: communityFood.fat,
+            servingSize: communityFood.servingSize,
+            servingUnit: communityFood.servingUnit,
+          },
+        });
+      }
+    } catch {}
 
     // Try 1: Open Food Facts
     try {

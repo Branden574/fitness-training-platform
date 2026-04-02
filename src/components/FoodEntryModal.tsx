@@ -66,6 +66,7 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
   const [mealType, setMealType] = useState('BREAKFAST');
   const [notes, setNotes] = useState('');
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Favorites state
@@ -241,7 +242,26 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
       });
     }
 
+    // Save to community database if there's a pending barcode from a failed scan
+    if (pendingBarcode && activeTab === 'manual' && manualForm.foodName) {
+      fetch('/api/food-community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          barcode: pendingBarcode,
+          name: manualForm.foodName,
+          calories: manualForm.calories,
+          protein: manualForm.protein,
+          carbs: manualForm.carbs,
+          fat: manualForm.fat,
+          servingSize: manualForm.quantity,
+          servingUnit: manualForm.unit,
+        }),
+      }).catch(() => {});
+    }
+
     // Reset
+    setPendingBarcode(null);
     setSelectedFood(null);
     setSearchQuery('');
     setSearchResults([]);
@@ -588,9 +608,16 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
 
       {showBarcodeScanner && (
         <BarcodeScanner
-          onClose={() => setShowBarcodeScanner(false)}
+          onClose={(scannedBarcode) => {
+            setShowBarcodeScanner(false);
+            if (scannedBarcode) {
+              setPendingBarcode(scannedBarcode);
+              setActiveTab('manual');
+            }
+          }}
           onResult={(product) => {
             setShowBarcodeScanner(false);
+            setPendingBarcode(null);
             setActiveTab('manual');
             setManualForm({
               foodName: product.name, quantity: product.servingSize.toString(), unit: product.servingUnit,
