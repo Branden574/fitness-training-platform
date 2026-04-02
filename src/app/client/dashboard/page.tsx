@@ -888,24 +888,33 @@ const ClientDashboard = () => {
               </h1>
             </div>
 
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <NotificationSystem
                 userId={session?.user?.id || ""}
                 userRole="CLIENT"
               />
               <button
                 onClick={() => setActiveTab('settings')}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg"
+                title="Settings"
               >
                 <Settings className="w-5 h-5" />
               </button>
+              {/* Icon-only on mobile, full button on desktop */}
               <button
                 onClick={handleSignOut}
-                className="p-2 text-gray-400 hover:text-red-500 transition-colors sm:px-3 sm:py-1.5 sm:bg-red-600 sm:hover:bg-red-700 sm:text-white sm:rounded-lg sm:text-sm sm:font-medium"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
                 title="Sign Out"
               >
-                <LogOut className="w-5 h-5 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline ml-1.5">Sign Out</span>
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="sm:hidden p-2 text-gray-400 hover:text-red-500 transition-colors rounded-lg"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
             </div>
           </div>
