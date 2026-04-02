@@ -182,7 +182,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => window.location.reload()}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
         >
           Refresh Data
         </motion.button>
@@ -260,7 +260,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ isTrainer = false, clie
             title: 'Total Workouts',
             value: analytics.overallMetrics.totalWorkoutsCompleted,
             icon: Activity,
-            color: 'bg-blue-500',
+            color: 'bg-indigo-500',
             change: null
           },
           {

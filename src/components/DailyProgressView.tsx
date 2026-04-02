@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Trash2
 } from 'lucide-react';
 
 interface ProgressEntry {
@@ -47,7 +48,23 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['weight', 'bodyFat', 'mood', 'energy']);
   const [timeRange, setTimeRange] = useState('30days');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const entriesPerPage = 10;
+
+  const handleDeleteEntry = async (entryId: string) => {
+    if (!confirm('Delete this progress entry? This cannot be undone.')) return;
+    setDeletingId(entryId);
+    try {
+      const res = await fetch(`/api/progress?id=${entryId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setEntries(prev => prev.filter(e => e.id !== entryId));
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const fetchProgressEntries = async () => {
     setLoading(true);
@@ -224,7 +241,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
               whileTap={{ scale: 0.95 }}
               onClick={fetchProgressEntries}
               disabled={loading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -316,7 +333,7 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ delay: index * 0.05 }}
-                  className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-[#242938] transition-colors"
+                  className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-[#242938] transition-colors group"
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     {/* Date */}
@@ -380,6 +397,17 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                         ) : !entry.photos || (entry.photos as string[]).length === 0 ? (
                           <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                         ) : null}
+                        {/* Delete button */}
+                        {!isTrainer && (
+                          <button
+                            onClick={() => handleDeleteEntry(entry.id)}
+                            disabled={deletingId === entry.id}
+                            className="ml-auto p-1 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+                            title="Delete entry"
+                          >
+                            <Trash2 className={`w-3.5 h-3.5 ${deletingId === entry.id ? 'animate-spin' : ''}`} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -411,8 +439,8 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                         onClick={() => setCurrentPage(page)}
                         className={`px-3 py-1 rounded-lg text-sm font-medium ${
                           currentPage === page
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white text-gray-900 dark:text-white hover:bg-gray-50'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white dark:bg-[#242938] text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-[#2a3042]'
                         }`}
                       >
                         {page}

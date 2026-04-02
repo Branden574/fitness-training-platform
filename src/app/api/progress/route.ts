@@ -511,3 +511,34 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+// Delete a progress entry
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const entryId = searchParams.get('id');
+
+    if (!entryId) {
+      return NextResponse.json({ message: 'Entry ID required' }, { status: 400 });
+    }
+
+    const entry = await prisma.progressEntry.findFirst({
+      where: { id: entryId, userId: session.user.id },
+    });
+
+    if (!entry) {
+      return NextResponse.json({ message: 'Entry not found' }, { status: 404 });
+    }
+
+    await prisma.progressEntry.delete({ where: { id: entryId } });
+
+    return NextResponse.json({ message: 'Entry deleted' });
+  } catch (error) {
+    console.error('Delete progress error:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+  }
+}

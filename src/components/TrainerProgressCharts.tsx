@@ -307,7 +307,7 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-[#2a3042]">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-300 rounded w-1/4 mb-4"></div>
           <div className="h-96 bg-gray-300 rounded"></div>
@@ -323,7 +323,7 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
       className="space-y-6"
     >
       {/* Chart Controls */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-[#2a3042]">
         <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -364,8 +364,8 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
                   onClick={() => setViewMode('individual')}
                   className={`px-3 py-2 text-sm font-medium ${
                     viewMode === 'individual'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white dark:bg-[#1a1f2e] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#242938]'
                   }`}
                 >
                   <User className="h-4 w-4 inline mr-1" />
@@ -375,8 +375,8 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
                   onClick={() => setViewMode('comparison')}
                   className={`px-3 py-2 text-sm font-medium ${
                     viewMode === 'comparison'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white dark:bg-[#1a1f2e] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#242938]'
                   }`}
                 >
                   <Users className="h-4 w-4 inline mr-1" />
@@ -467,7 +467,7 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
 
       {/* Client Breakdown Table */}
       {progressData.length > 1 && (
-        <div className="bg-white rounded-xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-[#2a3042]">
           <h4 className="text-lg font-semibold text-gray-900 mb-4">Client Progress Breakdown</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
