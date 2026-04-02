@@ -264,8 +264,8 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4">
-      <div className="bg-white dark:bg-[#1a1f2e] rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[100dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div className="bg-white dark:bg-[#1a1f2e] w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:p-5 border-b border-gray-200 dark:border-[#2a3042] flex-shrink-0">
           <div>
@@ -280,8 +280,8 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3 sm:p-5 space-y-3 sm:space-y-4">
-          {/* Meal Type — scrollable on mobile */}
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          {/* Meal Type */}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4">
             {['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'].map((type) => (
               <button key={type} onClick={() => setMealType(type)}
                 className={`py-2 px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -293,7 +293,7 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
 
           {/* Tab Navigation */}
           {!selectedFood && (
-            <div className="flex gap-1 bg-gray-100 dark:bg-[#111827] rounded-xl p-1 overflow-x-auto no-scrollbar">
+            <div className="flex gap-1 bg-gray-100 dark:bg-[#111827] rounded-xl p-1 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-1">
               {([
                 { key: 'search' as Tab, icon: Search, label: 'Search' },
                 { key: 'favorites' as Tab, icon: Heart, label: 'Fav' },
