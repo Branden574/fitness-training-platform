@@ -41,43 +41,48 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Normalize email to lowercase for case-insensitive lookup
         const normalizedEmail = credentials.email.toLowerCase().trim();
 
         try {
           const user = await prisma.user.findUnique({
-            where: {
-              email: normalizedEmail
-            },
-            include: {
-              clientProfile: true,
-              trainer: true
-            }
+            where: { email: normalizedEmail },
+            include: { clientProfile: true, trainer: true }
           });
 
           if (!user || !user.password) {
+            // Log failed login — user not found
+            await prisma.loginEvent.create({
+              data: { email: normalizedEmail, success: false, reason: 'user_not_found' }
+            }).catch(() => {});
             return null;
           }
 
-          // Block deactivated users from logging in
           if (!user.isActive) {
+            await prisma.loginEvent.create({
+              data: { email: normalizedEmail, userId: user.id, success: false, reason: 'account_disabled' }
+            }).catch(() => {});
             return null;
           }
 
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
           if (!isPasswordValid) {
+            await prisma.loginEvent.create({
+              data: { email: normalizedEmail, userId: user.id, success: false, reason: 'invalid_password' }
+            }).catch(() => {});
             return null;
           }
 
-          // Update login tracking
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              lastLogin: new Date(),
-              loginCount: { increment: 1 }
-            }
-          });
+          // Successful login
+          await Promise.all([
+            prisma.user.update({
+              where: { id: user.id },
+              data: { lastLogin: new Date(), loginCount: { increment: 1 } }
+            }),
+            prisma.loginEvent.create({
+              data: { email: normalizedEmail, userId: user.id, success: true, reason: 'success' }
+            })
+          ]).catch(() => {});
 
           return {
             id: user.id,

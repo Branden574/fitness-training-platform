@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useToast } from '@/components/Toast';
+import SecurityTab from '@/components/admin/SecurityTab';
 
 interface User {
   id: string;
@@ -74,7 +75,7 @@ export default function AdminPage() {
   const [adminData, setAdminData] = useState<AdminData | null>(null);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'contacts' | 'invitations'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'contacts' | 'invitations' | 'security'>('dashboard');
   const [newInviteEmail, setNewInviteEmail] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -270,6 +271,7 @@ export default function AdminPage() {
     { key: 'users' as const, label: `Users (${adminStats?.totalUsers || 0})` },
     { key: 'contacts' as const, label: `Contacts (${adminData?.contactSubmissions.length || 0})` },
     { key: 'invitations' as const, label: `Invitations (${adminData?.invitations?.length || 0})` },
+    { key: 'security' as const, label: 'Security' },
   ];
 
   return (
@@ -641,6 +643,10 @@ export default function AdminPage() {
               )}
             </div>
           </motion.div>
+        )}
+
+        {activeTab === 'security' && (
+          <SecurityTab />
         )}
       </div>
     </div>
