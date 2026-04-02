@@ -169,6 +169,9 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ── Safe area padding for bottom buttons on phones ── */
+.pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+
 /* ── Mobile modal full-screen behavior ── */
 @media (max-width: 640px) {
   .modal-mobile-full {

@@ -265,12 +265,12 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4">
-      <div className="bg-white dark:bg-[#1a1f2e] rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[85dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[100dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-[#2a3042]">
+        <div className="flex items-center justify-between px-4 py-3 sm:p-5 border-b border-gray-200 dark:border-[#2a3042] flex-shrink-0">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Log Food</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Log Food</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {(() => { const [y, m, d] = selectedDate.split('-'); return `${m}/${d}/${y}`; })()}
             </p>
           </div>
@@ -279,12 +279,12 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Meal Type */}
-          <div className="flex gap-2">
+        <div className="flex-1 overflow-y-auto px-4 py-3 sm:p-5 space-y-3 sm:space-y-4">
+          {/* Meal Type — scrollable on mobile */}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
             {['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'].map((type) => (
               <button key={type} onClick={() => setMealType(type)}
-                className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition-colors ${
+                className={`py-2 px-4 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                   mealType === type ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-[#242938] text-gray-600 dark:text-gray-400'
                 }`}
               >{type.charAt(0) + type.slice(1).toLowerCase()}</button>
@@ -293,15 +293,15 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
 
           {/* Tab Navigation */}
           {!selectedFood && (
-            <div className="flex gap-1.5 bg-gray-100 dark:bg-[#111827] rounded-xl p-1">
+            <div className="flex gap-1 bg-gray-100 dark:bg-[#111827] rounded-xl p-1 overflow-x-auto no-scrollbar">
               {([
                 { key: 'search' as Tab, icon: Search, label: 'Search' },
-                { key: 'favorites' as Tab, icon: Heart, label: 'Favorites' },
+                { key: 'favorites' as Tab, icon: Heart, label: 'Fav' },
                 { key: 'recent' as Tab, icon: Clock, label: 'Recent' },
                 { key: 'manual' as Tab, icon: Plus, label: 'Manual' },
               ]).map(({ key, icon: Icon, label }) => (
                 <button key={key} onClick={() => setActiveTab(key)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
                     activeTab === key
                       ? 'bg-white dark:bg-[#1a1f2e] text-indigo-600 dark:text-indigo-400 shadow-sm'
                       : 'text-gray-500 dark:text-gray-400'
@@ -575,12 +575,12 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-gray-200 dark:border-[#2a3042] flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-[#242938] rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3042] transition-colors text-sm font-medium">
+        <div className="px-4 py-3 sm:p-5 border-t border-gray-200 dark:border-[#2a3042] flex gap-2 sm:gap-3 flex-shrink-0 pb-safe">
+          <button onClick={onClose} className="flex-1 px-3 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-[#242938] rounded-xl hover:bg-gray-200 dark:hover:bg-[#2a3042] transition-colors text-sm font-medium">
             Cancel
           </button>
           <button onClick={handleSubmit} disabled={activeTab === 'manual' ? !manualForm.foodName : !selectedFood}
-            className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+            className="flex-1 px-3 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
             Add Entry
           </button>
         </div>
