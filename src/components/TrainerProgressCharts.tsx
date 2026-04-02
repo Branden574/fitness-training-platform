@@ -215,22 +215,22 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis 
             dataKey="date" 
-            tick={{ fontSize: 12, fill: '#000000', fontWeight: 500 }}
-            stroke="#000000"
+            tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 500 }}
+            stroke="#9ca3af"
             tickFormatter={formatDate}
           />
           <YAxis 
-            tick={{ fontSize: 12, fill: '#000000', fontWeight: 500 }}
-            stroke="#000000"
-            label={{ value: getMetricLabel(selectedMetric), angle: -90, position: 'insideLeft', style: { fill: '#000000', fontWeight: 500 } }}
+            tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 500 }}
+            stroke="#9ca3af"
+            label={{ value: getMetricLabel(selectedMetric), angle: -90, position: 'insideLeft', style: { fill: '#9ca3af', fontWeight: 500 } }}
           />
           <Tooltip 
             contentStyle={{ 
-              backgroundColor: 'white', 
+              backgroundColor: '#1a1f2e', 
               border: '1px solid #e5e7eb', 
               borderRadius: '8px',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              color: '#000000',
+              color: '#9ca3af',
               fontWeight: '500'
             }}
           />
@@ -335,7 +335,7 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
             <select
               value={selectedMetric}
               onChange={(e) => setSelectedMetric(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white text-black"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white text-gray-900 dark:text-white"
             >
               <option value="weight">Weight</option>
               <option value="bodyFat">Body Fat</option>
@@ -350,7 +350,7 @@ const TrainerProgressCharts: React.FC<TrainerProgressProps> = ({
             <select
               value={chartType}
               onChange={(e) => setChartType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white text-black"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white text-gray-900 dark:text-white"
             >
               <option value="line">Line Chart</option>
               <option value="area">Area Chart</option>

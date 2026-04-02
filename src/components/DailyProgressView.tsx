@@ -16,12 +16,14 @@ import {
   Filter,
   RefreshCw,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Camera,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface ProgressEntry {
   id: string;
-  date: string; // ISO date string
+  date: string;
   weight?: number | null;
   bodyFat?: number | null;
   muscleMass?: number | null;
@@ -29,6 +31,7 @@ interface ProgressEntry {
   energy?: number | null;
   sleep?: number | null;
   notes?: string | null;
+  photos?: string[] | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -353,15 +356,31 @@ const DailyProgressView: React.FC<DailyProgressViewProps> = ({ isTrainer = false
                       );
                     })}
 
-                    {/* Notes */}
+                    {/* Notes + Photos */}
                     <div className="col-span-2">
-                      {entry.notes ? (
-                        <span className="text-sm text-gray-900 dark:text-white truncate">
-                          {entry.notes}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-900 dark:text-white">-</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {entry.photos && (entry.photos as string[]).length > 0 && (
+                          <div className="flex -space-x-1 flex-shrink-0">
+                            {(entry.photos as string[]).slice(0, 3).map((photo, pi) => (
+                              <div key={pi} className="w-7 h-7 rounded-md overflow-hidden border-2 border-white dark:border-[#1a1f2e]">
+                                <img src={photo} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                            {(entry.photos as string[]).length > 3 && (
+                              <div className="w-7 h-7 rounded-md bg-gray-200 dark:bg-[#2a3042] border-2 border-white dark:border-[#1a1f2e] flex items-center justify-center">
+                                <span className="text-[9px] font-medium text-gray-600 dark:text-gray-400">+{(entry.photos as string[]).length - 3}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {entry.notes ? (
+                          <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                            {entry.notes}
+                          </span>
+                        ) : !entry.photos || (entry.photos as string[]).length === 0 ? (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
