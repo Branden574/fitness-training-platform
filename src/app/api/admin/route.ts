@@ -46,6 +46,17 @@ export async function GET() {
       });
     });
 
+    // Auto-expire stale pending invitations
+    await withDatabaseRetry(async () => {
+      await prisma.invitation.updateMany({
+        where: {
+          status: 'PENDING',
+          expiresAt: { lt: new Date() },
+        },
+        data: { status: 'EXPIRED' },
+      });
+    });
+
     // Get invitations with retry (capped at 200)
     const invitations = await withDatabaseRetry(async () => {
       return await prisma.invitation.findMany({

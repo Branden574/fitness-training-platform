@@ -57,6 +57,7 @@ model User {
   trainerAppointments    Appointment[]     @relation("TrainerAppointments")
   clientProfile          ClientProfile?
   foodEntries            FoodEntry[]
+  favoriteFoods          FavoriteFood[]
   sentInvitations        Invitation[]      @relation("InvitationInviter")
   createdMealPlans       MealPlan[]        @relation("TrainerMealPlans")
   mealPlans              MealPlan[]
@@ -300,6 +301,27 @@ model FoodEntry {
   @@index([date])
   @@index([mealType])
   @@map("food_entries")
+}
+
+model FavoriteFood {
+  id             String   @id @default(cuid())
+  userId         String
+  foodName       String
+  brand          String?
+  calories       Float
+  protein        Float
+  carbs          Float
+  fat            Float
+  servingSize    Float
+  servingUnit    String
+  category       String?
+  sourceId       String?  // External ID (usda-xxx, off-xxx, local-xxx)
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, foodName, brand])
+  @@index([userId])
+  @@map("favorite_foods")
 }
 
 model Meal {
