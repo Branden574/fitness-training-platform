@@ -45,7 +45,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { k: 'today', l: 'Today', i: Home, href: '/client' },
   { k: 'program', l: 'Program', i: Layers, href: '/client/program' },
-  { k: 'workout', l: 'Workout', i: Play, href: '/client/program', accent: true },
+  { k: 'workout', l: 'Workout', i: Play, href: '/client/workout', accent: true },
   { k: 'food', l: 'Food Log', i: Apple, href: '/client/food', accent: true },
   { k: 'progress', l: 'Progress', i: TrendingUp, href: '/client/progress' },
   { k: 'messages', l: 'Coach', i: MessageSquare, href: '/client/messages' },
