@@ -11,12 +11,21 @@ interface ExerciseDbItem {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
+function stem(t: string): string {
+  if (t.length > 3 && t.endsWith('ies')) return t.slice(0, -3) + 'y';
+  if (t.length > 3 && t.endsWith('es')) return t.slice(0, -2);
+  if (t.length > 2 && t.endsWith('s')) return t.slice(0, -1);
+  if (t.length > 3 && t.endsWith('ing')) return t.slice(0, -3);
+  return t;
+}
+
 function tokenize(s: string): string[] {
   return s
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
-    .filter(Boolean);
+    .filter(Boolean)
+    .map(stem);
 }
 
 function scoreMatch(target: string, candidate: string): number {
@@ -27,6 +36,32 @@ function scoreMatch(target: string, candidate: string): number {
   for (const t of tTokens) if (cTokens.has(t)) shared++;
   const denom = Math.max(tTokens.size, cTokens.size);
   return shared / denom;
+}
+
+async function resolveGifUrl(
+  item: ExerciseDbItem,
+  apiKey: string,
+): Promise<string | null> {
+  if (item.gifUrl && item.gifUrl.trim()) return item.gifUrl.trim();
+  const id = item.id;
+  if (!id) return null;
+  try {
+    const res = await fetch(
+      `https://exercisedb.p.rapidapi.com/exercises/exercise/${encodeURIComponent(id)}`,
+      {
+        headers: {
+          'X-RapidAPI-Key': apiKey,
+          'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+        },
+        cache: 'no-store',
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as ExerciseDbItem;
+    return data.gifUrl?.trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function POST() {
@@ -155,7 +190,7 @@ export async function POST() {
     const threshold = 0.34;
 
     // Fallback: if library match is too weak, try the per-name search endpoint.
-    if (!best || best.score < threshold || !best.item.gifUrl) {
+    if (!best || best.score < threshold) {
       const queries: string[] = [];
       const tokens = tokenize(name);
       const lower = name.toLowerCase();
@@ -180,11 +215,11 @@ export async function POST() {
           const items = Array.isArray(raw) ? raw : [raw];
           for (const item of items) {
             const candidateName = item.name ?? '';
-            if (!candidateName || !item.gifUrl) continue;
+            if (!candidateName) continue;
             const score = scoreMatch(name, candidateName);
             if (!best || score > best.score) best = { item, score };
           }
-          if (best && best.score >= threshold && best.item.gifUrl) break;
+          if (best && best.score >= threshold) break;
         } catch {
           // try next query
         }
@@ -192,7 +227,7 @@ export async function POST() {
       }
     }
 
-    if (!best || best.score < threshold || !best.item.gifUrl) {
+    if (!best || best.score < threshold) {
       results.skipped++;
       results.details.push({
         id: ex.id,
@@ -207,10 +242,24 @@ export async function POST() {
       continue;
     }
 
+    const gifUrl = await resolveGifUrl(best.item, apiKey);
+    if (!gifUrl) {
+      results.skipped++;
+      results.details.push({
+        id: ex.id,
+        name,
+        status: 'skipped',
+        reason: `matched "${best.item.name ?? ''}" but no gifUrl returned by detail endpoint`,
+        matchedName: best.item.name,
+        score: best.score,
+      });
+      continue;
+    }
+
     try {
       await prisma.exercise.update({
         where: { id: ex.id },
-        data: { imageUrl: best.item.gifUrl },
+        data: { imageUrl: gifUrl },
       });
       results.updated++;
       results.details.push({
@@ -219,7 +268,7 @@ export async function POST() {
         status: 'updated',
         matchedName: best.item.name,
         score: best.score,
-        gifUrl: best.item.gifUrl,
+        gifUrl,
       });
     } catch (e) {
       results.failed++;
@@ -230,6 +279,7 @@ export async function POST() {
         reason: e instanceof Error ? e.message : 'db error',
       });
     }
+    await new Promise((r) => setTimeout(r, 80));
   }
 
   return NextResponse.json({
