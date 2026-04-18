@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# design handoff (unzipped reference, not part of build)
+/design-handoff
+Martinez Fitness-handoff.zip
+v4-health-check.log

@@ -182,3 +182,383 @@ body {
     height: 100dvh;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   V4 REDESIGN — "Athletic Performance" tokens + primitives
+   Namespaced with --mf-* and .mf-* to avoid collision with legacy tokens.
+   Dark is the default theme. `.dark` class toggles dark overrides.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Accent presets (default = orange) ───────────────────────────── */
+:root {
+  --mf-accent: #FF4D1C;
+  --mf-accent-strong: #FF6B3D;
+  --mf-accent-ink: #0A0A0B;
+
+  /* Light (default when .dark is absent) */
+  --mf-bg: #F7F7F5;
+  --mf-surface-1: #FFFFFF;
+  --mf-surface-2: #FFFFFF;
+  --mf-surface-3: #F1F1EE;
+  --mf-hairline: #E5E5E2;
+  --mf-hairline-strong: #D4D4D0;
+  --mf-fg: #0A0A0B;
+  --mf-fg-dim: #52525A;
+  --mf-fg-mute: #8A8A92;
+
+  --mf-green: #2BD985;
+  --mf-amber: #F5B544;
+  --mf-red: #FF4D5E;
+  --mf-blue: #4D9EFF;
+
+  --mf-radius: 6px;
+
+  /* Density defaults */
+  --mf-pad: 1rem;
+  --mf-row: 48px;
+}
+
+.dark {
+  --mf-bg: #0A0A0B;
+  --mf-surface-1: #141416;
+  --mf-surface-2: #1C1C1F;
+  --mf-surface-3: #232327;
+  --mf-hairline: #232327;
+  --mf-hairline-strong: #2E2E33;
+  --mf-fg: #F4F4F5;
+  --mf-fg-dim: #A1A1A6;
+  --mf-fg-mute: #6E6E76;
+}
+
+/* Alternate accent presets — trigger via data-accent attribute on <html> */
+html[data-accent="lime"]  { --mf-accent:#D4FF4D; --mf-accent-strong:#E2FF73; --mf-accent-ink:#0A0A0B; }
+html[data-accent="volt"]  { --mf-accent:#F2FF00; --mf-accent-strong:#F8FF55; --mf-accent-ink:#0A0A0B; }
+html[data-accent="magma"] { --mf-accent:#FF2E63; --mf-accent-strong:#FF5A85; --mf-accent-ink:#0A0A0B; }
+
+/* Density */
+html.mf-compact { --mf-pad: 0.75rem; --mf-row: 44px; }
+html.mf-comfy   { --mf-pad: 1.25rem; --mf-row: 56px; }
+
+/* ── Tailwind v4 @theme bridge — exposes mf-* tokens as utilities ── */
+@theme inline {
+  --color-mf-bg: var(--mf-bg);
+  --color-mf-surface-1: var(--mf-surface-1);
+  --color-mf-surface-2: var(--mf-surface-2);
+  --color-mf-surface-3: var(--mf-surface-3);
+  --color-mf-hairline: var(--mf-hairline);
+  --color-mf-hairline-strong: var(--mf-hairline-strong);
+  --color-mf-fg: var(--mf-fg);
+  --color-mf-fg-dim: var(--mf-fg-dim);
+  --color-mf-fg-mute: var(--mf-fg-mute);
+  --color-mf-accent: var(--mf-accent);
+  --color-mf-accent-strong: var(--mf-accent-strong);
+  --color-mf-accent-ink: var(--mf-accent-ink);
+  --color-mf-green: var(--mf-green);
+  --color-mf-amber: var(--mf-amber);
+  --color-mf-red: var(--mf-red);
+  --color-mf-blue: var(--mf-blue);
+
+  --radius-mf: var(--mf-radius);
+
+  --font-mf-display: var(--font-display);
+  --font-mf-body: var(--font-mf-sans);
+  --font-mf-num: var(--font-mf-mono);
+}
+
+/* ── Typography primitives ───────────────────────────────────────── */
+.mf-font-display {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+.mf-font-mono {
+  font-family: var(--font-mf-mono), ui-monospace, monospace;
+}
+.mf-font-body {
+  font-family: var(--font-mf-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+}
+.mf-tnum { font-variant-numeric: tabular-nums; }
+
+.mf-eyebrow {
+  font-family: var(--font-mf-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--mf-fg-mute);
+}
+
+/* ── Surface + color utilities ───────────────────────────────────── */
+.mf-bg        { background: var(--mf-bg); }
+.mf-s1        { background: var(--mf-surface-1); }
+.mf-s2        { background: var(--mf-surface-2); }
+.mf-s3        { background: var(--mf-surface-3); }
+.mf-fg        { color: var(--mf-fg); }
+.mf-fg-dim    { color: var(--mf-fg-dim); }
+.mf-fg-mute   { color: var(--mf-fg-mute); }
+.mf-accent    { color: var(--mf-accent); }
+.mf-bg-accent { background: var(--mf-accent); color: var(--mf-accent-ink); }
+.mf-hairline          { border-color: var(--mf-hairline); }
+.mf-hairline-strong   { border-color: var(--mf-hairline-strong); }
+.mf-ring-accent       { box-shadow: 0 0 0 1px var(--mf-accent); }
+
+/* ── Cards ───────────────────────────────────────────────────────── */
+.mf-card {
+  background: var(--mf-surface-1);
+  border: 1px solid var(--mf-hairline);
+  border-radius: 8px;
+}
+.mf-card-elev {
+  background: var(--mf-surface-2);
+  border: 1px solid var(--mf-hairline);
+  border-radius: 8px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.mf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  height: 38px;
+  padding: 0 14px;
+  font-weight: 500;
+  font-size: 13px;
+  border-radius: var(--mf-radius);
+  border: 1px solid var(--mf-hairline-strong);
+  background: var(--mf-surface-2);
+  color: var(--mf-fg);
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+  cursor: pointer;
+}
+.mf-btn:hover  { background: var(--mf-surface-3); }
+.mf-btn:active { transform: translateY(1px); }
+.mf-btn[disabled], .mf-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.mf-btn-primary {
+  background: var(--mf-accent);
+  color: var(--mf-accent-ink);
+  border-color: var(--mf-accent);
+  font-weight: 600;
+}
+.mf-btn-primary:hover {
+  background: var(--mf-accent-strong);
+  border-color: var(--mf-accent-strong);
+}
+.mf-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.mf-btn-ghost:hover {
+  background: var(--mf-surface-3);
+  border-color: var(--mf-hairline);
+}
+
+/* ── Chips ───────────────────────────────────────────────────────── */
+.mf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid var(--mf-hairline-strong);
+  background: var(--mf-surface-2);
+  color: var(--mf-fg-dim);
+  font-family: var(--font-mf-mono), ui-monospace, monospace;
+  letter-spacing: 0.02em;
+}
+.mf-chip-live { background: var(--mf-accent); color: var(--mf-accent-ink); border-color: var(--mf-accent); }
+.mf-chip-ok   { color: var(--mf-green); border-color: rgba(43,217,133,0.3); background: rgba(43,217,133,0.08); }
+.mf-chip-warn { color: var(--mf-amber); border-color: rgba(245,181,68,0.3); background: rgba(245,181,68,0.08); }
+.mf-chip-bad  { color: var(--mf-red);   border-color: rgba(255,77,94,0.3);  background: rgba(255,77,94,0.08); }
+
+/* ── Inputs ──────────────────────────────────────────────────────── */
+.mf-input {
+  background: var(--mf-surface-2);
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--mf-fg);
+  font-size: 14px;
+  width: 100%;
+  font-family: inherit;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.mf-input:focus {
+  outline: none;
+  border-color: var(--mf-accent);
+  box-shadow: 0 0 0 3px rgba(255, 77, 28, 0.15);
+}
+.mf-input::placeholder { color: var(--mf-fg-mute); }
+/* Neutralize legacy .dark input !important rules inside v4 scope */
+.dark .mf-input {
+  background-color: var(--mf-surface-2) !important;
+  border-color: var(--mf-hairline-strong) !important;
+  color: var(--mf-fg) !important;
+}
+.dark .mf-input:focus {
+  border-color: var(--mf-accent) !important;
+  box-shadow: 0 0 0 3px rgba(255, 77, 28, 0.15) !important;
+}
+
+/* ── Divider ─────────────────────────────────────────────────────── */
+.mf-vr {
+  width: 1px;
+  background: var(--mf-hairline);
+  align-self: stretch;
+}
+
+/* ── Placeholder image (gridded) ─────────────────────────────────── */
+.mf-ph-img {
+  background:
+    linear-gradient(135deg, transparent 49.5%, rgba(255,255,255,0.04) 49.5%, rgba(255,255,255,0.04) 50.5%, transparent 50.5%) 0 0 / 14px 14px,
+    var(--mf-surface-3);
+  color: var(--mf-fg-mute);
+  font-family: var(--font-mf-mono), ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.mf-ph-img::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 20% 20%, rgba(255,255,255,0.04), transparent 55%);
+  pointer-events: none;
+}
+html:not(.dark) .mf-ph-img {
+  background:
+    linear-gradient(135deg, transparent 49.5%, rgba(0,0,0,0.06) 49.5%, rgba(0,0,0,0.06) 50.5%, transparent 50.5%) 0 0 / 14px 14px,
+    var(--mf-surface-3);
+}
+
+/* ── Duotone silhouette placeholder ──────────────────────────────── */
+.mf-duotone {
+  background: var(--mf-surface-3);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.mf-duotone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(10,10,11,0.7) 100%);
+  pointer-events: none;
+}
+
+/* ── Gridded hero background ─────────────────────────────────────── */
+.mf-grid-bg {
+  background-image:
+    linear-gradient(var(--mf-hairline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mf-hairline) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: -1px -1px;
+}
+
+/* ── Sparkline helper ────────────────────────────────────────────── */
+.mf-spark path { stroke: var(--mf-accent); stroke-width: 1.5; fill: none; }
+.mf-spark .fill { fill: var(--mf-accent); opacity: 0.14; stroke: none; }
+
+/* ── Ring progress (conic-gradient flavor) ───────────────────────── */
+.mf-ring-progress {
+  --p: 0.68;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: conic-gradient(var(--mf-accent) calc(var(--p) * 360deg), var(--mf-hairline-strong) 0);
+  display: grid;
+  place-items: center;
+}
+.mf-ring-progress > span {
+  background: var(--mf-surface-1);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+/* ── Live pulse ──────────────────────────────────────────────────── */
+@keyframes mf-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+.mf-pulse { animation: mf-pulse 1.6s ease-in-out infinite; }
+
+/* ── Nav active bar ──────────────────────────────────────────────── */
+.mf-nav-active { position: relative; }
+.mf-nav-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--mf-accent);
+}
+
+/* ── Phone frame (used for mobile preview stages) ────────────────── */
+.mf-phone {
+  width: 390px;
+  height: 780px;
+  background: var(--mf-bg);
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: 36px;
+  padding: 10px;
+  box-shadow: 0 40px 80px -40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.mf-phone-inner {
+  background: var(--mf-bg);
+  border-radius: 28px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.mf-notch {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92px;
+  height: 26px;
+  background: #000;
+  border-radius: 100px;
+  z-index: 30;
+}
+.mf-status-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  font-family: var(--font-mf-mono), ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mf-fg);
+  position: relative;
+  z-index: 10;
+}
+
+/* ── Scrollbar (scoped to v4 surfaces) ───────────────────────────── */
+.mf-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.mf-scroll::-webkit-scrollbar-track { background: transparent; }
+.mf-scroll::-webkit-scrollbar-thumb {
+  background: var(--mf-hairline-strong);
+  border-radius: 10px;
+  border: 2px solid var(--mf-bg);
+}
+.mf-scroll::-webkit-scrollbar-thumb:hover { background: var(--mf-fg-mute); }
+
+/* ── Kill tap-highlight inside v4 scope ──────────────────────────── */
+[data-mf] * { -webkit-tap-highlight-color: transparent; }
