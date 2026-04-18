@@ -282,6 +282,26 @@ export async function POST() {
     await new Promise((r) => setTimeout(r, 80));
   }
 
+  const sampleLibraryItem = library[0] ?? null;
+  let sampleDetail: unknown = null;
+  if (sampleLibraryItem?.id) {
+    try {
+      const res = await fetch(
+        `https://exercisedb.p.rapidapi.com/exercises/exercise/${encodeURIComponent(sampleLibraryItem.id)}`,
+        {
+          headers: {
+            'X-RapidAPI-Key': apiKey,
+            'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+          },
+          cache: 'no-store',
+        },
+      );
+      if (res.ok) sampleDetail = await res.json();
+    } catch {
+      sampleDetail = null;
+    }
+  }
+
   return NextResponse.json({
     libraryCount: library.length,
     fetchErrors,
@@ -290,5 +310,9 @@ export async function POST() {
     skipped: results.skipped,
     failed: results.failed,
     details: results.details,
+    debug: {
+      sampleLibraryItem,
+      sampleDetail,
+    },
   });
 }
