@@ -44,29 +44,56 @@ export async function POST() {
     );
   }
 
-  let library: ExerciseDbItem[];
-  try {
-    const res = await fetch(
-      'https://exercisedb.p.rapidapi.com/exercises?limit=1500',
-      {
-        headers: {
-          'X-RapidAPI-Key': apiKey,
-          'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+  const BODY_PARTS = [
+    'back',
+    'cardio',
+    'chest',
+    'lower arms',
+    'lower legs',
+    'neck',
+    'shoulders',
+    'upper arms',
+    'upper legs',
+    'waist',
+  ];
+
+  const library: ExerciseDbItem[] = [];
+  const seen = new Set<string>();
+  const fetchErrors: string[] = [];
+
+  for (const bp of BODY_PARTS) {
+    try {
+      const res = await fetch(
+        `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${encodeURIComponent(bp)}?limit=500`,
+        {
+          headers: {
+            'X-RapidAPI-Key': apiKey,
+            'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+          },
+          cache: 'no-store',
         },
-        cache: 'no-store',
-      },
-    );
-    if (!res.ok) {
-      return NextResponse.json(
-        { message: `ExerciseDB fetch failed (${res.status})` },
-        { status: 502 },
       );
+      if (!res.ok) {
+        fetchErrors.push(`${bp}: HTTP ${res.status}`);
+        continue;
+      }
+      const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
+      const items = Array.isArray(raw) ? raw : [raw];
+      for (const it of items) {
+        const key = String(it.id ?? it.name ?? '');
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        library.push(it);
+      }
+    } catch (e) {
+      fetchErrors.push(`${bp}: ${e instanceof Error ? e.message : 'unknown'}`);
     }
-    const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
-    library = Array.isArray(raw) ? raw : [raw];
-  } catch (e) {
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  if (library.length === 0) {
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : 'ExerciseDB fetch error' },
+      { message: 'ExerciseDB returned no library items', fetchErrors },
       { status: 502 },
     );
   }
@@ -150,6 +177,7 @@ export async function POST() {
 
   return NextResponse.json({
     libraryCount: library.length,
+    fetchErrors,
     total: missing.length,
     updated: results.updated,
     skipped: results.skipped,
