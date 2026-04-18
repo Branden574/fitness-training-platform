@@ -65,6 +65,7 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
   const [elapsedSec, setElapsedSec] = useState(0);
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prs, setPrs] = useState<Array<{ exerciseName: string; newWeight: number; previousWeight: number | null }> | null>(null);
 
   const startedAtMs = useRef(Date.now() - (Date.now() - new Date(initial.startedAt).getTime()));
 
@@ -140,16 +141,24 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
         })
         .filter((x): x is NonNullable<typeof x> => x !== null);
 
+      let detectedPrs: Array<{ exerciseName: string; newWeight: number; previousWeight: number | null }> = [];
       if (payload.length > 0) {
         const res = await fetch('/api/workout-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             workoutSessionId: initial.id,
-            exercises: payload,
+            exercises: payload.map((p) => ({
+              ...p,
+              exerciseName: initial.workout.exercises.find((e) => e.exerciseId === p.exerciseId)?.name,
+            })),
           }),
         });
         if (!res.ok) throw new Error('Could not save progress');
+        const data = (await res.json()) as {
+          prs?: Array<{ exerciseName: string; newWeight: number; previousWeight: number | null }>;
+        };
+        detectedPrs = data.prs ?? [];
       }
 
       const patch = await fetch('/api/workout-sessions', {
@@ -163,7 +172,13 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
       });
       if (!patch.ok) throw new Error('Could not close session');
 
-      router.push('/client');
+      if (detectedPrs.length > 0) {
+        setPrs(detectedPrs);
+        // Brief celebration, then redirect
+        setTimeout(() => router.push('/client'), 3200);
+      } else {
+        router.push('/client');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
       setFinishing(false);
@@ -646,6 +661,110 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
           {finishing ? 'SAVING…' : 'FINISH'}
         </Btn>
       </div>
+
+      {/* PR celebration overlay */}
+      {prs && prs.length > 0 && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 60,
+            background: 'rgba(10,10,11,0.92)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            className="mf-card-elev"
+            style={{
+              maxWidth: 380,
+              width: '100%',
+              padding: 24,
+              borderColor: 'var(--mf-accent)',
+              background: 'linear-gradient(180deg, rgba(255,77,28,0.12), transparent 60%)',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              className="mf-eyebrow mf-pulse"
+              style={{ color: 'var(--mf-accent)', marginBottom: 12 }}
+            >
+              NEW {prs.length > 1 ? `${prs.length} PRS` : 'PR'}
+            </div>
+            {prs.slice(0, 3).map((pr, i) => {
+              const delta =
+                pr.previousWeight != null
+                  ? `+${(pr.newWeight - pr.previousWeight).toFixed(1)} LB`
+                  : 'FIRST LOGGED';
+              return (
+                <div
+                  key={i}
+                  style={{
+                    marginBottom: i < Math.min(2, prs.length - 1) ? 16 : 0,
+                    paddingBottom: i < Math.min(2, prs.length - 1) ? 16 : 0,
+                    borderBottom:
+                      i < Math.min(2, prs.length - 1)
+                        ? '1px solid var(--mf-hairline)'
+                        : 'none',
+                  }}
+                >
+                  <div
+                    className="mf-font-display mf-tnum mf-accent"
+                    style={{ fontSize: 64, lineHeight: 0.9, letterSpacing: '-0.02em' }}
+                  >
+                    {pr.newWeight}
+                  </div>
+                  <div
+                    className="mf-font-display"
+                    style={{
+                      fontSize: 14,
+                      marginTop: 8,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    LB · {pr.exerciseName}
+                  </div>
+                  <div
+                    className="mf-font-mono mf-fg-mute"
+                    style={{
+                      fontSize: 10,
+                      marginTop: 4,
+                      letterSpacing: '0.1em',
+                      color: 'var(--mf-green)',
+                    }}
+                  >
+                    ▲ {delta}
+                  </div>
+                </div>
+              );
+            })}
+            {prs.length > 3 && (
+              <div
+                className="mf-font-mono mf-fg-mute"
+                style={{ fontSize: 10, marginTop: 12, letterSpacing: '0.1em' }}
+              >
+                + {prs.length - 3} MORE
+              </div>
+            )}
+            <div
+              className="mf-font-mono mf-fg-mute"
+              style={{
+                fontSize: 10,
+                marginTop: 16,
+                letterSpacing: '0.1em',
+              }}
+            >
+              YOUR COACH HAS BEEN NOTIFIED
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

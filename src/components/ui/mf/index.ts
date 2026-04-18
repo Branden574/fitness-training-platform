@@ -64,3 +64,9 @@ export type { HeatmapProps } from './Heatmap';
 
 export { default as SrcPill } from './SrcPill';
 export type { FoodSource, SrcPillProps } from './SrcPill';
+
+export { default as ErrorPanel } from './ErrorPanel';
+export type { ErrorPanelProps } from './ErrorPanel';
+
+export { default as LoadingPulse } from './LoadingPulse';
+export type { LoadingPulseProps } from './LoadingPulse';

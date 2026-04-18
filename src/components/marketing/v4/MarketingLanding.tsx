@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -156,7 +157,17 @@ function BrandMark({ size = 28 }: { size?: number }) {
 }
 
 export default function MarketingLanding() {
-  const [tab, setTab] = useState<'trainer' | 'client'>('trainer');
+  const params = useSearchParams();
+  const initialTab = params?.get('as') === 'client' ? 'client' : 'trainer';
+  const [tab, setTab] = useState<'trainer' | 'client'>(initialTab);
+
+  // Keep tab in sync if URL changes (e.g., nav click while already on /)
+  useEffect(() => {
+    const asParam = params?.get('as');
+    if (asParam === 'client' || asParam === 'trainer') {
+      setTab(asParam);
+    }
+  }, [params]);
 
   return (
     <div data-mf className="mf-bg mf-fg" style={{ minHeight: '100vh' }}>
@@ -183,15 +194,15 @@ export default function MarketingLanding() {
               className="hidden md:flex items-center gap-6 mf-fg-dim"
               style={{ fontSize: 14 }}
             >
-              <Link href="/programs" className="hover:text-[color:var(--mf-fg)]">Platform</Link>
-              <Link href="/programs" className="hover:text-[color:var(--mf-fg)]">For Trainers</Link>
-              <Link href="/programs" className="hover:text-[color:var(--mf-fg)]">For Clients</Link>
+              <a href="#platform" className="hover:text-[color:var(--mf-fg)]">Platform</a>
+              <a href="/?as=trainer#role-split" className="hover:text-[color:var(--mf-fg)]">For Trainers</a>
+              <a href="/?as=client#role-split" className="hover:text-[color:var(--mf-fg)]">For Clients</a>
               <a href="#pricing" className="hover:text-[color:var(--mf-fg)]">Pricing</a>
               <Link href="/shop" className="hover:text-[color:var(--mf-fg)]">Shop</Link>
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/auth/signin">
+            <Link href="/auth/signin" className="hidden sm:inline-flex">
               <Btn variant="ghost">Sign in</Btn>
             </Link>
             <Link href="/auth/signup">
@@ -356,7 +367,7 @@ export default function MarketingLanding() {
                 style={{
                   position: 'absolute',
                   bottom: -24,
-                  left: -32,
+                  left: 'clamp(-32px, -4vw, 8px)',
                   padding: 12,
                   boxShadow: '0 20px 40px -20px rgba(0,0,0,0.5)',
                 }}
@@ -393,7 +404,7 @@ export default function MarketingLanding() {
       </div>
 
       {/* ── Features ───────────────────────────────────────── */}
-      <div className="max-w-[1200px] mx-auto px-6" style={{ paddingTop: 96, paddingBottom: 96 }}>
+      <div id="platform" className="max-w-[1200px] mx-auto px-6" style={{ paddingTop: 96, paddingBottom: 96 }}>
         <div className="grid md:grid-cols-12 gap-8" style={{ marginBottom: 48 }}>
           <div className="md:col-span-5">
             <div className="mf-eyebrow" style={{ marginBottom: 12 }}>01 / PLATFORM</div>
@@ -446,7 +457,7 @@ export default function MarketingLanding() {
       </div>
 
       {/* ── Role split ─────────────────────────────────────── */}
-      <div style={{ borderTop: '1px solid var(--mf-hairline)' }}>
+      <div id="role-split" style={{ borderTop: '1px solid var(--mf-hairline)', scrollMarginTop: 80 }}>
         <div className="max-w-[1200px] mx-auto px-6" style={{ paddingTop: 96, paddingBottom: 96 }}>
           <div className="flex items-end justify-between" style={{ marginBottom: 32 }}>
             <div>
@@ -603,7 +614,7 @@ export default function MarketingLanding() {
       </div>
 
       {/* ── Pricing ───────────────────────────────────────── */}
-      <div id="pricing" className="max-w-[1200px] mx-auto px-6" style={{ paddingTop: 96, paddingBottom: 96 }}>
+      <div id="pricing" className="max-w-[1200px] mx-auto px-6" style={{ paddingTop: 96, paddingBottom: 96, scrollMarginTop: 80 }}>
         <div className="text-center" style={{ marginBottom: 48 }}>
           <div className="mf-eyebrow" style={{ marginBottom: 12 }}>03 / PRICING</div>
           <h2
