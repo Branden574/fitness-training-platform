@@ -333,7 +333,6 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
               const logs = logsByExercise[ex.id] ?? [];
               const allDone = logs.length > 0 && logs.every((s) => s.done);
               const isActive = i === exerciseIdx;
-              const status = allDone ? 'DONE' : isActive ? 'NOW' : 'NEXT';
               return (
                 <button
                   key={ex.id}
@@ -346,7 +345,7 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
                       ),
                     );
                   }}
-                  className="w-full text-left flex items-start gap-3 relative"
+                  className="w-full text-left flex items-center gap-3 relative"
                   style={{
                     padding: '12px 16px',
                     borderBottom: '1px solid var(--mf-hairline)',
@@ -368,20 +367,31 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
                   )}
                   <div
                     className="grid place-items-center mf-font-mono shrink-0"
+                    aria-label={
+                      allDone
+                        ? 'Completed'
+                        : isActive
+                          ? `Active exercise ${i + 1}`
+                          : `Exercise ${i + 1}`
+                    }
                     style={{
-                      width: 24,
-                      height: 24,
+                      width: 16,
+                      height: 16,
                       borderRadius: 4,
-                      fontSize: 10,
-                      background: allDone
-                        ? 'var(--mf-accent)'
-                        : 'var(--mf-surface-3)',
-                      color: allDone
-                        ? 'var(--mf-accent-ink)'
-                        : 'var(--mf-fg)',
+                      fontSize: 9,
+                      lineHeight: 1,
+                      fontWeight: 600,
+                      background:
+                        allDone || isActive
+                          ? 'var(--mf-accent)'
+                          : 'var(--mf-surface-3)',
+                      color:
+                        allDone || isActive
+                          ? 'var(--mf-accent-ink)'
+                          : 'var(--mf-fg-mute)',
                     }}
                   >
-                    {allDone ? <Check size={12} /> : i + 1}
+                    {allDone ? <Check size={10} /> : i + 1}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
@@ -389,19 +399,20 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
                         fontSize: 12,
                         fontWeight: 600,
                         lineHeight: 1.2,
-                        marginBottom: 4,
+                        marginBottom: 2,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {ex.name}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="mf-font-mono mf-fg-mute" style={{ fontSize: 10 }}>
-                        {ex.targetSets}×{ex.targetReps}
-                        {ex.targetWeight ? ` · ${ex.targetWeight} LB` : ''}
-                      </span>
-                      <Chip kind={isActive ? 'live' : allDone ? 'ok' : 'default'}>
-                        {status}
-                      </Chip>
+                    <div
+                      className="mf-font-mono mf-fg-mute"
+                      style={{ fontSize: 10 }}
+                    >
+                      {ex.targetSets}×{ex.targetReps}
+                      {ex.targetWeight ? ` · ${ex.targetWeight} LB` : ''}
                     </div>
                   </div>
                 </button>
