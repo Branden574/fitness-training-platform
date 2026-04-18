@@ -76,3 +76,6 @@ export type { ClientDesktopKey, ClientDesktopShellProps } from './ClientDesktopS
 
 export { default as TrainerMobileTabs } from './TrainerMobileTabs';
 export type { TrainerMobileTabKey, TrainerMobileTabsProps } from './TrainerMobileTabs';
+
+export { default as PublicTopNav } from './PublicTopNav';
+export type { PublicTopNavProps } from './PublicTopNav';

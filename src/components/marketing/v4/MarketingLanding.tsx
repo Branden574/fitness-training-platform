@@ -16,7 +16,7 @@ import {
   Trophy,
   type LucideIcon,
 } from 'lucide-react';
-import { Avatar, Btn, Chip, LineChart } from '@/components/ui/mf';
+import { Avatar, Btn, Chip, LineChart, PublicTopNav } from '@/components/ui/mf';
 
 const BENCH_SERIES = [185, 195, 200, 205, 205, 215, 215, 220, 220, 225, 225, 230];
 const WEEK_LABELS = Array.from({ length: 12 }, (_, i) => `W${i + 1}`);
@@ -171,46 +171,8 @@ export default function MarketingLanding() {
 
   return (
     <div data-mf className="mf-bg mf-fg" style={{ minHeight: '100vh' }}>
-      {/* ── Top nav ─────────────────────────────────────────── */}
-      <div
-        className="sticky top-0 z-40 mf-bg"
-        style={{
-          borderBottom: '1px solid var(--mf-hairline)',
-          backdropFilter: 'blur(10px)',
-        }}
-      >
-        <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between" style={{ height: 64 }}>
-          <div className="flex items-center gap-10">
-            <Link href="/" className="flex items-center gap-2">
-              <BrandMark />
-              <span
-                className="mf-font-display"
-                style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.01em' }}
-              >
-                MARTINEZ/FITNESS
-              </span>
-            </Link>
-            <nav
-              className="hidden md:flex items-center gap-6 mf-fg-dim"
-              style={{ fontSize: 14 }}
-            >
-              <a href="#platform" className="hover:text-[color:var(--mf-fg)]">Platform</a>
-              <a href="/?as=trainer#role-split" className="hover:text-[color:var(--mf-fg)]">For Trainers</a>
-              <a href="/?as=client#role-split" className="hover:text-[color:var(--mf-fg)]">For Clients</a>
-              <a href="#pricing" className="hover:text-[color:var(--mf-fg)]">Pricing</a>
-              <Link href="/shop" className="hover:text-[color:var(--mf-fg)]">Shop</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/auth/signin" className="hidden sm:inline-flex">
-              <Btn variant="ghost">Sign in</Btn>
-            </Link>
-            <Link href="/auth/signup">
-              <Btn variant="primary" icon={ArrowRight}>Start training</Btn>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PublicTopNav />
+
 
       {/* ── Hero ────────────────────────────────────────────── */}
       <div className="relative mf-grid-bg">
