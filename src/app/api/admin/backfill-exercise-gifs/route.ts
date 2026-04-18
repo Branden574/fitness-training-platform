@@ -11,6 +11,24 @@ interface ExerciseDbItem {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function scoreMatch(target: string, candidate: string): number {
+  const tTokens = new Set(tokenize(target));
+  const cTokens = new Set(tokenize(candidate));
+  if (tTokens.size === 0 || cTokens.size === 0) return 0;
+  let shared = 0;
+  for (const t of tTokens) if (cTokens.has(t)) shared++;
+  const denom = Math.max(tTokens.size, cTokens.size);
+  return shared / denom;
+}
+
 export async function POST() {
   try {
     await requireAdminSession();
@@ -26,6 +44,33 @@ export async function POST() {
     );
   }
 
+  let library: ExerciseDbItem[];
+  try {
+    const res = await fetch(
+      'https://exercisedb.p.rapidapi.com/exercises?limit=1500',
+      {
+        headers: {
+          'X-RapidAPI-Key': apiKey,
+          'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+        },
+        cache: 'no-store',
+      },
+    );
+    if (!res.ok) {
+      return NextResponse.json(
+        { message: `ExerciseDB fetch failed (${res.status})` },
+        { status: 502 },
+      );
+    }
+    const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
+    library = Array.isArray(raw) ? raw : [raw];
+  } catch (e) {
+    return NextResponse.json(
+      { message: e instanceof Error ? e.message : 'ExerciseDB fetch error' },
+      { status: 502 },
+    );
+  }
+
   const missing = await prisma.exercise.findMany({
     where: { OR: [{ imageUrl: null }, { imageUrl: '' }] },
     select: { id: true, name: true },
@@ -35,7 +80,15 @@ export async function POST() {
     updated: number;
     skipped: number;
     failed: number;
-    details: Array<{ id: string; name: string; status: 'updated' | 'skipped' | 'failed'; reason?: string; gifUrl?: string }>;
+    details: Array<{
+      id: string;
+      name: string;
+      status: 'updated' | 'skipped' | 'failed';
+      reason?: string;
+      matchedName?: string;
+      score?: number;
+      gifUrl?: string;
+    }>;
   } = { updated: 0, skipped: 0, failed: 0, details: [] };
 
   for (const ex of missing) {
@@ -46,57 +99,57 @@ export async function POST() {
       continue;
     }
 
+    let best: { item: ExerciseDbItem; score: number } | null = null;
+    for (const item of library) {
+      const candidateName = item.name ?? '';
+      if (!candidateName) continue;
+      const score = scoreMatch(name, candidateName);
+      if (!best || score > best.score) best = { item, score };
+    }
+
+    const threshold = 0.5;
+    if (!best || best.score < threshold || !best.item.gifUrl) {
+      results.skipped++;
+      results.details.push({
+        id: ex.id,
+        name,
+        status: 'skipped',
+        reason: best
+          ? `low score ${best.score.toFixed(2)} (closest: "${best.item.name ?? ''}")`
+          : 'no library items',
+        matchedName: best?.item.name,
+        score: best?.score,
+      });
+      continue;
+    }
+
     try {
-      const res = await fetch(
-        `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(name.toLowerCase())}`,
-        {
-          headers: {
-            'X-RapidAPI-Key': apiKey,
-            'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-          },
-          cache: 'no-store',
-        },
-      );
-
-      if (!res.ok) {
-        results.failed++;
-        results.details.push({ id: ex.id, name, status: 'failed', reason: `HTTP ${res.status}` });
-        continue;
-      }
-
-      const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
-      const items = Array.isArray(raw) ? raw : [raw];
-      const lowered = name.toLowerCase();
-      const exact = items.find((it) => (it.name ?? '').toLowerCase() === lowered);
-      const match = exact ?? items[0];
-      const gifUrl = match?.gifUrl?.trim();
-
-      if (!gifUrl) {
-        results.skipped++;
-        results.details.push({ id: ex.id, name, status: 'skipped', reason: 'no match' });
-        continue;
-      }
-
       await prisma.exercise.update({
         where: { id: ex.id },
-        data: { imageUrl: gifUrl },
+        data: { imageUrl: best.item.gifUrl },
       });
       results.updated++;
-      results.details.push({ id: ex.id, name, status: 'updated', gifUrl });
+      results.details.push({
+        id: ex.id,
+        name,
+        status: 'updated',
+        matchedName: best.item.name,
+        score: best.score,
+        gifUrl: best.item.gifUrl,
+      });
     } catch (e) {
       results.failed++;
       results.details.push({
         id: ex.id,
         name,
         status: 'failed',
-        reason: e instanceof Error ? e.message : 'unknown error',
+        reason: e instanceof Error ? e.message : 'db error',
       });
     }
-
-    await new Promise((r) => setTimeout(r, 120));
   }
 
   return NextResponse.json({
+    libraryCount: library.length,
     total: missing.length,
     updated: results.updated,
     skipped: results.skipped,
