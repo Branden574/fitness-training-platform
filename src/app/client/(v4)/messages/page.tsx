@@ -1,6 +1,8 @@
 import { requireClientSession, getClientContext } from '@/lib/client-data';
 import { prisma } from '@/lib/prisma';
+import { ClientDesktopShell } from '@/components/ui/mf';
 import MessagesClient from './messages-client';
+import MessagesDesktop from './messages-desktop';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +11,8 @@ export default async function ClientMessagesPage() {
   const ctx = await getClientContext(session.user.id);
 
   if (!ctx.trainer) {
-    return (
-      <main style={{ padding: 24 }}>
+    const empty = (
+      <div style={{ padding: 24 }}>
         <div className="mf-eyebrow" style={{ marginBottom: 8 }}>COACH</div>
         <div
           className="mf-card"
@@ -27,7 +29,23 @@ export default async function ClientMessagesPage() {
             you to a coach, messages appear here.
           </div>
         </div>
-      </main>
+      </div>
+    );
+    return (
+      <>
+        <main className="md:hidden">{empty}</main>
+        <div className="hidden md:block">
+          <ClientDesktopShell
+            active="messages"
+            title="Messages"
+            breadcrumbs="CONNECT"
+            athleteInitials={ctx.initials}
+            athleteName={ctx.name ?? ctx.email}
+          >
+            {empty}
+          </ClientDesktopShell>
+        </div>
+      </>
     );
   }
 
@@ -58,17 +76,27 @@ export default async function ClientMessagesPage() {
     data: { read: true },
   }).catch(() => {});
 
+  const mapped = messages.map((m) => ({
+    id: m.id,
+    content: m.content,
+    fromMe: m.senderId === session.user.id,
+    at: m.createdAt.toISOString(),
+  }));
+
   return (
-    <MessagesClient
-      selfId={session.user.id}
-      selfInitials={ctx.initials}
-      trainer={{ id: ctx.trainer.id, name: ctx.trainer.name }}
-      initialMessages={messages.map((m) => ({
-        id: m.id,
-        content: m.content,
-        fromMe: m.senderId === session.user.id,
-        at: m.createdAt.toISOString(),
-      }))}
-    />
+    <>
+      <MessagesClient
+        selfId={session.user.id}
+        selfInitials={ctx.initials}
+        trainer={{ id: ctx.trainer.id, name: ctx.trainer.name }}
+        initialMessages={mapped}
+      />
+      <MessagesDesktop
+        selfId={session.user.id}
+        selfInitials={ctx.initials}
+        trainer={{ id: ctx.trainer.id, name: ctx.trainer.name }}
+        initialMessages={mapped}
+      />
+    </>
   );
 }

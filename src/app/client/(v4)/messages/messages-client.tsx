@@ -171,6 +171,7 @@ export default function MessagesClient({
 
   return (
     <main
+      className="md:hidden"
       style={{
         display: 'flex',
         flexDirection: 'column',
