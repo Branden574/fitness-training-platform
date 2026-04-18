@@ -1,12 +1,11 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Navigation from './Navigation';
+import PublicTopNav from '@/components/ui/mf/PublicTopNav';
 
 const ConditionalNavigation = () => {
   const pathname = usePathname();
 
-  // Pages that bring their own chrome (v4 redesign + legacy dashboards)
   const ownsChrome =
     pathname === '/' ||
     pathname === '/design' ||
@@ -20,7 +19,7 @@ const ConditionalNavigation = () => {
 
   if (ownsChrome) return null;
 
-  return <Navigation />;
+  return <PublicTopNav />;
 };
 
 export default ConditionalNavigation;
