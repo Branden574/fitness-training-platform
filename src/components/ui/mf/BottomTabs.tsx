@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Calendar, Apple, BarChart3, MessageSquare, User, type LucideIcon } from 'lucide-react';
+import { Home, Calendar, Play, Apple, BarChart3, MessageSquare, User, type LucideIcon } from 'lucide-react';
 
-export type ClientTabKey = 'today' | 'program' | 'food' | 'progress' | 'messages' | 'profile';
+export type ClientTabKey = 'today' | 'program' | 'workout' | 'food' | 'progress' | 'messages' | 'profile';
 
 export interface BottomTabsProps {
   active?: ClientTabKey;
@@ -22,6 +22,7 @@ interface Tab {
 const DEFAULT_TABS: Tab[] = [
   { k: 'today',    i: Home,          l: 'Today',    href: '/client' },
   { k: 'program',  i: Calendar,      l: 'Program',  href: '/client/program' },
+  { k: 'workout',  i: Play,          l: 'Workout',  href: '/client/workout' },
   { k: 'food',     i: Apple,         l: 'Food',     href: '/client/food' },
   { k: 'progress', i: BarChart3,     l: 'Progress', href: '/client/progress' },
   { k: 'messages', i: MessageSquare, l: 'Chat',     href: '/client/messages' },
@@ -30,12 +31,12 @@ const DEFAULT_TABS: Tab[] = [
 
 function deriveActive(pathname: string | null): ClientTabKey {
   if (!pathname) return 'today';
+  if (pathname.startsWith('/client/workout')) return 'workout';
   if (pathname.startsWith('/client/program')) return 'program';
   if (pathname.startsWith('/client/food')) return 'food';
   if (pathname.startsWith('/client/progress')) return 'progress';
   if (pathname.startsWith('/client/messages')) return 'messages';
   if (pathname.startsWith('/client/profile')) return 'profile';
-  if (pathname.startsWith('/client/workout')) return 'today';
   return 'today';
 }
 
@@ -62,8 +63,13 @@ export default function BottomTabs({ active, className, hrefMap }: BottomTabsPro
           <Link
             key={t.k}
             href={href}
-            className="flex flex-col items-center gap-0.5 px-2 py-1.5"
-            style={{ color: isActive ? 'var(--mf-accent)' : 'var(--mf-fg-mute)' }}
+            className="flex flex-col items-center gap-0.5 py-1.5"
+            style={{
+              color: isActive ? 'var(--mf-accent)' : 'var(--mf-fg-mute)',
+              paddingInline: 4,
+              flex: 1,
+              minWidth: 0,
+            }}
             aria-current={isActive ? 'page' : undefined}
           >
             <Icon size={18} />
