@@ -2,7 +2,7 @@ import { ArrowDown } from 'lucide-react';
 import { requireAdminSession, relativeShort } from '@/lib/admin-data';
 import { prisma } from '@/lib/prisma';
 import { getAllFlags } from '@/lib/feature-flags';
-import { Btn, Chip, DesktopShell, StatusDot } from '@/components/ui/mf';
+import { Btn, DesktopShell, StatusDot } from '@/components/ui/mf';
 import FlagTogglesClient from './flag-toggles-client';
 
 export const dynamic = 'force-dynamic';

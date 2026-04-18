@@ -1,4 +1,4 @@
-import { Plus, Filter, Search, MoreHorizontal } from 'lucide-react';
+import { Plus, Filter, MoreHorizontal } from 'lucide-react';
 import { requireAdminSession, initialsFor, relativeShort } from '@/lib/admin-data';
 import { prisma } from '@/lib/prisma';
 import {

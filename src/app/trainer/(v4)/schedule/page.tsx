@@ -28,7 +28,8 @@ function colorForType(t: AppointmentType, status: AppointmentStatus): string {
       return '#2BD985';
     case 'CHECK_IN':
       return '#F5B544';
-    case 'CONSULTATION':
+    case 'ASSESSMENT':
+    case 'FOLLOW_UP':
     default:
       return '#4D9EFF';
   }

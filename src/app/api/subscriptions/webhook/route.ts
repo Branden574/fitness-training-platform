@@ -70,7 +70,9 @@ export async function POST(request: Request) {
             stripeSubscriptionId: sub.id,
             stripePriceId: priceId,
             status: sub.status,
-            currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+            currentPeriodEnd: sub.items.data[0]?.current_period_end
+              ? new Date(sub.items.data[0].current_period_end * 1000)
+              : null,
             cancelAtPeriodEnd: sub.cancel_at_period_end,
           },
           update: {
@@ -78,7 +80,9 @@ export async function POST(request: Request) {
             stripeSubscriptionId: sub.id,
             stripePriceId: priceId,
             status: sub.status,
-            currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+            currentPeriodEnd: sub.items.data[0]?.current_period_end
+              ? new Date(sub.items.data[0].current_period_end * 1000)
+              : null,
             cancelAtPeriodEnd: sub.cancel_at_period_end,
           },
         });

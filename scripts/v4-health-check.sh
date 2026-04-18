@@ -107,7 +107,8 @@ STATUS_EXIT=$?
 if [ $STATUS_EXIT -eq 0 ]; then record "migrate status (in sync)" "PASS"; else record "migrate status (in sync)" "FAIL" "exit $STATUS_EXIT — pending migrations?"; fi
 
 # Quick DB connectivity + phase-8 table check
-cat > /tmp/.v4hc-db-check.ts << 'TSEOF'
+# NOTE: script lives inside the project so tsx can resolve @prisma/client from node_modules
+cat > .v4hc-db-check.ts << 'TSEOF'
 import { PrismaClient } from '@prisma/client';
 const p = new PrismaClient();
 async function main() {
@@ -133,10 +134,10 @@ async function main() {
 main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(2); }).finally(() => p.$disconnect());
 TSEOF
 
-log_run "db connectivity + table counts" npx tsx /tmp/.v4hc-db-check.ts
+log_run "db connectivity + table counts" npx tsx .v4hc-db-check.ts
 DB_EXIT=$?
 if [ $DB_EXIT -eq 0 ]; then record "db connectivity (Railway)" "PASS"; else record "db connectivity (Railway)" "FAIL" "exit $DB_EXIT"; fi
-rm -f /tmp/.v4hc-db-check.ts
+rm -f .v4hc-db-check.ts
 
 # ── PHASE 2: Types + Lint ──────────────────────────────────────────
 header "2 · TYPES + LINT"
