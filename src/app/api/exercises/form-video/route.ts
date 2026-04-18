@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       title: item.snippet?.title ?? '',
       channelTitle: item.snippet?.channelTitle ?? '',
       thumbnailUrl: thumb,
-      embedUrl: `https://www.youtube.com/embed/${videoId}`,
+      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}`,
     });
   } catch (error) {
     console.error('YouTube form-video error:', error);
