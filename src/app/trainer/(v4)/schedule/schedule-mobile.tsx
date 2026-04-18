@@ -8,7 +8,7 @@ export interface ScheduleMobileProps {
   appointments: ScheduleAppointment[];
   clients: ScheduleClient[];
   weekStart: Date;
-  weekEnd: Date;
+  weekEnd: Date;  // accepted for parity with desktop component
 }
 
 function typeLabel(t: AppointmentType): string {
@@ -59,7 +59,6 @@ function initialsFor(name: string | null, email: string): string {
 export default function ScheduleMobile({
   appointments,
   weekStart,
-  weekEnd,
 }: ScheduleMobileProps) {
   const now = new Date();
   const today = new Date();

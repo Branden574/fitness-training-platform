@@ -202,10 +202,10 @@ if [ $READY -eq 1 ]; then
   check_url "GET /admin (unauth → signin)"   "$DEV_URL/admin"             '^200$'
   check_url "GET /trainer/builder (unauth)"  "$DEV_URL/trainer/builder"   '^200$'
 
-  # Legacy routes still reachable
-  check_url "GET /client/dashboard (legacy)" "$DEV_URL/client/dashboard"  '^200$'
-  check_url "GET /trainer/dashboard (legacy)" "$DEV_URL/trainer/dashboard" '^200$'
-  check_url "GET /admin/legacy (relocated)"   "$DEV_URL/admin/legacy"     '^200$'
+  # Legacy routes deleted — confirm they are gone (404)
+  check_url "GET /client/dashboard (deleted)"  "$DEV_URL/client/dashboard"  '^404$'
+  check_url "GET /trainer/dashboard (deleted)" "$DEV_URL/trainer/dashboard" '^404$'
+  check_url "GET /admin/legacy (deleted)"      "$DEV_URL/admin/legacy"      '^404$'
 
   # APIs: unauthenticated expect 401 (success means auth is guarding correctly)
   check_url "POST /api/messages (expect 401)"      "$DEV_URL/api/messages"      '^401$'

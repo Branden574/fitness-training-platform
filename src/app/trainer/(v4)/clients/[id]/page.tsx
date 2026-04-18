@@ -241,11 +241,11 @@ export default async function ClientDetailPage({
     // Try to read planned exercise count from the workout
     const workoutWithExercises = await prisma.workout.findFirst({
       where: { id: ts.workoutId },
-      select: { _count: { select: { workoutExercises: true } } },
+      select: { _count: { select: { exercises: true } } },
     });
     const exercisesTotal = Math.max(
       exercisesDone,
-      workoutWithExercises?._count.workoutExercises ?? exercisesDone,
+      workoutWithExercises?._count.exercises ?? exercisesDone,
     );
     const progressPct =
       exercisesTotal > 0

@@ -993,27 +993,31 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
                 LAST TIME
               </div>
               {currentExercise.previous ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {Array.from({
-                    length: currentExercise.previous.sets ?? 1,
-                  }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between mf-font-mono"
-                      style={{ fontSize: 11 }}
-                    >
-                      <span className="mf-fg-mute">SET {i + 1}</span>
-                      <span
-                        className="mf-font-display mf-tnum mf-fg"
-                        style={{ fontSize: 13 }}
-                      >
-                        {currentExercise.previous.weight ?? 0} ×{' '}
-                        {currentExercise.previous.reps ?? 0}
-                      </span>
-                      <span className="mf-accent">PREV</span>
+                (() => {
+                  const prev = currentExercise.previous;
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {Array.from({
+                        length: prev.sets ?? 1,
+                      }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between mf-font-mono"
+                          style={{ fontSize: 11 }}
+                        >
+                          <span className="mf-fg-mute">SET {i + 1}</span>
+                          <span
+                            className="mf-font-display mf-tnum mf-fg"
+                            style={{ fontSize: 13 }}
+                          >
+                            {prev.weight ?? 0} × {prev.reps ?? 0}
+                          </span>
+                          <span className="mf-accent">PREV</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()
               ) : (
                 <div className="mf-fg-mute" style={{ fontSize: 12 }}>
                   No prior data. This session sets your baseline.
