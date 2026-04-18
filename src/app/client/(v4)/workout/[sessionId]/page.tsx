@@ -22,7 +22,15 @@ export default async function ActiveWorkoutPage({
           exercises: {
             orderBy: { order: 'asc' },
             include: {
-              exercise: { select: { id: true, name: true, muscleGroups: true, videoUrl: true } },
+              exercise: {
+                select: {
+                  id: true,
+                  name: true,
+                  muscleGroups: true,
+                  videoUrl: true,
+                  imageUrl: true,
+                },
+              },
             },
           },
         },
@@ -65,6 +73,7 @@ export default async function ActiveWorkoutPage({
           muscleGroup: Array.isArray(we.exercise.muscleGroups)
             ? String(we.exercise.muscleGroups[0] ?? '')
             : '',
+          imageUrl: we.exercise.imageUrl ?? null,
           previous: prev
             ? {
                 weight: prev.weight ?? null,

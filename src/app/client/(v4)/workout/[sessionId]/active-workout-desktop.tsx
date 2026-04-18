@@ -24,7 +24,16 @@ interface ExerciseDef {
   restSeconds: number;
   order: number;
   muscleGroup: string;
+  imageUrl?: string | null;
   previous: { weight: number | null; reps: number | null; sets: number | null } | null;
+}
+
+interface FormVideo {
+  videoId: string;
+  title: string;
+  channelTitle: string;
+  thumbnailUrl: string;
+  embedUrl: string;
 }
 
 interface InitialPayload {
@@ -74,6 +83,10 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prs, setPrs] = useState<Array<{ exerciseName: string; newWeight: number; previousWeight: number | null }> | null>(null);
+  const [formVideoOpen, setFormVideoOpen] = useState(false);
+  const [formVideo, setFormVideo] = useState<FormVideo | null>(null);
+  const [formVideoLoading, setFormVideoLoading] = useState(false);
+  const [formVideoError, setFormVideoError] = useState<string | null>(null);
 
   const startedAtMs = useRef(new Date(initial.startedAt).getTime());
 
@@ -102,6 +115,36 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
       copy[currentExercise.id] = arr;
       return copy;
     });
+  }
+
+  async function openFormVideo() {
+    setFormVideoOpen(true);
+    setFormVideo(null);
+    setFormVideoError(null);
+    setFormVideoLoading(true);
+    try {
+      const res = await fetch(
+        `/api/exercises/form-video?name=${encodeURIComponent(currentExercise.name)}`,
+      );
+      if (res.status === 404) {
+        setFormVideoError('No form video available for this exercise.');
+        return;
+      }
+      if (res.status === 503) {
+        setFormVideoError('Form video lookup is not configured on the server.');
+        return;
+      }
+      if (!res.ok) {
+        setFormVideoError('Could not load form video. Try again later.');
+        return;
+      }
+      const data = (await res.json()) as FormVideo;
+      setFormVideo(data);
+    } catch {
+      setFormVideoError('Network error while loading form video.');
+    } finally {
+      setFormVideoLoading(false);
+    }
   }
 
   function completeSet() {
@@ -385,7 +428,7 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Btn icon={Video}>Form check</Btn>
+                  <Btn icon={Video} onClick={openFormVideo}>Form check</Btn>
                   <Btn icon={MessageSquare}>Ask coach</Btn>
                 </div>
               </div>
@@ -949,21 +992,37 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
             style={{ display: 'flex', flexDirection: 'column', gap: 16, alignSelf: 'start' }}
           >
             <div className="mf-card-elev overflow-hidden">
-              <div
-                className="mf-ph-img grid place-items-center"
-                style={{
-                  aspectRatio: '9 / 12',
-                  background: 'var(--mf-surface-3)',
-                  color: 'var(--mf-fg-mute)',
-                }}
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <Video size={24} />
-                  <span className="mf-font-mono" style={{ fontSize: 10 }}>
-                    FORM VIDEO
-                  </span>
+              {currentExercise.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={currentExercise.imageUrl}
+                  alt={currentExercise.name}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    objectFit: 'cover',
+                    borderRadius: 6,
+                    display: 'block',
+                    background: 'var(--mf-surface-3)',
+                  }}
+                />
+              ) : (
+                <div
+                  className="mf-ph-img grid place-items-center"
+                  style={{
+                    aspectRatio: '9 / 12',
+                    background: 'var(--mf-surface-3)',
+                    color: 'var(--mf-fg-mute)',
+                  }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Video size={24} />
+                    <span className="mf-font-mono" style={{ fontSize: 10 }}>
+                      FORM VIDEO
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
               <div style={{ padding: 16 }}>
                 <div className="mf-eyebrow" style={{ marginBottom: 4 }}>
                   CURRENT EXERCISE
@@ -1039,6 +1098,110 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
             </div>
           </aside>
         </div>
+
+        {/* Form video modal */}
+        {formVideoOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setFormVideoOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 70,
+              background: 'rgba(10,10,11,0.88)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 24,
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="mf-card-elev"
+              style={{
+                maxWidth: 880,
+                width: '100%',
+                padding: 16,
+                borderColor: 'var(--mf-hairline-strong)',
+              }}
+            >
+              <div
+                className="flex items-center justify-between"
+                style={{ marginBottom: 12 }}
+              >
+                <div>
+                  <div className="mf-eyebrow">FORM VIDEO</div>
+                  <div
+                    className="mf-font-display"
+                    style={{
+                      fontSize: 16,
+                      marginTop: 2,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {currentExercise.name}
+                  </div>
+                  {formVideo?.channelTitle ? (
+                    <div
+                      className="mf-font-mono mf-fg-mute"
+                      style={{ fontSize: 10, marginTop: 4 }}
+                    >
+                      {formVideo.channelTitle.toUpperCase()}
+                    </div>
+                  ) : null}
+                </div>
+                <Btn icon={X} onClick={() => setFormVideoOpen(false)}>
+                  Close
+                </Btn>
+              </div>
+
+              {formVideoLoading && (
+                <div
+                  className="mf-font-mono mf-fg-mute"
+                  style={{
+                    padding: 48,
+                    textAlign: 'center',
+                    fontSize: 11,
+                    letterSpacing: '0.1em',
+                  }}
+                >
+                  LOADING…
+                </div>
+              )}
+
+              {!formVideoLoading && formVideoError && (
+                <div
+                  className="mf-card mf-fg-dim"
+                  style={{
+                    padding: 32,
+                    textAlign: 'center',
+                    fontSize: 13,
+                  }}
+                >
+                  {formVideoError}
+                </div>
+              )}
+
+              {!formVideoLoading && !formVideoError && formVideo && (
+                <iframe
+                  src={formVideo.embedUrl}
+                  title={formVideo.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    width: '100%',
+                    aspectRatio: '16 / 9',
+                    border: 0,
+                    borderRadius: 6,
+                    background: '#000',
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         {/* PR celebration overlay */}
         {prs && prs.length > 0 && (

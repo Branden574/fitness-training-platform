@@ -16,6 +16,7 @@ interface ExerciseDef {
   restSeconds: number;
   order: number;
   muscleGroup: string;
+  imageUrl?: string | null;
   previous: { weight: number | null; reps: number | null; sets: number | null } | null;
 }
 
@@ -325,6 +326,25 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
             ) : null}
           </div>
         </div>
+
+        {/* Exercise demo GIF */}
+        {currentExercise.imageUrl ? (
+          <div style={{ padding: '0 16px 12px' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={currentExercise.imageUrl}
+              alt={currentExercise.name}
+              style={{
+                width: '100%',
+                aspectRatio: '1 / 1',
+                objectFit: 'cover',
+                borderRadius: 6,
+                display: 'block',
+                background: 'var(--mf-surface-3)',
+              }}
+            />
+          </div>
+        ) : null}
 
         {/* Scoreboard — current set */}
         <div style={{ padding: '0 16px 16px' }}>
