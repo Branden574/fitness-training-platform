@@ -1,4 +1,3 @@
-// v4 · phase 0 stub — implemented in phase 1
 export interface ScoreboardProps {
   value: string | number;
   unit?: string;
@@ -9,13 +8,58 @@ export interface ScoreboardProps {
   className?: string;
 }
 
-export default function Scoreboard({ value, unit, label, size = 72, delta, accent, className }: ScoreboardProps) {
+function deltaColor(delta: string): string {
+  if (delta.startsWith('+')) return 'var(--mf-green)';
+  if (delta.startsWith('-')) return 'var(--mf-red)';
+  return 'var(--mf-fg-dim)';
+}
+
+export default function Scoreboard({
+  value,
+  unit,
+  label,
+  size = 72,
+  delta,
+  accent,
+  className,
+}: ScoreboardProps) {
   return (
-    <div data-mf-stub="Scoreboard" data-accent={accent ? '' : undefined} className={className}>
-      {label ? <div className="mf-eyebrow">{label}</div> : null}
-      <span className="mf-font-display mf-tnum" style={{ fontSize: size }}>{value}</span>
-      {unit ? <span className="mf-font-mono">{unit}</span> : null}
-      {delta ? <div className="mf-font-mono">{delta}</div> : null}
+    <div className={className}>
+      {label ? <div className="mf-eyebrow mb-1">{label}</div> : null}
+      <div className="flex items-baseline gap-2">
+        <span
+          className="mf-font-display mf-tnum"
+          style={{
+            fontSize: size,
+            fontWeight: 600,
+            lineHeight: 1,
+            letterSpacing: '-0.02em',
+            color: accent ? 'var(--mf-accent)' : 'var(--mf-fg)',
+          }}
+        >
+          {value}
+        </span>
+        {unit ? (
+          <span
+            className="mf-font-mono mf-fg-dim"
+            style={{
+              fontSize: 12,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+            }}
+          >
+            {unit}
+          </span>
+        ) : null}
+      </div>
+      {delta ? (
+        <div
+          className="mf-font-mono"
+          style={{ fontSize: 11, marginTop: 4, color: deltaColor(delta) }}
+        >
+          {delta}
+        </div>
+      ) : null}
     </div>
   );
 }

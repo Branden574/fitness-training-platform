@@ -1,4 +1,3 @@
-// v4 · phase 0 stub — implemented in phase 1
 import type { ReactNode } from 'react';
 
 export type ChipKind = 'default' | 'live' | 'ok' | 'warn' | 'bad';
@@ -10,14 +9,10 @@ export interface ChipProps {
 }
 
 export default function Chip({ kind = 'default', children, className }: ChipProps) {
-  const kindClass =
+  const k =
     kind === 'live' ? 'mf-chip-live' :
     kind === 'ok'   ? 'mf-chip-ok'   :
     kind === 'warn' ? 'mf-chip-warn' :
     kind === 'bad'  ? 'mf-chip-bad'  : '';
-  return (
-    <span data-mf-stub="Chip" className={`mf-chip ${kindClass} ${className ?? ''}`}>
-      {children}
-    </span>
-  );
+  return <span className={`mf-chip ${k} ${className ?? ''}`}>{children}</span>;
 }

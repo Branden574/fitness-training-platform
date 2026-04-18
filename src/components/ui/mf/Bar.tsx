@@ -1,4 +1,3 @@
-// v4 · phase 0 stub — implemented in phase 1
 export interface BarProps {
   pct?: number;
   height?: number;
@@ -7,17 +6,29 @@ export interface BarProps {
 }
 
 export default function Bar({ pct = 0, height = 4, accent, className }: BarProps) {
+  const clamped = Math.max(0, Math.min(100, pct));
   return (
     <div
-      data-mf-stub="Bar"
-      data-pct={pct}
-      data-accent={accent ? '' : undefined}
       className={className}
-      style={{ height }}
+      style={{
+        height,
+        background: 'var(--mf-hairline)',
+        borderRadius: 999,
+        overflow: 'hidden',
+      }}
       role="progressbar"
-      aria-valuenow={pct}
+      aria-valuenow={clamped}
       aria-valuemin={0}
       aria-valuemax={100}
-    />
+    >
+      <div
+        style={{
+          width: `${clamped}%`,
+          height: '100%',
+          background: accent ? 'var(--mf-accent)' : 'var(--mf-fg)',
+          transition: 'width .3s ease',
+        }}
+      />
+    </div>
   );
 }

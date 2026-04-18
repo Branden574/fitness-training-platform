@@ -1,4 +1,3 @@
-// v4 · phase 0 stub — implemented in phase 1
 import type { ButtonHTMLAttributes, ComponentType, ReactNode } from 'react';
 
 export type BtnVariant = 'default' | 'primary' | 'ghost';
@@ -16,15 +15,11 @@ export default function Btn({
   className,
   ...rest
 }: BtnProps) {
-  const variantClass =
+  const v =
     variant === 'primary' ? 'mf-btn-primary' :
     variant === 'ghost'   ? 'mf-btn-ghost'   : '';
   return (
-    <button
-      data-mf-stub="Btn"
-      className={`mf-btn ${variantClass} ${className ?? ''}`}
-      {...rest}
-    >
+    <button className={`mf-btn ${v} ${className ?? ''}`} {...rest}>
       {Icon ? <Icon size={14} /> : null}
       {children}
     </button>
