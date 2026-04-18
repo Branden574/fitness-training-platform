@@ -1,6 +1,7 @@
-import { Trophy, Filter } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { Chip, Heatmap } from '@/components/ui/mf';
 import ProgressMetricTabsClient from './metric-tabs-client';
+import LogProgressModal from './log-progress-modal';
 
 interface SeriesPoint {
   weekLabel: string;
@@ -91,13 +92,7 @@ export default function ProgressMobile({ data }: { data: ProgressMobileData }) {
             Scoreboard
           </div>
         </div>
-        <button
-          className="mf-btn mf-btn-ghost"
-          style={{ height: 32, width: 32, padding: 0 }}
-          aria-label="Filter"
-        >
-          <Filter size={16} />
-        </button>
+        <LogProgressModal />
       </div>
 
       <div style={{ padding: '0 20px' }}>

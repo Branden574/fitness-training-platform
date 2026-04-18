@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/mf';
 import type { ClientContext } from '@/lib/client-data';
 import type { ProgressMobileData } from './progress-mobile';
+import LogProgressModal from './log-progress-modal';
 
 export interface ProgressDesktopData extends ProgressMobileData {
   heatmap180: number[][];
@@ -78,7 +79,10 @@ export default function ProgressDesktop({
         athleteName={ctx.name ?? ctx.email}
         athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
         headerRight={
-          <Chip kind={data.streak > 0 ? 'ok' : 'default'}>{streakChip}</Chip>
+          <>
+            <Chip kind={data.streak > 0 ? 'ok' : 'default'}>{streakChip}</Chip>
+            <LogProgressModal />
+          </>
         }
       >
         <div className="p-6 grid grid-cols-12 gap-5">
