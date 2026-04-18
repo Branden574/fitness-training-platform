@@ -70,3 +70,6 @@ export type { ErrorPanelProps } from './ErrorPanel';
 
 export { default as LoadingPulse } from './LoadingPulse';
 export type { LoadingPulseProps } from './LoadingPulse';
+
+export { default as ClientDesktopShell } from './ClientDesktopShell';
+export type { ClientDesktopKey, ClientDesktopShellProps } from './ClientDesktopShell';
