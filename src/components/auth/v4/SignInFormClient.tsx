@@ -35,7 +35,7 @@ export default function SignInFormClient() {
         if (session?.user?.role === 'ADMIN') {
           router.push('/admin');
         } else if (session?.user?.role === 'TRAINER') {
-          router.push('/trainer/dashboard');
+          router.push('/trainer');
         } else {
           router.push('/client');
         }
