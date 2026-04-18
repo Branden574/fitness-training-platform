@@ -359,22 +359,22 @@ export default async function AdminOverviewPage() {
           }}
         >
           <QuickLink
-            href="/admin/users"
-            eyebrow="USERS"
-            title={`${totalUsers.toLocaleString()} accounts`}
-            subtitle={`${pendingInvitations} pending invites`}
+            href="/admin/invitations"
+            eyebrow="INVITATIONS"
+            title={`${pendingInvitations} pending`}
+            subtitle="Issue + track invite codes"
+          />
+          <QuickLink
+            href="/admin/contacts"
+            eyebrow="CONTACTS"
+            title={`${newContactSubmissions} new inbound`}
+            subtitle="Review + triage submissions"
           />
           <QuickLink
             href="/admin/audit"
             eyebrow="AUDIT"
             title="Login events + API"
             subtitle="Security + activity feed"
-          />
-          <QuickLink
-            href="/admin/legacy"
-            eyebrow="LEGACY"
-            title="Contacts + invitations"
-            subtitle={`${newContactSubmissions} new inbound`}
           />
         </div>
       </div>

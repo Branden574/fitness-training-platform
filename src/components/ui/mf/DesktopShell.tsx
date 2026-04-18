@@ -59,11 +59,13 @@ const TRAINER_NAV: DesktopShellNavItem[] = [
 ];
 
 const ADMIN_NAV: DesktopShellNavItem[] = [
-  { k: 'stats',   l: 'Overview',      i: Activity,     href: '/admin' },
-  { k: 'users',   l: 'Users',         i: Users,        href: '/admin/users' },
-  { k: 'billing', l: 'Billing',       i: CreditCard,   href: '/admin/billing' },
-  { k: 'audit',   l: 'Audit Log',     i: Shield,       href: '/admin/audit' },
-  { k: 'shop',    l: 'Shop',          i: ShoppingBag,  href: '/admin/shop' },
+  { k: 'stats',       l: 'Overview',      i: Activity,        href: '/admin' },
+  { k: 'users',       l: 'Users',         i: Users,           href: '/admin/users' },
+  { k: 'invitations', l: 'Invitations',   i: MessageSquare,   href: '/admin/invitations' },
+  { k: 'contacts',    l: 'Contacts',      i: User,            href: '/admin/contacts' },
+  { k: 'billing',     l: 'Billing',       i: CreditCard,      href: '/admin/billing' },
+  { k: 'audit',       l: 'Audit Log',     i: Shield,          href: '/admin/audit' },
+  { k: 'shop',        l: 'Shop',          i: ShoppingBag,     href: '/admin/shop' },
 ];
 
 function BrandMark({ role }: { role: DesktopShellRole }) {
