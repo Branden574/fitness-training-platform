@@ -37,7 +37,7 @@ export default function SignInFormClient() {
         } else if (session?.user?.role === 'TRAINER') {
           router.push('/trainer/dashboard');
         } else {
-          router.push('/client/dashboard');
+          router.push('/client');
         }
       } else {
         setError('Something went wrong. Please try again.');

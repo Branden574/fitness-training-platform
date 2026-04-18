@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Home, Calendar, Apple, BarChart3, MessageSquare, User, type LucideIcon } from 'lucide-react';
 
 export type ClientTabKey = 'today' | 'program' | 'food' | 'progress' | 'messages' | 'profile';
@@ -27,7 +28,21 @@ const DEFAULT_TABS: Tab[] = [
   { k: 'profile',  i: User,          l: 'Me',       href: '/client/profile' },
 ];
 
-export default function BottomTabs({ active = 'today', className, hrefMap }: BottomTabsProps) {
+function deriveActive(pathname: string | null): ClientTabKey {
+  if (!pathname) return 'today';
+  if (pathname.startsWith('/client/program')) return 'program';
+  if (pathname.startsWith('/client/food')) return 'food';
+  if (pathname.startsWith('/client/progress')) return 'progress';
+  if (pathname.startsWith('/client/messages')) return 'messages';
+  if (pathname.startsWith('/client/profile')) return 'profile';
+  if (pathname.startsWith('/client/workout')) return 'today';
+  return 'today';
+}
+
+export default function BottomTabs({ active, className, hrefMap }: BottomTabsProps) {
+  const pathname = usePathname();
+  const resolved = active ?? deriveActive(pathname);
+
   return (
     <nav
       className={`mf-s1 flex items-center justify-around ${className ?? ''}`}
@@ -41,7 +56,7 @@ export default function BottomTabs({ active = 'today', className, hrefMap }: Bot
     >
       {DEFAULT_TABS.map((t) => {
         const Icon = t.i;
-        const isActive = active === t.k;
+        const isActive = resolved === t.k;
         const href = hrefMap?.[t.k] ?? t.href;
         return (
           <Link

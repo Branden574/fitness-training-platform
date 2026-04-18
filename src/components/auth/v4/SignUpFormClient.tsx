@@ -115,7 +115,7 @@ export default function SignUpFormClient() {
         redirect: false,
       });
       if (signInResult?.ok) {
-        router.push('/client/dashboard');
+        router.push('/client');
       } else {
         router.push('/auth/signin?message=Account created. Please sign in.');
       }

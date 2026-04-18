@@ -158,3 +158,55 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// Update a workout session (typically mark completed / set endTime after finish)
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, completed, endTime, notes, rating, caloriesBurned } = body as {
+      id?: string;
+      completed?: boolean;
+      endTime?: string | Date;
+      notes?: string | null;
+      rating?: number | null;
+      caloriesBurned?: number | null;
+    };
+
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    const existing = await prisma.workoutSession.findFirst({
+      where: { id, userId: session.user.id },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    const updated = await prisma.workoutSession.update({
+      where: { id },
+      data: {
+        ...(completed !== undefined ? { completed } : {}),
+        ...(endTime !== undefined ? { endTime: endTime ? new Date(endTime) : null } : {}),
+        ...(notes !== undefined ? { notes } : {}),
+        ...(rating !== undefined ? { rating } : {}),
+        ...(caloriesBurned !== undefined ? { caloriesBurned } : {}),
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error('Error updating workout session:', error);
+    return NextResponse.json(
+      { error: 'Failed to update workout session' },
+      { status: 500 }
+    );
+  }
+}
