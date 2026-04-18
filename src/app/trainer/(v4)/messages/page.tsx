@@ -1,7 +1,7 @@
 import { requireTrainerSession, initialsFor } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
-import { DesktopShell } from '@/components/ui/mf';
-import TrainerInboxClient from './inbox-client';
+import InboxDesktop from './inbox-desktop';
+import InboxMobile from './inbox-mobile';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,22 +69,29 @@ export default async function TrainerMessagesPage({
     return (a.name ?? '').localeCompare(b.name ?? '');
   });
 
-  const activeId = sp.with && rail.some((r) => r.id === sp.with) ? sp.with : rail[0]?.id ?? null;
+  // Desktop: default to first client if ?with missing. Mobile: null shows list.
+  const requestedWith = sp.with && rail.some((r) => r.id === sp.with) ? sp.with : null;
+  const desktopActiveId = requestedWith ?? rail[0]?.id ?? null;
+  const mobileActiveId = requestedWith;
 
+  // Resolve thread for whichever active id we need (desktop always has one if any clients exist;
+  // mobile only has one when ?with=<id>). If they're the same, fetch once. If only desktop has
+  // one (mobile is list view), fetch desktop's.
+  const threadForId = desktopActiveId; // superset of mobileActiveId
   let thread: Array<{ id: string; content: string; fromMe: boolean; at: string }> = [];
   let activeName: string | null = null;
   let activeInitials = '';
 
-  if (activeId) {
-    const activeRail = rail.find((r) => r.id === activeId);
+  if (threadForId) {
+    const activeRail = rail.find((r) => r.id === threadForId);
     activeName = activeRail?.name ?? activeRail?.email ?? null;
     activeInitials = activeRail?.initials ?? '';
 
     const msgs = await prisma.message.findMany({
       where: {
         OR: [
-          { senderId: session.user.id, receiverId: activeId },
-          { senderId: activeId, receiverId: session.user.id },
+          { senderId: session.user.id, receiverId: threadForId },
+          { senderId: threadForId, receiverId: session.user.id },
         ],
       },
       orderBy: { createdAt: 'asc' },
@@ -98,32 +105,42 @@ export default async function TrainerMessagesPage({
       at: m.createdAt.toISOString(),
     }));
 
-    // Mark trainer-incoming messages read
-    await prisma.message.updateMany({
-      where: { senderId: activeId, receiverId: session.user.id, read: false },
-      data: { read: true },
-    }).catch(() => {});
+    // Mark trainer-incoming messages read for the active thread. Matches prior desktop
+    // behavior (which defaulted to first client when no ?with was set).
+    await prisma.message
+      .updateMany({
+        where: { senderId: threadForId, receiverId: session.user.id, read: false },
+        data: { read: true },
+      })
+      .catch(() => {});
   }
 
   const totalUnread = rail.reduce((s, r) => s + r.unreadFromClient, 0);
 
+  // For the mobile list view (no ?with), we don't need the preloaded thread.
+  const mobileInitialThread = mobileActiveId ? thread : [];
+  const mobileActiveName = mobileActiveId ? activeName : null;
+  const mobileActiveInitials = mobileActiveId ? activeInitials : '';
+
   return (
-    <DesktopShell
-      role="trainer"
-      active="messages"
-      title="Inbox"
-      breadcrumbs="TRAINER / MESSAGES"
-      nav={undefined}
-    >
-      <TrainerInboxClient
+    <>
+      <InboxMobile
         selfId={session.user.id}
         rail={rail}
-        activeId={activeId}
+        activeId={mobileActiveId}
+        activeName={mobileActiveName}
+        activeInitials={mobileActiveInitials}
+        initialThread={mobileInitialThread}
+      />
+      <InboxDesktop
+        selfId={session.user.id}
+        rail={rail}
+        activeId={desktopActiveId}
         activeName={activeName}
         activeInitials={activeInitials}
         initialThread={thread}
         totalUnread={totalUnread}
       />
-    </DesktopShell>
+    </>
   );
 }
