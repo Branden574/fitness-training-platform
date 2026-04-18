@@ -134,7 +134,46 @@ export async function POST() {
       if (!best || score > best.score) best = { item, score };
     }
 
-    const threshold = 0.5;
+    const threshold = 0.34;
+
+    // Fallback: if library match is too weak, try the per-name search endpoint.
+    if (!best || best.score < threshold || !best.item.gifUrl) {
+      const queries: string[] = [];
+      const tokens = tokenize(name);
+      const lower = name.toLowerCase();
+      if (lower) queries.push(lower);
+      if (tokens.length >= 2) queries.push(tokens.slice(-2).join(' '));
+      if (tokens.length >= 1) queries.push(tokens[tokens.length - 1]!);
+
+      for (const q of queries) {
+        try {
+          const res = await fetch(
+            `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(q)}`,
+            {
+              headers: {
+                'X-RapidAPI-Key': apiKey,
+                'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+              },
+              cache: 'no-store',
+            },
+          );
+          if (!res.ok) continue;
+          const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
+          const items = Array.isArray(raw) ? raw : [raw];
+          for (const item of items) {
+            const candidateName = item.name ?? '';
+            if (!candidateName || !item.gifUrl) continue;
+            const score = scoreMatch(name, candidateName);
+            if (!best || score > best.score) best = { item, score };
+          }
+          if (best && best.score >= threshold && best.item.gifUrl) break;
+        } catch {
+          // try next query
+        }
+        await new Promise((r) => setTimeout(r, 80));
+      }
+    }
+
     if (!best || best.score < threshold || !best.item.gifUrl) {
       results.skipped++;
       results.details.push({
