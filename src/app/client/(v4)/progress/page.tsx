@@ -1,8 +1,7 @@
-import { Trophy, Filter } from 'lucide-react';
-import { requireClientSession, startOfWeek } from '@/lib/client-data';
+import { getClientContext, requireClientSession, startOfWeek } from '@/lib/client-data';
 import { prisma } from '@/lib/prisma';
-import { Chip, Heatmap, LineChart } from '@/components/ui/mf';
-import ProgressMetricTabsClient from './metric-tabs-client';
+import ProgressMobile, { type ProgressMobileData } from './progress-mobile';
+import ProgressDesktop, { type ProgressDesktopData } from './progress-desktop';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,20 +20,38 @@ interface SeriesPoint {
   value: number;
 }
 
-async function getProgressData(userId: string) {
+async function getProgressData(userId: string): Promise<ProgressDesktopData> {
   const twelveWeeks = new Date();
   twelveWeeks.setDate(twelveWeeks.getDate() - 12 * 7);
 
-  const [bodyweightEntries, liftLogs, recentEntries] = await Promise.all([
+  const hundredEighty = new Date();
+  hundredEighty.setDate(hundredEighty.getDate() - 180);
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [
+    bodyweightEntries,
+    bodyweightEntries180,
+    liftLogs,
+    recentEntry,
+    completedSessions,
+    completedSessions180,
+  ] = await Promise.all([
     prisma.progressEntry.findMany({
       where: { userId, weight: { not: null }, date: { gte: twelveWeeks } },
       orderBy: { date: 'asc' },
       select: { weight: true, date: true, bodyFat: true, mood: true, energy: true, sleep: true },
     }),
+    prisma.progressEntry.findMany({
+      where: { userId, weight: { not: null }, date: { gte: hundredEighty } },
+      orderBy: { date: 'asc' },
+      select: { weight: true, date: true },
+    }),
     prisma.workoutProgress.findMany({
       where: {
         userId,
-        date: { gte: twelveWeeks },
+        date: { gte: hundredEighty },
         weight: { not: null },
       },
       orderBy: { date: 'asc' },
@@ -45,6 +62,14 @@ async function getProgressData(userId: string) {
       orderBy: { date: 'desc' },
       select: { weight: true, bodyFat: true, mood: true, energy: true, sleep: true, date: true },
     }),
+    prisma.workoutSession.findMany({
+      where: { userId, completed: true, startTime: { gte: twelveWeeks } },
+      select: { startTime: true },
+    }),
+    prisma.workoutSession.findMany({
+      where: { userId, completed: true, startTime: { gte: hundredEighty } },
+      select: { startTime: true },
+    }),
   ]);
 
   const bodyweightSeries = bucketIntoWeeks(
@@ -53,31 +78,31 @@ async function getProgressData(userId: string) {
       .map((e) => ({ date: e.date, value: e.weight! })),
   );
 
-  // Per-lift series: peak weight achieved per week per lift
+  // Per-lift 12-week series (peak per week)
+  const liftsFor12w = liftLogs.filter((l) => l.date >= twelveWeeks);
   const byLift: Record<(typeof TOP_LIFTS)[number], SeriesPoint[]> = {
     bench: [],
     squat: [],
     deadlift: [],
   };
-
   for (const lift of TOP_LIFTS) {
-    const matched = liftLogs
+    const matched = liftsFor12w
       .filter((l) => matchLift(l.exercise.name) === lift && l.weight != null)
       .map((l) => ({ date: l.date, value: l.weight! }));
     byLift[lift] = bucketIntoWeeks(matched, 'max');
   }
 
-  // Compliance: presence of any completed workout per day over 12 weeks (7x12 grid)
-  const completedSessions = await prisma.workoutSession.findMany({
-    where: { userId, completed: true, startTime: { gte: twelveWeeks } },
-    select: { startTime: true },
-  });
   const compliance = buildCompliance(completedSessions.map((s) => s.startTime));
+  const heatmap180 = build180Heatmap(completedSessions180.map((s) => s.startTime));
 
-  // PR timeline: latest 5 heaviest lifts per exercise
+  // PR timeline (all-time within lift logs loaded)
   const prTimeline = buildPRTimeline(liftLogs);
 
-  // 12-week adherence %
+  // PRs that occurred in the last 30 days
+  const prsThisMonth = buildAllPREvents(liftLogs).filter(
+    (e) => e.date >= thirtyDaysAgo,
+  ).length;
+
   const daysWithSession = new Set(
     completedSessions.map((s) => s.startTime.toISOString().slice(0, 10)),
   );
@@ -86,6 +111,48 @@ async function getProgressData(userId: string) {
     100,
     Math.round((daysWithSession.size / totalWorkoutDays) * 100),
   );
+
+  // Streak: consecutive days back from today with a completed session
+  const sessionDaySet = new Set(
+    completedSessions180.map((s) => s.startTime.toISOString().slice(0, 10)),
+  );
+  let streak = 0;
+  {
+    const cursor = new Date();
+    cursor.setHours(0, 0, 0, 0);
+    while (sessionDaySet.has(cursor.toISOString().slice(0, 10))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+  }
+
+  // Week sessions (current week)
+  const weekStart = startOfWeek();
+  const weekSessions = completedSessions.filter(
+    (s) => s.startTime >= weekStart,
+  ).length;
+
+  // Body-weight sparkline: most recent 12 entries (trimmed from 180-day bucket)
+  const bwSparkline = bodyweightEntries180
+    .map((e) => e.weight!)
+    .slice(-12);
+
+  // BW trend delta vs 30 days ago (for KPI)
+  let bwTrendDelta: string | null = null;
+  const latestBW = recentEntry?.weight ?? null;
+  if (latestBW != null) {
+    const priorBW = bodyweightEntries180.find((e) => e.date <= thirtyDaysAgo)?.weight;
+    if (priorBW != null) {
+      const diff = latestBW - priorBW;
+      if (Math.abs(diff) >= 0.1) {
+        const sign = diff > 0 ? '▲' : '▼';
+        bwTrendDelta = `${sign} ${Math.abs(diff).toFixed(1)} LB / 30D`;
+      }
+    }
+  }
+
+  const benchDelta = seriesDelta(byLift.bench);
+  const bwDelta = seriesDelta(bodyweightSeries);
 
   return {
     bodyweightSeries,
@@ -96,7 +163,16 @@ async function getProgressData(userId: string) {
     prTimeline,
     adherencePct,
     sessionCount: completedSessions.length,
-    recentEntry: recentEntries,
+    recentEntry: recentEntry ?? null,
+    benchDelta,
+    bwDelta,
+    heatmap180,
+    prsThisMonth,
+    streak,
+    weekSessions,
+    bodyWeight: latestBW,
+    bwTrendDelta,
+    bwSparkline,
   };
 }
 
@@ -113,7 +189,7 @@ function bucketIntoWeeks(
     const diffDays = Math.floor((weekStart.getTime() - p.date.getTime()) / 86400000);
     const weeksAgo = Math.floor(diffDays / 7);
     if (weeksAgo < 0 || weeksAgo > 11) continue;
-    const bucket = 11 - weeksAgo; // 0..11 oldest→newest
+    const bucket = 11 - weeksAgo;
     const arr = weeks.get(bucket) ?? [];
     arr.push(p.value);
     weeks.set(bucket, arr);
@@ -145,6 +221,57 @@ function buildCompliance(dates: Date[]): number[][] {
   return grid;
 }
 
+function build180Heatmap(dates: Date[]): number[][] {
+  // 26 weeks x 7 rows. Binary 0/1 for now (completion); the Heatmap primitive
+  // interpolates opacity on values > 0.
+  const cols = 26;
+  const grid: number[][] = Array.from({ length: 7 }, () => Array(cols).fill(0));
+  const weekStart = startOfWeek();
+  for (const d of dates) {
+    const diff = Math.floor((weekStart.getTime() - d.getTime()) / 86400000);
+    const weeksAgo = Math.floor(diff / 7);
+    if (weeksAgo < 0 || weeksAgo > cols - 1) continue;
+    const col = cols - 1 - weeksAgo;
+    const day = d.getDay();
+    const row = day === 0 ? 6 : day - 1;
+    grid[row]![col] = Math.min(1, (grid[row]![col] ?? 0) + 1);
+  }
+  return grid;
+}
+
+interface PREvent {
+  date: Date;
+  lift: string;
+  weight: number;
+  reps: number | null;
+  delta: number;
+}
+
+function buildAllPREvents(
+  logs: Array<{
+    date: Date;
+    weight: number | null;
+    reps: number | null;
+    exercise: { name: string };
+  }>,
+): PREvent[] {
+  const best: Record<string, { weight: number }> = {};
+  const events: PREvent[] = [];
+  for (const l of logs) {
+    if (l.weight == null) continue;
+    const key = l.exercise.name;
+    const prev = best[key];
+    if (!prev || l.weight > prev.weight) {
+      const delta = prev ? l.weight - prev.weight : 0;
+      best[key] = { weight: l.weight };
+      if (delta > 0 || !prev) {
+        events.push({ date: l.date, lift: key, weight: l.weight, reps: l.reps, delta });
+      }
+    }
+  }
+  return events;
+}
+
 function buildPRTimeline(
   logs: Array<{
     date: Date;
@@ -153,27 +280,13 @@ function buildPRTimeline(
     exercise: { name: string };
   }>,
 ): Array<{ date: string; lift: string; weight: string; delta: string }> {
-  const best: Record<string, { date: Date; weight: number; reps: number | null }> = {};
-  const events: Array<{ date: Date; lift: string; weight: number; reps: number | null; delta: number }> = [];
-
-  for (const l of logs) {
-    if (l.weight == null) continue;
-    const key = l.exercise.name;
-    const prev = best[key];
-    if (!prev || l.weight > prev.weight) {
-      const delta = prev ? l.weight - prev.weight : 0;
-      best[key] = { date: l.date, weight: l.weight, reps: l.reps };
-      if (delta > 0 || !prev) {
-        events.push({ date: l.date, lift: key, weight: l.weight, reps: l.reps, delta });
-      }
-    }
-  }
-
-  return events
+  return buildAllPREvents(logs)
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, 5)
     .map((e) => ({
-      date: e.date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }).replace('/', '.'),
+      date: e.date
+        .toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })
+        .replace('/', '.'),
       lift: e.lift,
       weight: `${e.weight} lb${e.reps ? ` × ${e.reps}` : ''}`,
       delta: e.delta > 0 ? `+${e.delta} lb` : 'NEW',
@@ -190,257 +303,29 @@ function seriesDelta(series: SeriesPoint[]): string | null {
 
 export default async function ClientProgressPage() {
   const session = await requireClientSession();
-  const data = await getProgressData(session.user.id);
+  const [ctx, data] = await Promise.all([
+    getClientContext(session.user.id),
+    getProgressData(session.user.id),
+  ]);
 
-  // Pick the metric with the most recent PR as "hero"
-  const hero = data.prTimeline[0];
-
-  const benchDelta = seriesDelta(data.benchSeries);
-  const bwDelta = seriesDelta(data.bodyweightSeries);
-
-  // Build metric payload for client-side tabs
-  const metrics = {
-    bench: {
-      label: 'BENCH',
-      long: 'BENCH · 1RM EST',
-      data: data.benchSeries.map((p) => p.value),
-      labels: data.benchSeries.map((p) => p.weekLabel),
-      unit: 'LB',
-    },
-    squat: {
-      label: 'SQUAT',
-      long: 'SQUAT · 1RM EST',
-      data: data.squatSeries.map((p) => p.value),
-      labels: data.squatSeries.map((p) => p.weekLabel),
-      unit: 'LB',
-    },
-    deadlift: {
-      label: 'DEAD',
-      long: 'DEADLIFT · 1RM EST',
-      data: data.deadliftSeries.map((p) => p.value),
-      labels: data.deadliftSeries.map((p) => p.weekLabel),
-      unit: 'LB',
-    },
-    bw: {
-      label: 'BW',
-      long: 'BODYWEIGHT',
-      data: data.bodyweightSeries.map((p) => p.value),
-      labels: data.bodyweightSeries.map((p) => p.weekLabel),
-      unit: 'LB',
-    },
+  const mobileData: ProgressMobileData = {
+    bodyweightSeries: data.bodyweightSeries,
+    benchSeries: data.benchSeries,
+    squatSeries: data.squatSeries,
+    deadliftSeries: data.deadliftSeries,
+    compliance: data.compliance,
+    prTimeline: data.prTimeline,
+    adherencePct: data.adherencePct,
+    sessionCount: data.sessionCount,
+    recentEntry: data.recentEntry,
+    benchDelta: data.benchDelta,
+    bwDelta: data.bwDelta,
   };
 
-  const recent = data.recentEntry;
-
   return (
-    <main style={{ padding: '12px 0 24px' }}>
-      <div
-        className="flex items-center justify-between"
-        style={{ padding: '12px 20px 8px' }}
-      >
-        <div>
-          <div className="mf-eyebrow">PROGRESS</div>
-          <div
-            className="mf-font-display"
-            style={{
-              fontSize: 22,
-              letterSpacing: '-0.01em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Scoreboard
-          </div>
-        </div>
-        <button
-          className="mf-btn mf-btn-ghost"
-          style={{ height: 32, width: 32, padding: 0 }}
-          aria-label="Filter"
-        >
-          <Filter size={16} />
-        </button>
-      </div>
-
-      <div style={{ padding: '0 20px' }}>
-        {/* Hero PR card */}
-        {hero ? (
-          <div
-            className="mf-card-elev"
-            style={{
-              padding: 16,
-              marginBottom: 16,
-              background: 'linear-gradient(180deg, rgba(255,77,28,0.08), transparent 50%)',
-              borderColor: 'var(--mf-accent)',
-            }}
-          >
-            <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-              <Chip kind="live">NEW PR · {hero.date}</Chip>
-              <Trophy size={18} className="mf-accent" />
-            </div>
-            <div
-              className="mf-font-display mf-tnum mf-accent"
-              style={{ fontSize: 56, lineHeight: 1 }}
-            >
-              {hero.weight.split(' ')[0]}
-            </div>
-            <div
-              className="mf-font-display"
-              style={{
-                fontSize: 18,
-                marginTop: 4,
-                textTransform: 'uppercase',
-              }}
-            >
-              {hero.weight.replace(/^\d+\s*/, 'LB × ').toUpperCase()} · {hero.lift.toUpperCase()}
-            </div>
-            <div
-              className="mf-font-mono mf-fg-mute"
-              style={{ fontSize: 11, marginTop: 8 }}
-            >
-              {hero.delta.toUpperCase()}
-            </div>
-          </div>
-        ) : (
-          <div className="mf-card" style={{ padding: 16, marginBottom: 16, textAlign: 'center' }}>
-            <div className="mf-eyebrow" style={{ marginBottom: 8 }}>NO PRS YET</div>
-            <div className="mf-fg-dim" style={{ fontSize: 13 }}>
-              Log workouts and PRs will auto-surface here.
-            </div>
-          </div>
-        )}
-
-        {/* Metric tabs + chart */}
-        <ProgressMetricTabsClient metrics={metrics} benchDelta={benchDelta} bwDelta={bwDelta} />
-
-        {/* Compliance heatmap */}
-        <div className="mf-card" style={{ padding: 12, marginTop: 16 }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-            <div>
-              <div className="mf-eyebrow">ADHERENCE</div>
-              <div className="mf-font-display mf-tnum" style={{ fontSize: 22, lineHeight: 1, marginTop: 2 }}>
-                {data.adherencePct}
-                <span className="mf-fg-mute" style={{ fontSize: 12 }}>%</span>
-              </div>
-            </div>
-            <span className="mf-font-mono mf-fg-mute" style={{ fontSize: 10 }}>
-              12 WK · {data.sessionCount} SESSIONS
-            </span>
-          </div>
-          <Heatmap cells={data.compliance} />
-        </div>
-
-        {/* PR Timeline */}
-        {data.prTimeline.length > 0 && (
-          <>
-            <div className="mf-eyebrow" style={{ marginTop: 16, marginBottom: 8 }}>
-              PR TIMELINE
-            </div>
-            <div className="mf-card" style={{ overflow: 'hidden', marginBottom: 16 }}>
-              {data.prTimeline.map((p, i) => (
-                <div
-                  key={`${p.lift}-${p.date}`}
-                  className="flex items-center"
-                  style={{
-                    padding: '10px 12px',
-                    borderBottom: i < data.prTimeline.length - 1 ? '1px solid var(--mf-hairline)' : 'none',
-                  }}
-                >
-                  <div
-                    className="mf-font-mono mf-fg-mute mf-tnum"
-                    style={{ fontSize: 10, width: 40 }}
-                  >
-                    {p.date}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>{p.lift}</div>
-                    <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 10 }}>
-                      {p.weight}
-                    </div>
-                  </div>
-                  <span
-                    className="mf-font-mono"
-                    style={{ fontSize: 10, fontWeight: 600, color: 'var(--mf-green)' }}
-                  >
-                    {p.delta}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Body stats */}
-        <div className="mf-eyebrow" style={{ marginBottom: 8 }}>BODY STATS</div>
-        <div className="grid grid-cols-2 gap-2">
-          <BodyStat
-            label="Weight"
-            unit="LB"
-            value={recent?.weight?.toFixed(1) ?? '—'}
-            delta={bwDelta}
-            good={bwDelta?.startsWith('−') ?? null}
-          />
-          <BodyStat
-            label="Body Fat"
-            unit="%"
-            value={recent?.bodyFat?.toFixed(1) ?? '—'}
-            delta={null}
-            good={null}
-          />
-          <BodyStat
-            label="Sleep"
-            unit="HR"
-            value={recent?.sleep?.toFixed(1) ?? '—'}
-            delta={null}
-            good={null}
-          />
-          <BodyStat
-            label="Mood"
-            unit="/10"
-            value={recent?.mood != null ? String(recent.mood) : '—'}
-            delta={null}
-            good={null}
-          />
-        </div>
-      </div>
-    </main>
-  );
-}
-
-function BodyStat({
-  label,
-  unit,
-  value,
-  delta,
-  good,
-}: {
-  label: string;
-  unit: string;
-  value: string;
-  delta: string | null;
-  good: boolean | null;
-}) {
-  return (
-    <div className="mf-card" style={{ padding: 12 }}>
-      <div className="mf-eyebrow" style={{ marginBottom: 4 }}>{label.toUpperCase()}</div>
-      <div className="mf-font-display mf-tnum" style={{ fontSize: 22, lineHeight: 1 }}>
-        {value}
-        <span className="mf-fg-mute" style={{ fontSize: 11 }}> {unit}</span>
-      </div>
-      {delta ? (
-        <div
-          className="mf-font-mono"
-          style={{
-            fontSize: 10,
-            marginTop: 4,
-            color: good === true ? 'var(--mf-green)' : good === false ? 'var(--mf-red)' : 'var(--mf-fg-dim)',
-          }}
-        >
-          {delta.startsWith('−') ? '▼' : '▲'} {delta.replace(/^[+−]/, '')}
-        </div>
-      ) : (
-        <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 10, marginTop: 4 }}>
-          —
-        </div>
-      )}
-    </div>
+    <>
+      <ProgressMobile data={mobileData} />
+      <ProgressDesktop ctx={ctx} data={data} />
+    </>
   );
 }
