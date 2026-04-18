@@ -73,3 +73,6 @@ export type { LoadingPulseProps } from './LoadingPulse';
 
 export { default as ClientDesktopShell } from './ClientDesktopShell';
 export type { ClientDesktopKey, ClientDesktopShellProps } from './ClientDesktopShell';
+
+export { default as TrainerMobileTabs } from './TrainerMobileTabs';
+export type { TrainerMobileTabKey, TrainerMobileTabsProps } from './TrainerMobileTabs';
