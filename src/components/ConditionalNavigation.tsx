@@ -5,17 +5,18 @@ import Navigation from './Navigation';
 
 const ConditionalNavigation = () => {
   const pathname = usePathname();
-  
-  // Hide main navigation on dashboard pages
-  const shouldHideNavigation = pathname?.startsWith('/trainer/') ||
-                              pathname?.startsWith('/client/dashboard') ||
-                              pathname === '/admin' ||
-                              pathname?.startsWith('/admin/');
 
-  // Only show main navigation on public pages
-  if (shouldHideNavigation) {
-    return null;
-  }
+  // Pages that bring their own chrome (v4 redesign + dashboards)
+  const ownsChrome =
+    pathname === '/' ||
+    pathname === '/design' ||
+    pathname?.startsWith('/auth/') ||
+    pathname?.startsWith('/trainer/') ||
+    pathname?.startsWith('/client/dashboard') ||
+    pathname === '/admin' ||
+    pathname?.startsWith('/admin/');
+
+  if (ownsChrome) return null;
 
   return <Navigation />;
 };
