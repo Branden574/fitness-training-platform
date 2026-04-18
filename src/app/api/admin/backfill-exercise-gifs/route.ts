@@ -61,34 +61,52 @@ export async function POST() {
   const seen = new Set<string>();
   const fetchErrors: string[] = [];
 
+  const PAGE_SIZE = 10;
+  const MAX_PAGES_PER_BP = 40;
   for (const bp of BODY_PARTS) {
-    try {
-      const res = await fetch(
-        `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${encodeURIComponent(bp)}?limit=500`,
-        {
-          headers: {
-            'X-RapidAPI-Key': apiKey,
-            'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+    let offset = 0;
+    let pages = 0;
+    for (;;) {
+      if (pages >= MAX_PAGES_PER_BP) break;
+      pages++;
+      try {
+        const res = await fetch(
+          `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${encodeURIComponent(
+            bp,
+          )}?limit=${PAGE_SIZE}&offset=${offset}`,
+          {
+            headers: {
+              'X-RapidAPI-Key': apiKey,
+              'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+            },
+            cache: 'no-store',
           },
-          cache: 'no-store',
-        },
-      );
-      if (!res.ok) {
-        fetchErrors.push(`${bp}: HTTP ${res.status}`);
-        continue;
+        );
+        if (!res.ok) {
+          fetchErrors.push(`${bp}@${offset}: HTTP ${res.status}`);
+          break;
+        }
+        const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
+        const items = Array.isArray(raw) ? raw : [raw];
+        if (items.length === 0) break;
+        let added = 0;
+        for (const it of items) {
+          const key = String(it.id ?? it.name ?? '');
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          library.push(it);
+          added++;
+        }
+        if (items.length < PAGE_SIZE) break;
+        // If an entire page returned only duplicates, bail out — stuck in a loop.
+        if (added === 0) break;
+        offset += items.length;
+      } catch (e) {
+        fetchErrors.push(`${bp}@${offset}: ${e instanceof Error ? e.message : 'unknown'}`);
+        break;
       }
-      const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
-      const items = Array.isArray(raw) ? raw : [raw];
-      for (const it of items) {
-        const key = String(it.id ?? it.name ?? '');
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-        library.push(it);
-      }
-    } catch (e) {
-      fetchErrors.push(`${bp}: ${e instanceof Error ? e.message : 'unknown'}`);
+      await new Promise((r) => setTimeout(r, 80));
     }
-    await new Promise((r) => setTimeout(r, 100));
   }
 
   if (library.length === 0) {
