@@ -55,7 +55,7 @@ export function middleware(request: NextRequest) {
     : "'self' 'unsafe-inline'";
   response.headers.set(
     'Content-Security-Policy',
-    `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;`
+    `default-src 'self'; script-src ${scriptSrc} https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https:;`
   )
 
   return response
