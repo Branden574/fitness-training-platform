@@ -4,6 +4,7 @@ import { Play, Calendar } from 'lucide-react';
 import { requireClientSession, getClientContext } from '@/lib/client-data';
 import { prisma } from '@/lib/prisma';
 import { Btn, ClientDesktopShell } from '@/components/ui/mf';
+import StartSampleButton from './start-sample-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,11 +42,12 @@ export default async function WorkoutLandingPage() {
           No sessions yet
         </h1>
         <p className="mf-fg-dim" style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 24 }}>
-          Your trainer hasn&apos;t assigned any workouts yet. Check your program or message your coach.
+          Your trainer hasn&apos;t assigned any workouts yet. Start a session from a library template, or browse your program.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <StartSampleButton fullWidth />
           <Link href="/client/program">
-            <Btn variant="primary" icon={Calendar} className="w-full">Browse program</Btn>
+            <Btn icon={Calendar} className="w-full">Browse program</Btn>
           </Link>
         </div>
       </main>
@@ -85,12 +87,15 @@ export default async function WorkoutLandingPage() {
                   No sessions yet
                 </div>
                 <div className="mf-fg-dim" style={{ fontSize: 13, marginTop: 8, maxWidth: 420 }}>
-                  Your trainer hasn&apos;t assigned any workouts yet. Check your program or message your coach.
+                  Your trainer hasn&apos;t assigned any workouts yet. Start a session from a library template, or browse your program.
                 </div>
               </div>
-              <Link href="/client/program">
-                <Btn variant="primary" icon={Calendar}>Browse program</Btn>
-              </Link>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <StartSampleButton />
+                <Link href="/client/program">
+                  <Btn icon={Calendar}>Browse program</Btn>
+                </Link>
+              </div>
             </div>
           </div>
         </ClientDesktopShell>
