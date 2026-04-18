@@ -15,18 +15,45 @@ async function getProgramData(userId: string) {
   const fourForward = new Date();
   fourForward.setDate(fourForward.getDate() + 28);
 
-  const sessions = await prisma.workoutSession.findMany({
-    where: {
-      userId,
-      startTime: { gte: fourBack, lte: fourForward },
-    },
-    orderBy: { startTime: 'asc' },
-    include: {
-      workout: { select: { id: true, title: true, type: true, duration: true, difficulty: true } },
-    },
-  });
+  const [sessions, assignment] = await Promise.all([
+    prisma.workoutSession.findMany({
+      where: {
+        userId,
+        startTime: { gte: fourBack, lte: fourForward },
+      },
+      orderBy: { startTime: 'asc' },
+      include: {
+        workout: { select: { id: true, title: true, type: true, duration: true, difficulty: true } },
+      },
+    }),
+    // Active Program assignment (if any)
+    prisma.programAssignment.findFirst({
+      where: { clientId: userId, status: 'ACTIVE' },
+      orderBy: { startDate: 'desc' },
+      include: {
+        program: {
+          include: {
+            weeks: {
+              orderBy: { weekNumber: 'asc' },
+              include: {
+                days: {
+                  orderBy: { order: 'asc' },
+                  include: {
+                    exercises: {
+                      orderBy: { order: 'asc' },
+                      include: { exercise: { select: { id: true, name: true } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
 
-  return { sessions };
+  return { sessions, assignment };
 }
 
 interface DayBucket {
@@ -77,7 +104,7 @@ function bucketByDay(
 
 export default async function ClientProgramPage() {
   const session = await requireClientSession();
-  const { sessions } = await getProgramData(session.user.id);
+  const { sessions, assignment } = await getProgramData(session.user.id);
 
   const currentWeekStart = startOfWeek();
   const weeks = Array.from({ length: 5 }, (_, i) => {
@@ -85,6 +112,32 @@ export default async function ClientProgramPage() {
     s.setDate(currentWeekStart.getDate() + (i - 2) * 7);
     return s;
   });
+
+  // If the client has an active Program assignment, compute current program week from startDate
+  let programBadge: { name: string; weekNumber: number; total: number } | null = null;
+  let programWeekDays: Array<{ dayOfWeek: string; sessionType: string; exerciseCount: number }> | null = null;
+  if (assignment?.program) {
+    const daysElapsed = Math.floor(
+      (Date.now() - new Date(assignment.startDate).getTime()) / 86400000,
+    );
+    const weekIdx = Math.max(
+      0,
+      Math.min(assignment.program.weeks.length - 1, Math.floor(daysElapsed / 7)),
+    );
+    const activeWeek = assignment.program.weeks[weekIdx];
+    if (activeWeek) {
+      programBadge = {
+        name: assignment.program.name,
+        weekNumber: activeWeek.weekNumber,
+        total: assignment.program.durationWks,
+      };
+      programWeekDays = activeWeek.days.map((d) => ({
+        dayOfWeek: d.dayOfWeek,
+        sessionType: d.sessionType,
+        exerciseCount: d.exercises.length,
+      }));
+    }
+  }
 
   const currentWeekBuckets = bucketByDay(
     sessions.map((s) => ({
@@ -117,12 +170,51 @@ export default async function ClientProgramPage() {
             textTransform: 'uppercase',
           }}
         >
-          Your week
+          {programBadge ? programBadge.name : 'Your week'}
         </div>
         <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 11, marginTop: 2 }}>
-          {sessions.length > 0 ? `${sessions.length} SESSIONS IN VIEW · LAST 4 + NEXT 4 WKS` : 'NO SESSIONS YET'}
+          {programBadge
+            ? `WK ${programBadge.weekNumber} / ${programBadge.total} · ASSIGNED BY COACH`
+            : sessions.length > 0
+              ? `${sessions.length} SESSIONS IN VIEW · LAST 4 + NEXT 4 WKS`
+              : 'NO SESSIONS YET'}
         </div>
       </div>
+
+      {programWeekDays && (
+        <div style={{ padding: '0 20px', marginBottom: 12 }}>
+          <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
+            PROGRAM · CURRENT WEEK
+          </div>
+          <div
+            className="mf-card-elev"
+            style={{ padding: 12, borderColor: 'var(--mf-accent)' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {programWeekDays.map((d, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between"
+                  style={{ padding: '6px 0', borderBottom: i < programWeekDays!.length - 1 ? '1px solid var(--mf-hairline)' : 'none' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="mf-font-mono mf-fg-mute"
+                      style={{ fontSize: 10, width: 32, letterSpacing: '0.1em' }}
+                    >
+                      {d.dayOfWeek}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 500 }}>{d.sessionType}</span>
+                  </div>
+                  <span className="mf-font-mono mf-fg-dim" style={{ fontSize: 10 }}>
+                    {d.exerciseCount > 0 ? `${d.exerciseCount} EX` : d.sessionType.toLowerCase() === 'rest' ? '—' : 'OPEN'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Week pill picker */}
       <div style={{ padding: '0 20px', marginBottom: 12 }}>

@@ -1,5 +1,6 @@
 import { requireAdminSession, initialsFor, relativeShort } from '@/lib/admin-data';
 import { prisma } from '@/lib/prisma';
+import { isFlagEnabled } from '@/lib/feature-flags';
 import {
   BarChart,
   Btn,
@@ -34,6 +35,28 @@ export default async function AdminBillingPage() {
   thirty.setDate(thirty.getDate() - 30);
   const twelveWks = new Date();
   twelveWks.setDate(twelveWks.getDate() - 12 * 7);
+
+  const subsEnabled = await isFlagEnabled('stripe_subscriptions');
+  let subs: Array<{
+    id: string;
+    userId: string;
+    plan: string | null;
+    status: string | null;
+    currentPeriodEnd: Date | null;
+    user: { name: string | null; email: string };
+  }> = [];
+  if (subsEnabled) {
+    try {
+      subs = await prisma.subscription.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        include: { user: { select: { name: true, email: true } } },
+      });
+    } catch {
+      // Table may not exist yet in this env
+      subs = [];
+    }
+  }
 
   // Shop revenue (only thing Stripe-wired today)
   const [ordersThisMonth, recentOrders, weeklyOrders, failedOrders] = await Promise.all([
@@ -86,36 +109,100 @@ export default async function AdminBillingPage() {
       breadcrumbs="ADMIN / BILLING"
     >
       <div style={{ padding: 24, maxWidth: 1400 }}>
-        {/* Gated banner: subscription plans not live yet */}
-        <div
-          className="mf-card-elev"
-          style={{
-            padding: 16,
-            marginBottom: 24,
-            borderColor: 'var(--mf-amber)',
-            background: 'rgba(245,181,68,0.06)',
-          }}
-        >
-          <div className="flex items-center justify-between" style={{ gap: 16 }}>
-            <div>
-              <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
-                <Chip kind="warn">FLAG · STRIPE_SUBSCRIPTIONS OFF</Chip>
-              </div>
-              <div
-                className="mf-font-display"
-                style={{ fontSize: 18, letterSpacing: '-0.01em', textTransform: 'uppercase' }}
-              >
-                Subscription plans pending
-              </div>
-              <div className="mf-fg-dim" style={{ fontSize: 13, marginTop: 4, maxWidth: 640, lineHeight: 1.5 }}>
-                The Self-led / Coached / Team plans marketed on the landing page aren&apos;t wired
-                to Stripe yet. Only shop checkout is live — numbers below reflect one-time
-                merchandise orders, not recurring revenue.
+        {/* Subscription banner — gated on stripe_subscriptions flag */}
+        {subsEnabled ? (
+          <div
+            className="mf-card-elev"
+            style={{
+              padding: 16,
+              marginBottom: 24,
+              borderColor: 'var(--mf-accent)',
+              background: 'linear-gradient(180deg, rgba(255,77,28,0.06), transparent 50%)',
+            }}
+          >
+            <div className="flex items-center justify-between" style={{ gap: 16 }}>
+              <div>
+                <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
+                  <Chip kind="live">SUBSCRIPTIONS · LIVE</Chip>
+                </div>
+                <div
+                  className="mf-font-display"
+                  style={{ fontSize: 18, letterSpacing: '-0.01em', textTransform: 'uppercase' }}
+                >
+                  {subs.length} active subscription{subs.length === 1 ? '' : 's'}
+                </div>
+                <div className="mf-fg-dim" style={{ fontSize: 13, marginTop: 4, maxWidth: 640, lineHeight: 1.5 }}>
+                  Stripe subscription plans are enabled. Shop orders below show one-time
+                  merchandise revenue; subscriptions render separately.
+                </div>
               </div>
             </div>
-            <Btn>Configure Stripe</Btn>
+            {subs.length > 0 && (
+              <div
+                className="mf-card"
+                style={{ overflow: 'hidden', marginTop: 16, background: 'var(--mf-surface-2)' }}
+              >
+                {subs.map((s, i) => (
+                  <div
+                    key={s.id}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1.5fr 1fr 1fr 1fr',
+                      padding: '10px 16px',
+                      borderBottom: i < subs.length - 1 ? '1px solid var(--mf-hairline)' : 'none',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{s.user.name ?? s.user.email}</div>
+                    <div className="mf-font-mono mf-fg-dim" style={{ fontSize: 11, textTransform: 'uppercase' }}>
+                      {s.plan ?? '—'}
+                    </div>
+                    <div>
+                      <Chip kind={s.status === 'active' ? 'ok' : s.status === 'past_due' ? 'warn' : 'bad'}>
+                        {(s.status ?? 'unknown').toUpperCase()}
+                      </Chip>
+                    </div>
+                    <div className="mf-font-mono mf-fg-dim" style={{ fontSize: 11, textAlign: 'right' }}>
+                      {s.currentPeriodEnd
+                        ? `renews ${s.currentPeriodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                        : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <div
+            className="mf-card-elev"
+            style={{
+              padding: 16,
+              marginBottom: 24,
+              borderColor: 'var(--mf-amber)',
+              background: 'rgba(245,181,68,0.06)',
+            }}
+          >
+            <div className="flex items-center justify-between" style={{ gap: 16 }}>
+              <div>
+                <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
+                  <Chip kind="warn">FLAG · STRIPE_SUBSCRIPTIONS OFF</Chip>
+                </div>
+                <div
+                  className="mf-font-display"
+                  style={{ fontSize: 18, letterSpacing: '-0.01em', textTransform: 'uppercase' }}
+                >
+                  Subscription plans pending
+                </div>
+                <div className="mf-fg-dim" style={{ fontSize: 13, marginTop: 4, maxWidth: 640, lineHeight: 1.5 }}>
+                  Self-led / Coached / Team plans aren&apos;t wired to Stripe yet. Toggle the
+                  flag on <Chip>/admin/audit</Chip> once Stripe products + webhook secret are set
+                  in env. Numbers below reflect shop orders only.
+                </div>
+              </div>
+              <Btn>Configure Stripe</Btn>
+            </div>
+          </div>
+        )}
 
         {/* Stat strip (shop only) */}
         <div

@@ -1,45 +1,39 @@
-import { Plus, Copy, Edit, Eye, Users, Layers, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { Plus, Copy, Users, Layers, Clock, ChevronRight } from 'lucide-react';
 import { requireTrainerSession } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
-import { Btn, Chip, DesktopShell } from '@/components/ui/mf';
-import type { Difficulty, WorkoutType } from '@prisma/client';
+import { Btn, DesktopShell } from '@/components/ui/mf';
+import NewProgramClient from './new-program-client';
 
 export const dynamic = 'force-dynamic';
-
-function diffKind(d: Difficulty): 'default' | 'ok' | 'warn' {
-  if (d === 'ADVANCED') return 'warn';
-  if (d === 'INTERMEDIATE') return 'ok';
-  return 'default';
-}
-
-function typeLabel(t: WorkoutType): string {
-  return t.replace(/_/g, ' ');
-}
 
 export default async function TrainerBuilderPage() {
   const session = await requireTrainerSession();
 
-  const [workouts, exerciseCount, assignedSessions] = await Promise.all([
-    prisma.workout.findMany({
-      where: { createdBy: session.user.id },
+  const [programs, exerciseCount, totalAssignments] = await Promise.all([
+    prisma.program.findMany({
+      where: {
+        archived: false,
+        ...(session.user.role === 'ADMIN' ? {} : { createdById: session.user.id }),
+      },
       orderBy: { createdAt: 'desc' },
       include: {
-        exercises: { select: { id: true } },
-        sessions: {
-          select: { id: true, userId: true, completed: true },
+        weeks: { select: { id: true, days: { select: { exercises: { select: { id: true } } } } } },
+        assignments: {
+          where: { status: 'ACTIVE' },
+          select: { id: true, clientId: true, client: { select: { name: true, email: true } } },
         },
       },
       take: 60,
     }),
     prisma.exercise.count(),
-    prisma.workoutSession.count({
-      where: { workout: { createdBy: session.user.id } },
+    prisma.programAssignment.count({
+      where: { assignedById: session.user.id, status: 'ACTIVE' },
     }),
   ]);
 
-  const completedCount = workouts.reduce(
-    (s, w) => s + w.sessions.filter((x) => x.completed).length,
+  const totalExercisesPlanned = programs.reduce(
+    (s, p) => s + p.weeks.reduce((ws, w) => ws + w.days.reduce((ds, d) => ds + d.exercises.length, 0), 0),
     0,
   );
 
@@ -49,12 +43,6 @@ export default async function TrainerBuilderPage() {
       active="builder"
       title="Program Builder"
       breadcrumbs="PROGRAMS / BUILDER"
-      headerRight={
-        <>
-          <Btn variant="ghost" icon={Eye}>Preview</Btn>
-          <Btn variant="primary" icon={Plus}>New workout</Btn>
-        </>
-      }
     >
       <div style={{ padding: 24, maxWidth: 1400 }}>
         {/* Intro banner */}
@@ -67,10 +55,10 @@ export default async function TrainerBuilderPage() {
             borderColor: 'var(--mf-accent)',
           }}
         >
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between" style={{ gap: 24 }}>
             <div>
               <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-                PROGRAM BUILDER
+                PROGRAM BUILDER · LIVE
               </div>
               <div
                 className="mf-font-display"
@@ -78,74 +66,73 @@ export default async function TrainerBuilderPage() {
               >
                 Build once. Assign forever.
               </div>
-              <div className="mf-fg-dim" style={{ fontSize: 13, marginTop: 8, maxWidth: 560, lineHeight: 1.5 }}>
-                Drag-reorder weeks, clone days, swap exercises. Assign to one athlete or a whole
-                roster. Full week-grid editor lands alongside the Program schema — below is your
-                current workout template library.
+              <div
+                className="mf-fg-dim"
+                style={{ fontSize: 13, marginTop: 8, maxWidth: 560, lineHeight: 1.5 }}
+              >
+                Create multi-week programs, stack them with exercises, and assign to athletes.
+                Each assignment drives their mobile Program view and binds workouts to a week +
+                day in their plan.
               </div>
             </div>
             <div className="flex gap-4">
-              <Stat label="WORKOUTS" value={workouts.length} />
+              <Stat label="PROGRAMS" value={programs.length} />
               <div className="mf-vr" />
               <Stat label="EXERCISES" value={exerciseCount} />
               <div className="mf-vr" />
-              <Stat label="ASSIGNED" value={assignedSessions} />
+              <Stat label="ACTIVE ASSN." value={totalAssignments} accent />
               <div className="mf-vr" />
-              <Stat label="LOGGED" value={completedCount} accent />
+              <Stat label="EX PLANNED" value={totalExercisesPlanned} />
             </div>
           </div>
         </div>
 
-        {/* Templates */}
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+        {/* New program + list */}
+        <NewProgramClient />
+
+        <div className="flex items-center justify-between" style={{ marginTop: 32, marginBottom: 12 }}>
           <div>
-            <div className="mf-eyebrow">01 / TEMPLATES</div>
+            <div className="mf-eyebrow">01 / YOUR PROGRAMS</div>
             <div
               className="mf-font-display"
               style={{ fontSize: 20, letterSpacing: '-0.01em', textTransform: 'uppercase' }}
             >
-              Your workouts
+              Templates
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Btn variant="ghost" icon={Layers}>Import</Btn>
-            <Btn variant="primary" icon={Plus}>New workout</Btn>
           </div>
         </div>
 
-        {workouts.length === 0 ? (
+        {programs.length === 0 ? (
           <div
             className="mf-card"
-            style={{
-              padding: 48,
-              textAlign: 'center',
-            }}
+            style={{ padding: 48, textAlign: 'center' }}
           >
             <div className="mf-eyebrow" style={{ marginBottom: 8 }}>EMPTY LIBRARY</div>
-            <div className="mf-fg-dim" style={{ fontSize: 13, marginBottom: 16 }}>
-              You haven&apos;t built any workout templates yet. Start with a push day, pull day,
-              or lower-body block.
+            <div className="mf-fg-dim" style={{ fontSize: 13 }}>
+              No programs yet. Use the form above to create your first.
             </div>
-            <Btn variant="primary" icon={Plus}>New workout</Btn>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            {workouts.map((w) => {
-              const clientCount = new Set(w.sessions.map((s) => s.userId)).size;
-              const done = w.sessions.filter((s) => s.completed).length;
+            {programs.map((p) => {
+              const totalExercises = p.weeks.reduce(
+                (s, w) => s + w.days.reduce((ds, d) => ds + d.exercises.length, 0),
+                0,
+              );
+              const activeClients = new Set(p.assignments.map((a) => a.clientId)).size;
               return (
-                <div key={w.id} className="mf-card" style={{ padding: 16 }}>
+                <Link
+                  key={p.id}
+                  href={`/trainer/builder/${p.id}`}
+                  className="mf-card"
+                  style={{ padding: 16, display: 'block' }}
+                >
                   <div
                     className="flex items-center justify-between"
                     style={{ marginBottom: 8 }}
                   >
-                    <Chip kind={diffKind(w.difficulty)}>{w.difficulty}</Chip>
-                    <div
-                      className="mf-font-mono mf-fg-mute"
-                      style={{ fontSize: 10, letterSpacing: '0.1em' }}
-                    >
-                      {typeLabel(w.type).toUpperCase()}
-                    </div>
+                    <div className="mf-eyebrow">{p.durationWks} WEEKS</div>
+                    <ChevronRight size={14} className="mf-fg-mute" />
                   </div>
                   <div
                     className="mf-font-display"
@@ -157,9 +144,9 @@ export default async function TrainerBuilderPage() {
                       marginBottom: 8,
                     }}
                   >
-                    {w.title}
+                    {p.name}
                   </div>
-                  {w.description && (
+                  {p.description && (
                     <div
                       className="mf-fg-dim"
                       style={{
@@ -172,69 +159,25 @@ export default async function TrainerBuilderPage() {
                         overflow: 'hidden',
                       }}
                     >
-                      {w.description}
+                      {p.description}
                     </div>
                   )}
                   <div
                     className="flex items-center gap-3 mf-font-mono mf-fg-mute"
-                    style={{ fontSize: 10, marginBottom: 12 }}
+                    style={{ fontSize: 10 }}
                   >
                     <span className="flex items-center gap-1">
-                      <Layers size={10} /> {w.exercises.length} EX
+                      <Layers size={10} /> {p.weeks.length}W · {totalExercises} EX
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock size={10} /> {w.duration} MIN
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users size={10} /> {clientCount} · {done} LOGGED
+                      <Users size={10} /> {activeClients} ACTIVE
                     </span>
                   </div>
-                  <div className="flex gap-2">
-                    <Btn icon={Edit} style={{ flex: 1 }}>
-                      Edit
-                    </Btn>
-                    <Btn variant="ghost" icon={Copy} aria-label="Duplicate" />
-                    <Btn variant="primary" icon={Users}>
-                      Assign
-                    </Btn>
-                  </div>
-                </div>
+                </Link>
               );
             })}
           </div>
         )}
-
-        {/* Planned feature */}
-        <div
-          className="mf-card"
-          style={{
-            padding: 20,
-            marginTop: 32,
-            borderStyle: 'dashed',
-          }}
-        >
-          <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-            COMING · 02 / WEEK BUILDER
-          </div>
-          <div
-            className="mf-font-display"
-            style={{ fontSize: 18, letterSpacing: '-0.01em', textTransform: 'uppercase', marginBottom: 8 }}
-          >
-            Drag weeks. Clone days. Swap exercises.
-          </div>
-          <div className="mf-fg-dim" style={{ fontSize: 13, lineHeight: 1.5, maxWidth: 640 }}>
-            Full week-by-week program editor — 3-column layout with template library, 7-day grid,
-            and a right-rail day editor. Lands once the{' '}
-            <span className="mf-font-mono">Program / ProgramWeek / ProgramDay</span> schema is
-            added in a coming phase.
-          </div>
-        </div>
-
-        <div style={{ marginTop: 24 }}>
-          <Link href="/trainer">
-            <Btn variant="ghost">← Back to roster</Btn>
-          </Link>
-        </div>
       </div>
     </DesktopShell>
   );
@@ -261,9 +204,7 @@ function Stat({
       >
         {value}
       </div>
-      <div className="mf-eyebrow" style={{ marginTop: 4 }}>
-        {label}
-      </div>
+      <div className="mf-eyebrow" style={{ marginTop: 4 }}>{label}</div>
     </div>
   );
 }

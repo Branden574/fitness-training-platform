@@ -3,8 +3,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, X, ChevronLeft, Calendar, Search, Loader2 } from 'lucide-react';
-import { Apple, Heart, Clock } from 'lucide-react';
+import { Apple, Heart, Clock, Camera } from 'lucide-react';
 import { CalRing, MacroRing, SrcPill, type FoodSource } from '@/components/ui/mf';
+import BarcodeScanner from '@/components/BarcodeScanner';
 
 const MEALS = ['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER'] as const;
 type MealType = (typeof MEALS)[number];
@@ -345,6 +346,7 @@ function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<FoodSource | 'all'>('all');
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const runSearch = useCallback(async (query: string, source: string) => {
     if (!query.trim()) {
@@ -484,9 +486,29 @@ function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void 
             onChange={(e) => setQ(e.target.value)}
             autoFocus
             className="mf-input"
-            style={{ paddingLeft: 36, height: 40, fontSize: 13 }}
-            placeholder='Search "chicken breast"'
+            style={{ paddingLeft: 36, paddingRight: 44, height: 40, fontSize: 13 }}
+            placeholder='Search "chicken breast" or scan ▥'
           />
+          <button
+            type="button"
+            onClick={() => setScannerOpen(true)}
+            aria-label="Scan barcode"
+            className="grid place-items-center"
+            style={{
+              position: 'absolute',
+              right: 6,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 30,
+              height: 30,
+              borderRadius: 6,
+              background: 'var(--mf-surface-3)',
+              border: '1px solid var(--mf-hairline-strong)',
+              cursor: 'pointer',
+            }}
+          >
+            <Camera size={14} className="mf-fg-dim" />
+          </button>
         </div>
 
         {/* Source filter pills */}
@@ -662,6 +684,40 @@ function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void 
           );
         })}
       </div>
+
+      {/* Barcode scanner overlay */}
+      {scannerOpen && (
+        <BarcodeScanner
+          onResult={async (product) => {
+            // Auto-log scanned product as a food entry for this meal
+            const dateStr = new Date().toLocaleDateString('en-CA');
+            try {
+              await fetch('/api/food-entries', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  foodName: product.name,
+                  quantity: product.servingSize || 1,
+                  unit: product.servingUnit || 'serving',
+                  calories: product.calories,
+                  protein: product.protein,
+                  carbs: product.carbs,
+                  fat: product.fat,
+                  mealType: meal,
+                  date: dateStr,
+                }),
+              });
+              setScannerOpen(false);
+              onClose();
+              router.refresh();
+            } catch {
+              setScannerOpen(false);
+              setError('Could not save scanned food');
+            }
+          }}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
     </div>
   );
 }

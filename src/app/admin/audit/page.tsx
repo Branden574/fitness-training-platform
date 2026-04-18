@@ -1,7 +1,9 @@
 import { ArrowDown } from 'lucide-react';
 import { requireAdminSession, relativeShort } from '@/lib/admin-data';
 import { prisma } from '@/lib/prisma';
+import { getAllFlags } from '@/lib/feature-flags';
 import { Btn, Chip, DesktopShell, StatusDot } from '@/components/ui/mf';
+import FlagTogglesClient from './flag-toggles-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +31,7 @@ export default async function AdminAuditPage({
   else if (range === '7d') since.setDate(since.getDate() - 7);
   else since.setDate(since.getDate() - 30);
 
-  const [events, adminLogs, loginEvents, failedLogins, apiLogs] = await Promise.all([
+  const [events, adminLogs, loginEvents, failedLogins, apiLogs, flags] = await Promise.all([
     prisma.adminLog.findMany({
       where: { createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
@@ -39,6 +41,7 @@ export default async function AdminAuditPage({
     prisma.loginEvent.count({ where: { createdAt: { gte: since } } }),
     prisma.loginEvent.count({ where: { createdAt: { gte: since }, success: false } }),
     prisma.apiRequestLog.count({ where: { createdAt: { gte: since } } }),
+    getAllFlags(),
   ]);
 
   const recentLogins = await prisma.loginEvent.findMany({
@@ -47,17 +50,6 @@ export default async function AdminAuditPage({
     take: 50,
   });
 
-  // Static feature flags (no FeatureFlag model yet — show as a read-only list)
-  const flags: Array<{ key: string; enabled: boolean; description: string }> = [
-    { key: 'active_workout_v4', enabled: true, description: 'Per-set RPE logging + rest timer' },
-    { key: 'client_messages_poll', enabled: true, description: 'Visibility-aware 8s message polling' },
-    { key: 'food_search_usda', enabled: true, description: 'USDA food database integration' },
-    { key: 'food_search_off', enabled: true, description: 'Open Food Facts integration' },
-    { key: 'barcode_scanner', enabled: false, description: 'Quagga2 barcode scanner (UI wiring pending)' },
-    { key: 'program_builder_dnd', enabled: false, description: 'Drag-drop week editor (schema pending)' },
-    { key: 'stripe_subscriptions', enabled: false, description: 'Subscription plans (only shop checkout live)' },
-    { key: 'pr_detection', enabled: true, description: 'Auto-compute PR timeline from set logs' },
-  ];
 
   return (
     <DesktopShell
@@ -230,29 +222,14 @@ export default async function AdminAuditPage({
               {flags.filter((f) => f.enabled).length} / {flags.length} ACTIVE
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {flags.map((f) => (
-              <div key={f.key} className="flex items-center gap-3" style={{ padding: '8px 8px' }}>
-                <Chip kind={f.enabled ? 'ok' : 'default'}>{f.enabled ? 'ON' : 'OFF'}</Chip>
-                <div style={{ flex: 1 }}>
-                  <div className="mf-font-mono" style={{ fontSize: 12 }}>{f.key}</div>
-                  <div className="mf-fg-dim" style={{ fontSize: 11 }}>{f.description}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div
-            className="mf-font-mono mf-fg-mute"
-            style={{
-              marginTop: 12,
-              paddingTop: 12,
-              borderTop: '1px solid var(--mf-hairline)',
-              fontSize: 10,
-              letterSpacing: '0.1em',
-            }}
-          >
-            FLAGS ARE READ-ONLY · FEATUREFLAG SCHEMA LANDS IN A LATER PHASE
-          </div>
+          <FlagTogglesClient
+            initial={flags.map((f) => ({
+              key: f.key,
+              enabled: f.enabled,
+              description: f.description,
+              updatedBy: f.updatedBy,
+            }))}
+          />
         </div>
       </div>
     </DesktopShell>

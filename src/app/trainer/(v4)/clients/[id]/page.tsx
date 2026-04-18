@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { MessageSquare, Edit, Plus } from 'lucide-react';
+import { MessageSquare, Edit } from 'lucide-react';
 import { requireTrainerSession, initialsFor } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
 import {
@@ -10,6 +10,7 @@ import {
   Heatmap,
   LineChart,
 } from '@/components/ui/mf';
+import CoachNotesClient from './coach-notes-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,11 +84,11 @@ export default async function ClientDetailPage({
         workoutProgress: { select: { weight: true, reps: true, sets: true } },
       },
     }),
-    prisma.message.findMany({
-      where: { senderId: session.user.id, receiverId: id },
+    prisma.coachNote.findMany({
+      where: { clientId: id },
       orderBy: { createdAt: 'desc' },
-      take: 3,
-      select: { id: true, content: true, createdAt: true },
+      take: 10,
+      select: { id: true, body: true, context: true, createdAt: true },
     }),
   ]);
 
@@ -314,36 +315,15 @@ export default async function ClientDetailPage({
           </div>
 
           {/* Coach notes */}
-          <div className="mf-card" style={{ padding: 16 }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-              <div className="mf-eyebrow">COACH NOTES</div>
-              <Link href={`/trainer/messages`}>
-                <Btn variant="ghost" icon={Plus} style={{ height: 28, padding: '0 8px', fontSize: 11 }}>
-                  Note
-                </Btn>
-              </Link>
-            </div>
-            {notesFromTrainer.length === 0 && (
-              <div className="mf-fg-mute mf-font-mono" style={{ fontSize: 11, letterSpacing: '0.1em' }}>
-                NO NOTES YET
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {notesFromTrainer.map((n) => (
-                <div
-                  key={n.id}
-                  style={{ paddingLeft: 12, borderLeft: '2px solid var(--mf-accent)' }}
-                >
-                  <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 10 }}>
-                    {n.createdAt.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }).replace('/', '.')}
-                  </div>
-                  <div className="mf-fg-dim" style={{ fontSize: 12, marginTop: 2, lineHeight: 1.5 }}>
-                    {n.content}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <CoachNotesClient
+            clientId={id}
+            initial={notesFromTrainer.map((n) => ({
+              id: n.id,
+              body: n.body,
+              context: n.context,
+              createdAt: n.createdAt.toISOString(),
+            }))}
+          />
         </div>
       </div>
     </DesktopShell>

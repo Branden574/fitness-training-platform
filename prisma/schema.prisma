@@ -37,43 +37,49 @@ model Session {
 }
 
 model User {
-  id                     String            @id @default(cuid())
+  id                     String              @id @default(cuid())
   name                   String?
-  email                  String            @unique
+  email                  String              @unique
   emailVerified          DateTime?
   password               String?
-  passwordChangeRequired Boolean           @default(false)
+  passwordChangeRequired Boolean             @default(false)
   image                  String?
-  role                   Role              @default(CLIENT)
-  isActive               Boolean           @default(true)
+  role                   Role                @default(CLIENT)
+  isActive               Boolean             @default(true)
   lastLogin              DateTime?
-  loginCount             Int               @default(0)
+  loginCount             Int                 @default(0)
   adminNotes             String?
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @updatedAt
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
   trainerId              String?
   accounts               Account[]
-  clientAppointments     Appointment[]     @relation("ClientAppointments")
-  trainerAppointments    Appointment[]     @relation("TrainerAppointments")
+  clientAppointments     Appointment[]       @relation("ClientAppointments")
+  trainerAppointments    Appointment[]       @relation("TrainerAppointments")
   clientProfile          ClientProfile?
   foodEntries            FoodEntry[]
   favoriteFoods          FavoriteFood[]
-  sentInvitations        Invitation[]      @relation("InvitationInviter")
-  createdMealPlans       MealPlan[]        @relation("TrainerMealPlans")
+  sentInvitations        Invitation[]        @relation("InvitationInviter")
+  createdMealPlans       MealPlan[]          @relation("TrainerMealPlans")
   mealPlans              MealPlan[]
-  receivedMessages       Message[]         @relation("MessageReceiver")
-  sentMessages           Message[]         @relation("MessageSender")
+  receivedMessages       Message[]           @relation("MessageReceiver")
+  sentMessages           Message[]           @relation("MessageSender")
   notifications          Notification[]
   nutritionPlans         NutritionPlan[]
   progressEntries        ProgressEntry[]
   sessions               Session[]
   trainer                Trainer?
-  assignedTrainer        User?             @relation("TrainerClients", fields: [trainerId], references: [id])
-  clients                User[]            @relation("TrainerClients")
+  assignedTrainer        User?               @relation("TrainerClients", fields: [trainerId], references: [id])
+  clients                User[]              @relation("TrainerClients")
   workoutProgress        WorkoutProgress[]
   workoutSessions        WorkoutSession[]
   createdWorkouts        Workout[]
   orders                 Order[]
+  createdPrograms        Program[]           @relation("ProgramCreator")
+  clientAssignments      ProgramAssignment[] @relation("ClientAssignments")
+  assignedPrograms       ProgramAssignment[] @relation("TrainerAssignments")
+  coachNotesAsTrainer    CoachNote[]         @relation("CoachNotesTrainer")
+  coachNotesAsClient     CoachNote[]         @relation("CoachNotesClient")
+  subscription           Subscription?
 
   @@index([email])
   @@index([role])
@@ -118,7 +124,7 @@ model LoginEvent {
   success   Boolean
   ipAddress String?
   userAgent String?
-  reason    String?  // "invalid_password", "account_disabled", "success", etc.
+  reason    String? // "invalid_password", "account_disabled", "success", etc.
   createdAt DateTime @default(now())
 
   @@index([email])
@@ -136,7 +142,7 @@ model ApiRequestLog {
   path      String
   status    Int
   ipAddress String?
-  duration  Int?     // ms
+  duration  Int? // ms
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -178,19 +184,20 @@ model ClientProfile {
 }
 
 model Exercise {
-  id               String            @id @default(cuid())
-  name             String
-  description      String?
-  instructions     Json?
-  muscleGroups     Json?
-  equipment        Json?
-  difficulty       Difficulty        @default(BEGINNER)
-  imageUrl         String?
-  videoUrl         String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  workoutExercises WorkoutExercise[]
-  workoutProgress  WorkoutProgress[]
+  id                  String               @id @default(cuid())
+  name                String
+  description         String?
+  instructions        Json?
+  muscleGroups        Json?
+  equipment           Json?
+  difficulty          Difficulty           @default(BEGINNER)
+  imageUrl            String?
+  videoUrl            String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  workoutExercises    WorkoutExercise[]
+  workoutProgress     WorkoutProgress[]
+  programDayExercises ProgramDayExercise[]
 
   @@index([name])
   @@index([difficulty])
@@ -313,24 +320,24 @@ model Food {
 }
 
 model CommunityFood {
-  id           String   @id @default(cuid())
-  barcode      String?  @unique
-  name         String
-  brand        String?
-  calories     Float
-  protein      Float
-  carbs        Float
-  fat          Float
-  fiber        Float?
-  sugar        Float?
-  servingSize  Float
-  servingUnit  String
-  category     String?
-  verified     Boolean  @default(false)
-  addedBy      String
-  useCount     Int      @default(1)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  barcode     String?  @unique
+  name        String
+  brand       String?
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  sugar       Float?
+  servingSize Float
+  servingUnit String
+  category    String?
+  verified    Boolean  @default(false)
+  addedBy     String
+  useCount    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([barcode])
   @@index([name])
@@ -365,20 +372,20 @@ model FoodEntry {
 }
 
 model FavoriteFood {
-  id             String   @id @default(cuid())
-  userId         String
-  foodName       String
-  brand          String?
-  calories       Float
-  protein        Float
-  carbs          Float
-  fat            Float
-  servingSize    Float
-  servingUnit    String
-  category       String?
-  sourceId       String?  // External ID (usda-xxx, off-xxx, local-xxx)
-  createdAt      DateTime @default(now())
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  foodName    String
+  brand       String?
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  servingSize Float
+  servingUnit String
+  category    String?
+  sourceId    String? // External ID (usda-xxx, off-xxx, local-xxx)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, foodName, brand])
   @@index([userId])
@@ -669,26 +676,26 @@ model ProductCategory {
 }
 
 model Product {
-  id              String           @id @default(cuid())
-  name            String
-  slug            String           @unique
-  shortDescription String?
-  description     String?
-  price           Int              // Price in cents (e.g. 2999 = $29.99)
-  compareAtPrice  Int?             // Original price for sale display (cents)
-  sku             String?
-  stock           Int              @default(0)
-  lowStockThreshold Int            @default(5)
-  trackInventory  Boolean          @default(true)
-  isActive        Boolean          @default(true)
-  isFeatured      Boolean          @default(false)
-  featuredOrder   Int              @default(0)
-  categoryId      String?
-  category        ProductCategory? @relation(fields: [categoryId], references: [id])
-  images          ProductImage[]
-  orderItems      OrderItem[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id                String           @id @default(cuid())
+  name              String
+  slug              String           @unique
+  shortDescription  String?
+  description       String?
+  price             Int // Price in cents (e.g. 2999 = $29.99)
+  compareAtPrice    Int? // Original price for sale display (cents)
+  sku               String?
+  stock             Int              @default(0)
+  lowStockThreshold Int              @default(5)
+  trackInventory    Boolean          @default(true)
+  isActive          Boolean          @default(true)
+  isFeatured        Boolean          @default(false)
+  featuredOrder     Int              @default(0)
+  categoryId        String?
+  category          ProductCategory? @relation(fields: [categoryId], references: [id])
+  images            ProductImage[]
+  orderItems        OrderItem[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   @@index([slug])
   @@index([isActive, isFeatured])
@@ -708,28 +715,28 @@ model ProductImage {
 }
 
 model Order {
-  id                String      @id @default(cuid())
-  orderNumber       String      @unique
-  customerEmail     String
-  customerName      String?
-  userId            String?     // If logged-in user
-  user              User?       @relation(fields: [userId], references: [id])
-  status            OrderStatus @default(PENDING)
-  paymentStatus     PaymentStatus @default(UNPAID)
-  fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
-  subtotal          Int         // Cents
-  tax               Int         @default(0)
-  total             Int         // Cents
-  stripeSessionId   String?     @unique
-  stripePaymentIntentId String? @unique
-  notes             String?
-  pickupDate        DateTime?
-  pickupTime        String?       // e.g. "10:00 AM - 11:00 AM"
-  pickupName        String?       // Name for pickup
-  pickupPhone       String?       // Phone for pickup contact
-  items             OrderItem[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id                    String            @id @default(cuid())
+  orderNumber           String            @unique
+  customerEmail         String
+  customerName          String?
+  userId                String? // If logged-in user
+  user                  User?             @relation(fields: [userId], references: [id])
+  status                OrderStatus       @default(PENDING)
+  paymentStatus         PaymentStatus     @default(UNPAID)
+  fulfillmentStatus     FulfillmentStatus @default(UNFULFILLED)
+  subtotal              Int // Cents
+  tax                   Int               @default(0)
+  total                 Int // Cents
+  stripeSessionId       String?           @unique
+  stripePaymentIntentId String?           @unique
+  notes                 String?
+  pickupDate            DateTime?
+  pickupTime            String? // e.g. "10:00 AM - 11:00 AM"
+  pickupName            String? // Name for pickup
+  pickupPhone           String? // Phone for pickup contact
+  items                 OrderItem[]
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   @@index([customerEmail])
   @@index([userId])
@@ -743,10 +750,10 @@ model OrderItem {
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId   String
   product     Product @relation(fields: [productId], references: [id])
-  productName String  // Snapshot at time of purchase
-  price       Int     // Price in cents at time of purchase
+  productName String // Snapshot at time of purchase
+  price       Int // Price in cents at time of purchase
   quantity    Int
-  total       Int     // price * quantity
+  total       Int // price * quantity
 
   @@index([orderId])
   @@index([productId])
@@ -774,4 +781,171 @@ enum FulfillmentStatus {
   UNFULFILLED
   READY_FOR_PICKUP
   PICKED_UP
+}
+
+// ══════════════════════════════════════════════════════════════════
+// V4 Phase 8 additions — Program builder, coach notes, feature flags,
+// Stripe subscriptions. All additive; no existing model altered in
+// a breaking way.
+// ══════════════════════════════════════════════════════════════════
+
+model Program {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  goal        String?
+  durationWks Int
+  isTemplate  Boolean             @default(false)
+  archived    Boolean             @default(false)
+  createdById String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  creator     User                @relation("ProgramCreator", fields: [createdById], references: [id])
+  weeks       ProgramWeek[]
+  assignments ProgramAssignment[]
+
+  @@index([createdById])
+  @@index([isTemplate])
+  @@index([archived])
+  @@map("programs")
+}
+
+model ProgramWeek {
+  id         String       @id @default(cuid())
+  programId  String
+  weekNumber Int
+  name       String?
+  notes      String?
+  program    Program      @relation(fields: [programId], references: [id], onDelete: Cascade)
+  days       ProgramDay[]
+
+  @@unique([programId, weekNumber])
+  @@index([programId])
+  @@map("program_weeks")
+}
+
+model ProgramDay {
+  id            String               @id @default(cuid())
+  programWeekId String
+  dayOfWeek     DayOfWeek
+  sessionType   String
+  notes         String?
+  order         Int                  @default(0)
+  programWeek   ProgramWeek          @relation(fields: [programWeekId], references: [id], onDelete: Cascade)
+  exercises     ProgramDayExercise[]
+
+  @@index([programWeekId])
+  @@map("program_days")
+}
+
+model ProgramDayExercise {
+  id           String     @id @default(cuid())
+  programDayId String
+  exerciseId   String
+  order        Int
+  sets         Int
+  repsScheme   String
+  targetWeight String?
+  restSeconds  Int?
+  tempo        String?
+  notes        String?
+  programDay   ProgramDay @relation(fields: [programDayId], references: [id], onDelete: Cascade)
+  exercise     Exercise   @relation(fields: [exerciseId], references: [id])
+
+  @@index([programDayId])
+  @@index([exerciseId])
+  @@map("program_day_exercises")
+}
+
+model ProgramAssignment {
+  id           String           @id @default(cuid())
+  programId    String
+  clientId     String
+  assignedById String
+  startDate    DateTime
+  currentWeek  Int              @default(1)
+  status       AssignmentStatus @default(ACTIVE)
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  program      Program          @relation(fields: [programId], references: [id])
+  client       User             @relation("ClientAssignments", fields: [clientId], references: [id])
+  assigner     User             @relation("TrainerAssignments", fields: [assignedById], references: [id])
+
+  @@index([clientId])
+  @@index([assignedById])
+  @@index([programId])
+  @@index([status])
+  @@map("program_assignments")
+}
+
+enum DayOfWeek {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model CoachNote {
+  id        String      @id @default(cuid())
+  trainerId String
+  clientId  String
+  body      String
+  context   NoteContext @default(GENERAL)
+  contextId String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  trainer   User        @relation("CoachNotesTrainer", fields: [trainerId], references: [id])
+  client    User        @relation("CoachNotesClient", fields: [clientId], references: [id])
+
+  @@index([trainerId])
+  @@index([clientId])
+  @@index([createdAt])
+  @@map("coach_notes")
+}
+
+enum NoteContext {
+  GENERAL
+  TRAINING
+  NUTRITION
+  PROGRESS
+}
+
+model FeatureFlag {
+  key         String   @id
+  enabled     Boolean  @default(false)
+  description String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@map("feature_flags")
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  plan                 String?
+  status               String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId], references: [id])
+
+  @@index([stripeCustomerId])
+  @@index([status])
+  @@map("subscriptions")
 }
