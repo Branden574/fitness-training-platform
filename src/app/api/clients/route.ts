@@ -190,7 +190,7 @@ export async function POST(request: Request) {
         title: 'New Workout Assigned',
         message: `Your trainer has assigned you a new workout: ${workoutSession.workout.title}`,
         type: 'WORKOUT_ASSIGNED',
-        actionUrl: '/client/dashboard?tab=workouts'
+        actionUrl: '/client'
       }
     });
 
@@ -285,7 +285,7 @@ export async function PUT(request: Request) {
         title: 'Welcome to Your Fitness Journey!',
         message: `You've been assigned to trainer ${trainer.name}. Please check your email for login instructions.`,
         type: 'GENERAL',
-        actionUrl: '/client/dashboard'
+        actionUrl: '/client'
       }
     });
 

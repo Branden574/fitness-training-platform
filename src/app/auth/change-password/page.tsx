@@ -36,9 +36,9 @@ export default function ChangePasswordPage() {
 
     if (!session.user.passwordChangeRequired) {
       if (session.user.role === 'TRAINER') {
-        router.push('/trainer/dashboard');
+        router.push('/trainer');
       } else {
-        router.push('/client/dashboard');
+        router.push('/client');
       }
     }
   }, [session, status, router]);
@@ -62,9 +62,9 @@ export default function ChangePasswordPage() {
         await update();
         setTimeout(() => {
           if (session?.user.role === 'TRAINER') {
-            router.push('/trainer/dashboard');
+            router.push('/trainer');
           } else {
-            router.push('/client/dashboard');
+            router.push('/client');
           }
         }, 2000);
       } else {

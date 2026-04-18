@@ -116,7 +116,7 @@ export default function RegisterWithCode() {
 
         if (signInResult?.ok) {
           // Successfully logged in, redirect to client dashboard
-          router.push('/client/dashboard');
+          router.push('/client');
         } else {
           // Account created but login failed, redirect to sign-in with message
           router.push('/auth/signin?message=Account created successfully! Please sign in.');

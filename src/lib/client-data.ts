@@ -13,7 +13,7 @@ export async function requireClientSession(): Promise<Session> {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
   if (session.user.role !== 'CLIENT') {
-    if (session.user.role === 'TRAINER') redirect('/trainer/dashboard');
+    if (session.user.role === 'TRAINER') redirect('/trainer');
     if (session.user.role === 'ADMIN') redirect('/admin');
     redirect('/auth/signin');
   }

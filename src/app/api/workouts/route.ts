@@ -224,7 +224,7 @@ export async function POST(request: Request) {
         type: 'WORKOUT_ASSIGNED',
         title: 'New Workout Assigned',
         message: `You have been assigned a new workout: ${workoutTemplate.title}`,
-        actionUrl: `/client/dashboard?tab=workouts`
+        actionUrl: `/client`
       }
     });
 

@@ -112,7 +112,7 @@ export async function POST(request: Request) {
         type: 'MEAL_PLAN_ASSIGNED',
         title: 'New Nutrition Plan Assigned',
         message: `You have been assigned a new nutrition plan: ${plan.name}`,
-        actionUrl: `/client/dashboard?tab=nutrition`
+        actionUrl: `/client/food`
       }
     });
 

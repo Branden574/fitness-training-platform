@@ -215,7 +215,7 @@ export async function POST(req: Request) {
           title: 'New Nutrition Plan Assigned',
           message: `Your trainer has assigned you a new nutrition plan: ${name}`,
           type: 'MEAL_PLAN_ASSIGNED',
-          actionUrl: '/client/dashboard?tab=nutrition'
+          actionUrl: '/client/food'
         }
       });
     }
@@ -312,7 +312,7 @@ export async function PUT(request: Request) {
           title: 'Meal Plan Updated',
           message: `Your trainer has updated your meal plan: ${name}`,
           type: 'MEAL_PLAN_ASSIGNED',
-          actionUrl: '/client/dashboard?tab=nutrition'
+          actionUrl: '/client/food'
         }
       });
     }

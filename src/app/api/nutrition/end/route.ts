@@ -54,7 +54,7 @@ export async function POST(request: Request) {
         type: 'MEAL_PLAN_ENDED',
         title: 'Client Ended Nutrition Plan',
         message: `${session.user.name} has ended their nutrition plan: ${plan.name}${reason ? ` (Reason: ${reason})` : ''}`,
-        actionUrl: `/trainer/dashboard?tab=nutrition`
+        actionUrl: `/trainer/nutrition`
       }
     });
 

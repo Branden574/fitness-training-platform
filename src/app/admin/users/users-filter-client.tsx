@@ -87,7 +87,7 @@ export default function AdminUsersFilterClient({
       </div>
       {pendingInvitations > 0 && (
         <Link
-          href="/admin/legacy"
+          href="/admin/invitations"
           className="mf-font-mono mf-fg-dim"
           style={{
             fontSize: 10,
