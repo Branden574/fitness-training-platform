@@ -9,7 +9,18 @@ if (process.env.NODE_ENV === 'production' && process.env.SEED_ALLOW_PROD !== 'tr
   process.exit(1);
 }
 
-const DEMO_PASSWORD = 'demo123';
+// Demo password for seeded users. Pass via SEED_DEMO_PASSWORD env var.
+// Falls back to a throwaway local-only value so local `prisma db seed` works
+// without extra setup. In production (SEED_ALLOW_PROD=true) the env var is
+// mandatory — the script refuses to run with the default.
+const DEMO_PASSWORD =
+  process.env.SEED_DEMO_PASSWORD ??
+  (process.env.SEED_ALLOW_PROD === 'true'
+    ? (() => {
+        console.error('[seed] SEED_DEMO_PASSWORD is required when SEED_ALLOW_PROD=true');
+        process.exit(1);
+      })()
+    : 'change-me-locally');
 
 async function main() {
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
