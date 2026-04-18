@@ -28,8 +28,8 @@ export default function RosterMobile({ roster, stats }: RosterMobileProps) {
   return (
     <div
       data-mf
-      className="md:hidden mf-bg mf-fg"
-      style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center' }}
+      className="flex justify-center md:hidden mf-bg mf-fg"
+      style={{ minHeight: '100vh' }}
     >
       <div
         style={{

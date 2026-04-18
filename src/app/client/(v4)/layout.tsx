@@ -8,17 +8,13 @@ export default async function ClientV4Layout({ children }: { children: React.Rea
 
   return (
     <div data-mf className="mf-bg mf-fg" style={{ minHeight: '100vh' }}>
-      <div
-        className="md:hidden"
-        style={{ display: 'flex', justifyContent: 'center', minHeight: '100vh' }}
-      >
+      <div className="flex justify-center md:hidden" style={{ minHeight: '100vh' }}>
         <div
+          className="flex flex-col"
           style={{
             width: '100%',
             maxWidth: 430,
             minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
             borderInline: '1px solid var(--mf-hairline)',
           }}
         >
