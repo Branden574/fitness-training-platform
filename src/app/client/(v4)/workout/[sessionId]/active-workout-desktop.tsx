@@ -10,6 +10,7 @@ import {
   Video,
   X,
   Pause,
+  Play,
   MessageSquare,
 } from 'lucide-react';
 import { Btn, Chip, ClientDesktopShell } from '@/components/ui/mf';
@@ -80,6 +81,7 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
   const [activeSetIdx, setActiveSetIdx] = useState(0);
   const [rest, setRest] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prs, setPrs] = useState<Array<{ exerciseName: string; newWeight: number; previousWeight: number | null }> | null>(null);
@@ -89,19 +91,30 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
   const [formVideoError, setFormVideoError] = useState<string | null>(null);
 
   const startedAtMs = useRef(new Date(initial.startedAt).getTime());
+  const pausedElapsedRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (paused) {
+      // Freeze elapsed where it is right now; stop ticking.
+      pausedElapsedRef.current = Math.floor((Date.now() - startedAtMs.current) / 1000);
+      return;
+    }
+    // On resume, rebase startedAtMs so Date.now() - startedAtMs = frozen elapsed.
+    if (pausedElapsedRef.current !== null) {
+      startedAtMs.current = Date.now() - pausedElapsedRef.current * 1000;
+      pausedElapsedRef.current = null;
+    }
     const id = setInterval(() => {
       setElapsedSec(Math.floor((Date.now() - startedAtMs.current) / 1000));
     }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [paused]);
 
   useEffect(() => {
-    if (rest <= 0) return;
+    if (rest <= 0 || paused) return;
     const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000);
     return () => clearInterval(id);
-  }, [rest]);
+  }, [rest, paused]);
 
   const currentExercise = initial.workout.exercises[exerciseIdx]!;
   const currentLogs = logsByExercise[currentExercise.id]!;
@@ -259,10 +272,15 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
         title="Active Session"
         headerRight={
           <>
-            <Chip kind="live">
-              ● LIVE · {String(elapsedM).padStart(2, '0')}:{String(elapsedS).padStart(2, '0')}
+            <Chip kind={paused ? 'warn' : 'live'}>
+              {paused ? 'PAUSED' : '● LIVE'} · {String(elapsedM).padStart(2, '0')}:{String(elapsedS).padStart(2, '0')}
             </Chip>
-            <Btn icon={Pause}>Pause</Btn>
+            <Btn
+              icon={paused ? Play : Pause}
+              onClick={() => setPaused((p) => !p)}
+            >
+              {paused ? 'Resume' : 'Pause'}
+            </Btn>
             <Btn icon={X} onClick={handleFinish} disabled={finishing}>
               {finishing ? 'Saving…' : 'End session'}
             </Btn>
