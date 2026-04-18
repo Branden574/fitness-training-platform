@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireClientSession } from '@/lib/client-data';
 import { prisma } from '@/lib/prisma';
 import ActiveWorkoutClient from './active-workout-client';
+import ActiveWorkoutDesktop from './active-workout-desktop';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,5 +77,10 @@ export default async function ActiveWorkoutPage({
     },
   };
 
-  return <ActiveWorkoutClient initial={payload} />;
+  return (
+    <>
+      <ActiveWorkoutClient initial={payload} />
+      <ActiveWorkoutDesktop initial={payload} />
+    </>
+  );
 }

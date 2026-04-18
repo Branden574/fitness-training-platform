@@ -198,6 +198,7 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
 
   return (
     <main
+      className="md:hidden"
       style={{
         display: 'flex',
         flexDirection: 'column',
