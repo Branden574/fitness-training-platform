@@ -1,16 +1,11 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { MessageSquare, Edit } from 'lucide-react';
 import { requireTrainerSession, initialsFor } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
-import {
-  Avatar,
-  Btn,
-  DesktopShell,
-  Heatmap,
-  LineChart,
-} from '@/components/ui/mf';
-import CoachNotesClient from './coach-notes-client';
+import ClientDetailDesktop from './client-detail-desktop';
+import ClientDetailMobile, {
+  type MobileRecentPR,
+  type MobileTodaySession,
+} from './client-detail-mobile';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +16,12 @@ function startOfWeek(d = new Date()): Date {
   const day = s.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   s.setDate(s.getDate() + diff);
+  s.setHours(0, 0, 0, 0);
+  return s;
+}
+
+function startOfDay(d = new Date()): Date {
+  const s = new Date(d);
   s.setHours(0, 0, 0, 0);
   return s;
 }
@@ -55,8 +56,20 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   const twelveAgo = new Date(Date.now() - TWELVE_WEEKS_MS);
+  const todayStart = startOfDay();
+  const tomorrowStart = new Date(todayStart.getTime() + 86400000);
+  const sevenDaysAgoStart = new Date(todayStart.getTime() - 6 * 86400000);
+  const fourteenDaysAgoStart = new Date(todayStart.getTime() - 13 * 86400000);
 
-  const [allSessions, liftLogs, recentSessions, notesFromTrainer] = await Promise.all([
+  const [
+    allSessions,
+    liftLogs,
+    recentSessions,
+    notesFromTrainer,
+    todaySessions,
+    volumeLogs,
+    prProgressLogs,
+  ] = await Promise.all([
     prisma.workoutSession.findMany({
       where: {
         userId: id,
@@ -89,6 +102,36 @@ export default async function ClientDetailPage({
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: { id: true, body: true, context: true, createdAt: true },
+    }),
+    prisma.workoutSession.findMany({
+      where: {
+        userId: id,
+        startTime: { gte: todayStart, lt: tomorrowStart },
+      },
+      orderBy: { startTime: 'desc' },
+      include: {
+        workout: { select: { title: true } },
+        workoutProgress: {
+          select: { id: true, exerciseId: true, weight: true, reps: true, sets: true },
+        },
+      },
+    }),
+    prisma.workoutProgress.findMany({
+      where: {
+        userId: id,
+        date: { gte: fourteenDaysAgoStart },
+      },
+      select: { date: true, weight: true, reps: true, sets: true },
+    }),
+    prisma.workoutProgress.findMany({
+      where: { userId: id, weight: { not: null } },
+      orderBy: { date: 'asc' },
+      select: {
+        date: true,
+        weight: true,
+        reps: true,
+        exercise: { select: { name: true } },
+      },
     }),
   ]);
 
@@ -156,205 +199,159 @@ export default async function ClientDetailPage({
   // 30d streak
   const streakDays = computeStreak(allSessions.map((s) => s.startTime));
 
-  const displayName = (client.name ?? client.email).toUpperCase();
   const fullInitials = initialsFor(client.name, client.email);
 
-  return (
-    <DesktopShell
-      role="trainer"
-      active="clientdetail"
-      title={client.name ?? client.email}
-      breadcrumbs={`ROSTER / ${(client.name ?? client.email).toUpperCase()}`}
-      headerRight={
-        <>
-          <Link href="/trainer/messages">
-            <Btn icon={MessageSquare}>Message</Btn>
-          </Link>
-          <Link href="/trainer/builder">
-            <Btn variant="primary" icon={Edit}>Edit program</Btn>
-          </Link>
-        </>
+  // ── Mobile-only derived data
+  // 7-day volume per day (M/T/W/T/F/S/S style — actually last 7 days ending today)
+  const prior7Volume: number[] = Array(7).fill(0);
+  const prior7Labels: string[] = [];
+  const previousWeekVolume: number[] = Array(7).fill(0);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sevenDaysAgoStart.getTime() + i * 86400000);
+    const letter = d.toLocaleDateString('en-US', { weekday: 'short' })[0]!.toUpperCase();
+    prior7Labels.push(letter);
+  }
+  for (const wp of volumeLogs) {
+    const dayMs = startOfDay(wp.date).getTime();
+    const vol = (wp.weight ?? 0) * (wp.reps ?? 0) * (wp.sets ?? 1);
+    const diffFromToday = Math.floor((todayStart.getTime() - dayMs) / 86400000);
+    if (diffFromToday >= 0 && diffFromToday <= 6) {
+      const idx = 6 - diffFromToday;
+      prior7Volume[idx] = (prior7Volume[idx] ?? 0) + vol;
+    } else if (diffFromToday >= 7 && diffFromToday <= 13) {
+      const idx = 13 - diffFromToday;
+      previousWeekVolume[idx] = (previousWeekVolume[idx] ?? 0) + vol;
+    }
+  }
+  const thisWeekTotal = prior7Volume.reduce((a, b) => a + b, 0);
+  const prevWeekTotal = previousWeekVolume.reduce((a, b) => a + b, 0);
+  const sevenDayVolumeDelta =
+    prevWeekTotal > 0
+      ? Math.round(((thisWeekTotal - prevWeekTotal) / prevWeekTotal) * 100)
+      : thisWeekTotal > 0
+        ? null
+        : null;
+
+  // Today's session (live if not completed with progress, or completed)
+  let todaySession: MobileTodaySession | null = null;
+  if (todaySessions.length > 0) {
+    const ts = todaySessions[0]!;
+    const exerciseIdsDone = new Set(ts.workoutProgress.map((wp) => wp.exerciseId));
+    const exercisesDone = exerciseIdsDone.size;
+    // Try to read planned exercise count from the workout
+    const workoutWithExercises = await prisma.workout.findFirst({
+      where: { id: ts.workoutId },
+      select: { _count: { select: { workoutExercises: true } } },
+    });
+    const exercisesTotal = Math.max(
+      exercisesDone,
+      workoutWithExercises?._count.workoutExercises ?? exercisesDone,
+    );
+    const progressPct =
+      exercisesTotal > 0
+        ? Math.round((exercisesDone / exercisesTotal) * 100)
+        : ts.completed
+          ? 100
+          : 0;
+    const endedOrNow = ts.endTime ?? new Date();
+    const minutesElapsed = Math.max(
+      0,
+      Math.round((endedOrNow.getTime() - ts.startTime.getTime()) / 60000),
+    );
+    todaySession = {
+      id: ts.id,
+      title: ts.workout.title,
+      completed: ts.completed,
+      inProgress: !ts.completed,
+      minutesElapsed,
+      progressPct,
+      exercisesDone,
+      exercisesTotal,
+    };
+  }
+
+  // Recent PRs — track top 3 most recent all-time PR events
+  const prEvents: MobileRecentPR[] = [];
+  const bestByExercise = new Map<string, number>();
+  for (const log of prProgressLogs) {
+    if (log.weight == null) continue;
+    const prev = bestByExercise.get(log.exercise.name);
+    if (prev == null || log.weight > prev) {
+      if (prev != null) {
+        prEvents.push({
+          exercise: log.exercise.name,
+          weight: log.weight,
+          reps: log.reps ?? 0,
+          date: log.date,
+          delta: Math.round((log.weight - prev) * 10) / 10,
+        });
       }
-    >
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        {/* Hero */}
-        <div
-          className="mf-card-elev"
-          style={{
-            padding: 20,
-            marginBottom: 24,
-            display: 'grid',
-            gridTemplateColumns: 'auto 1fr auto',
-            gap: 24,
-            alignItems: 'center',
-          }}
-        >
-          <Avatar initials={fullInitials} size={72} active />
-          <div>
-            <div className="mf-eyebrow" style={{ marginBottom: 4 }}>
-              COACHED · SINCE {client.createdAt.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' }).replace(/\//g, '.')}
-            </div>
-            <div
-              className="mf-font-display"
-              style={{ fontSize: 36, lineHeight: 1, letterSpacing: '-0.01em', textTransform: 'uppercase' }}
-            >
-              {displayName}
-            </div>
-            <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 11, marginTop: 4 }}>
-              {client.clientProfile?.fitnessLevel ?? '—'} ·{' '}
-              {client.clientProfile?.age ? `${client.clientProfile.age}Y` : '—'} ·{' '}
-              {client.clientProfile?.weight ? `${client.clientProfile.weight} LB` : '—'}
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <HeroStat label="ADHERENCE" value={`${adherencePct}`} unit="%" />
-            <div className="mf-vr" />
-            <HeroStat label="STREAK" value={`${streakDays}`} accent />
-            <div className="mf-vr" />
-            <HeroStat label="PRS / 90D" value={`${prCount}`} />
-          </div>
-        </div>
+      bestByExercise.set(log.exercise.name, log.weight);
+    }
+  }
+  const recentPRs = prEvents
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 3);
 
-        {/* Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          {/* Strength chart */}
-          <div className="mf-card" style={{ padding: 16, gridColumn: 'span 2' }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-              <div>
-                <div className="mf-eyebrow">BIG THREE · PEAK WEIGHT BY WEEK</div>
-                <div className="mf-fg-dim" style={{ fontSize: 12, marginTop: 2 }}>
-                  12 WEEKS · FROM LOGGED SETS
-                </div>
-              </div>
-              <div className="mf-font-mono mf-fg-dim" style={{ fontSize: 10, letterSpacing: '0.1em' }}>
-                SHOWING {primaryLabel}
-              </div>
-            </div>
-            {primarySeries.some((v) => v > 0) ? (
-              <LineChart data={primarySeries.map((v) => (v > 0 ? v : 0))} labels={labels} h={220} />
-            ) : (
-              <div
-                className="mf-fg-mute mf-font-mono"
-                style={{ padding: 48, textAlign: 'center', fontSize: 11, letterSpacing: '0.1em' }}
-              >
-                NO LIFT DATA YET
-              </div>
-            )}
-          </div>
-
-          {/* Adherence */}
-          <div className="mf-card" style={{ padding: 16 }}>
-            <div className="mf-eyebrow" style={{ marginBottom: 8 }}>ADHERENCE · 12 WK</div>
-            <div className="mf-font-display mf-tnum" style={{ fontSize: 32, lineHeight: 1, marginBottom: 12 }}>
-              {adherencePct}
-              <span className="mf-fg-mute" style={{ fontSize: 14 }}>%</span>
-            </div>
-            <Heatmap cells={compliance} cell={14} />
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--mf-hairline)' }}>
-              <Row label="Logged" value={`${allSessions.length}`} />
-              <Row label="Unique days" value={`${uniqueDays} / ${totalWorkoutDays}`} />
-              <Row label="PRs tracked" value={`${prCount}`} />
-            </div>
-          </div>
-
-          {/* Recent sessions */}
-          <div className="mf-card" style={{ padding: 16, gridColumn: 'span 2' }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-              <div className="mf-eyebrow">RECENT SESSIONS</div>
-              <span className="mf-font-mono mf-fg-mute" style={{ fontSize: 11 }}>
-                {recentSessions.length} SHOWN
-              </span>
-            </div>
-            {recentSessions.length === 0 && (
-              <div
-                className="mf-fg-mute mf-font-mono"
-                style={{ padding: 32, textAlign: 'center', fontSize: 11, letterSpacing: '0.1em' }}
-              >
-                NO COMPLETED SESSIONS YET
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {recentSessions.map((s) => {
-                const d = s.startTime;
-                const mo = String(d.getMonth() + 1).padStart(2, '0');
-                const dy = String(d.getDate()).padStart(2, '0');
-                const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-                const durationMin = s.endTime
-                  ? Math.round((s.endTime.getTime() - s.startTime.getTime()) / 60000)
-                  : null;
-                const totalVol = s.workoutProgress.reduce(
-                  (acc, wp) => acc + (wp.weight ?? 0) * (wp.reps ?? 0) * (wp.sets ?? 1),
-                  0,
-                );
-                return (
-                  <div
-                    key={s.id}
-                    className="flex items-center gap-3"
-                    style={{ padding: '8px 8px', borderRadius: 4 }}
-                  >
-                    <div className="mf-font-mono mf-fg-mute mf-tnum" style={{ fontSize: 11, width: 48 }}>
-                      {mo}.{dy}
-                    </div>
-                    <div className="mf-font-mono mf-fg-dim" style={{ fontSize: 10, width: 32 }}>
-                      {weekday}
-                    </div>
-                    <div style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{s.workout.title}</div>
-                    <div className="mf-font-mono mf-fg-dim" style={{ fontSize: 11 }}>
-                      {durationMin ? `${durationMin} MIN` : '—'}
-                    </div>
-                    <div
-                      className="mf-font-display mf-tnum"
-                      style={{ fontSize: 14, width: 96, textAlign: 'right' }}
-                    >
-                      {totalVol > 0 ? `${totalVol.toLocaleString()} LB` : '—'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Coach notes */}
-          <CoachNotesClient
-            clientId={id}
-            initial={notesFromTrainer.map((n) => ({
-              id: n.id,
-              body: n.body,
-              context: n.context,
-              createdAt: n.createdAt.toISOString(),
-            }))}
-          />
-        </div>
-      </div>
-    </DesktopShell>
+  // Weeks since client started (bounded by completed session count)
+  const createdMs = client.createdAt.getTime();
+  const programWeeksCompleted = Math.max(
+    0,
+    Math.floor((Date.now() - createdMs) / (7 * 86400000)),
   );
-}
+  const programTotalWeeks = 12;
+  const programWeek = Math.min(programTotalWeeks, programWeeksCompleted + 1);
 
-function HeroStat({ label, value, unit, accent }: { label: string; value: string; unit?: string; accent?: boolean }) {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div
-        className="mf-font-display mf-tnum"
-        style={{
-          fontSize: 32,
-          lineHeight: 1,
-          color: accent ? 'var(--mf-accent)' : undefined,
-        }}
-      >
-        {value}
-        {unit ? <span className="mf-fg-mute" style={{ fontSize: 14 }}>{unit}</span> : null}
-      </div>
-      <div className="mf-eyebrow" style={{ marginTop: 4 }}>{label}</div>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between" style={{ fontSize: 12, marginBottom: 4 }}>
-      <span className="mf-fg-dim">{label}</span>
-      <span className="mf-font-mono mf-tnum">{value}</span>
-    </div>
+    <>
+      <ClientDetailDesktop
+        clientId={id}
+        clientName={client.name}
+        clientEmail={client.email}
+        createdAt={client.createdAt}
+        fitnessLevel={client.clientProfile?.fitnessLevel ?? null}
+        age={client.clientProfile?.age ?? null}
+        weight={client.clientProfile?.weight ?? null}
+        fullInitials={fullInitials}
+        adherencePct={adherencePct}
+        streakDays={streakDays}
+        prCount={prCount}
+        uniqueDays={uniqueDays}
+        totalWorkoutDays={totalWorkoutDays}
+        totalCompletedSessions={allSessions.length}
+        primarySeries={primarySeries}
+        primaryLabel={primaryLabel}
+        labels={labels}
+        compliance={compliance}
+        recentSessions={recentSessions}
+        initialNotes={notesFromTrainer.map((n) => ({
+          id: n.id,
+          body: n.body,
+          context: n.context,
+          createdAt: n.createdAt.toISOString(),
+        }))}
+      />
+      <ClientDetailMobile
+        clientId={id}
+        clientName={client.name}
+        clientEmail={client.email}
+        fullInitials={fullInitials}
+        fitnessLevel={client.clientProfile?.fitnessLevel ?? null}
+        programWeek={programWeek}
+        programTotalWeeks={programTotalWeeks}
+        weight={client.clientProfile?.weight ?? null}
+        adherencePct={adherencePct}
+        streakDays={streakDays}
+        prCount={prCount}
+        programWeeksCompleted={programWeeksCompleted}
+        sevenDayVolume={prior7Volume}
+        sevenDayVolumeLabels={prior7Labels}
+        sevenDayVolumeDelta={sevenDayVolumeDelta}
+        todaySession={todaySession}
+        recentPRs={recentPRs}
+        prsInBlock={prCount}
+      />
+    </>
   );
 }
 
