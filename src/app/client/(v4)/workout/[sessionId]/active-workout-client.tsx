@@ -198,13 +198,11 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
 
   return (
     <main
-      className="md:hidden"
+      className="flex flex-col md:hidden"
       style={{
-        display: 'flex',
-        flexDirection: 'column',
         height: '100vh',
         position: 'relative',
-        paddingBottom: 76, // space for bottom action bar
+        paddingBottom: 76,
       }}
     >
       {/* Header */}

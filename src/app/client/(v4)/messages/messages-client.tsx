@@ -171,12 +171,8 @@ export default function MessagesClient({
 
   return (
     <main
-      className="md:hidden"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-      }}
+      className="flex flex-col md:hidden"
+      style={{ height: '100%' }}
     >
       {/* Header */}
       <div
