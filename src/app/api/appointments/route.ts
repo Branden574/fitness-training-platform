@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma';
+import { sendAppointmentStatusEmail, type AppointmentStatus } from '@/lib/email';
 
 // GET /api/appointments - Fetch appointments for trainer/client
 export async function GET(request: NextRequest) {
@@ -460,7 +461,7 @@ export async function PATCH(request: NextRequest) {
         // Determine who to notify (if client cancelled, notify trainer and vice versa)
         const notifyUserId = actualUserId === appointment.clientId ? appointment.trainerId : appointment.clientId;
         const cancellerName = actualUserId === appointment.clientId ? updatedAppointment.client.name : updatedAppointment.trainer.name;
-        
+
         await prisma.notification.create({
           data: {
             userId: notifyUserId,
@@ -470,10 +471,31 @@ export async function PATCH(request: NextRequest) {
             createdAt: new Date()
           }
         });
-        
+
       } catch (notificationError) {
         console.error('❌ Error creating cancellation notification:', notificationError);
         // Don't fail the whole request if notification fails
+      }
+    }
+
+    // Fire-and-forget transactional email on status change
+    // APPROVED/REJECTED: trainer acting on client's request → email client
+    // CANCELLED: either party → email the other side
+    if (status === 'APPROVED' || status === 'REJECTED' || status === 'CANCELLED') {
+      const toClient = actualUserId === appointment.trainerId;
+      const recipient = toClient ? updatedAppointment.client : updatedAppointment.trainer;
+      const actor = toClient ? updatedAppointment.trainer : updatedAppointment.client;
+      if (recipient?.email) {
+        void sendAppointmentStatusEmail({
+          toEmail: recipient.email,
+          toName: recipient.name,
+          title: updatedAppointment.title,
+          startTime: updatedAppointment.startTime,
+          status: status as AppointmentStatus,
+          actorName: actor?.name ?? null,
+          appointmentId: updatedAppointment.id,
+          recipientRole: toClient ? 'CLIENT' : 'TRAINER',
+        });
       }
     }
 

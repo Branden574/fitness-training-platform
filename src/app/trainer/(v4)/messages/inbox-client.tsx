@@ -73,7 +73,7 @@ export default function TrainerInboxClient({
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const poll = useCallback(async () => {
+  const fetchFull = useCallback(async () => {
     if (!activeId) return;
     try {
       const res = await fetch(`/api/messages?with=${activeId}`, { cache: 'no-store' });
@@ -94,12 +94,65 @@ export default function TrainerInboxClient({
     }
   }, [activeId, selfId]);
 
+  // Realtime: SSE stream with polling fallback per active thread
   useEffect(() => {
-    const id = setInterval(() => {
-      if (document.visibilityState === 'visible') void poll();
-    }, 8000);
-    return () => clearInterval(id);
-  }, [poll]);
+    if (!activeId) return;
+    let es: EventSource | null = null;
+    let pollId: ReturnType<typeof setInterval> | null = null;
+
+    function startPolling() {
+      pollId = setInterval(() => {
+        if (document.visibilityState === 'visible') void fetchFull();
+      }, 8000);
+    }
+
+    try {
+      es = new EventSource(`/api/messages/stream?with=${activeId}`);
+      es.onmessage = (evt) => {
+        try {
+          const payload = JSON.parse(evt.data) as Array<{
+            id: string;
+            content: string;
+            senderId: string;
+            createdAt: string;
+          }>;
+          if (!Array.isArray(payload) || payload.length === 0) return;
+          setMessages((prev) => {
+            const existingIds = new Set(prev.filter((m) => !m.id.startsWith('temp-')).map((m) => m.id));
+            const incoming = payload
+              .filter((m) => !existingIds.has(m.id))
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                fromMe: m.senderId === selfId,
+                at: m.createdAt,
+              }));
+            if (!incoming.length) return prev;
+            const withoutDupes = prev.filter(
+              (m) =>
+                !(m.id.startsWith('temp-') &&
+                  incoming.some((x) => x.fromMe === m.fromMe && x.content === m.content)),
+            );
+            return [...withoutDupes, ...incoming];
+          });
+        } catch {
+          // Malformed frame — ignore
+        }
+      };
+      es.onerror = () => {
+        es?.close();
+        es = null;
+        if (!pollId) startPolling();
+      };
+    } catch {
+      startPolling();
+    }
+
+    return () => {
+      es?.close();
+      if (pollId) clearInterval(pollId);
+    };
+  }, [activeId, selfId, fetchFull]);
 
   const filteredRail = rail.filter((r) => {
     if (!query) return true;
@@ -126,7 +179,7 @@ export default function TrainerInboxClient({
         body: JSON.stringify({ receiverId: activeId, content }),
       });
       if (!res.ok) throw new Error('Could not send');
-      await poll();
+      await fetchFull();
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send');

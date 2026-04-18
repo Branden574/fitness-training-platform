@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { sendNewMessageEmail } from '@/lib/email';
 import { z } from 'zod';
 
 const messageSchema = z.object({
@@ -165,6 +166,15 @@ export async function POST(request: Request) {
           }
         }
       }
+    });
+
+    // Fire-and-forget transactional email — never blocks the response
+    void sendNewMessageEmail({
+      toEmail: message.receiver.email,
+      toName: message.receiver.name,
+      fromName: message.sender.name,
+      fromRole: message.sender.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
+      preview: message.content,
     });
 
     return NextResponse.json(message, { status: 201 });

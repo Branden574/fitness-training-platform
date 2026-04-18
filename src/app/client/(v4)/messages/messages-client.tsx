@@ -50,7 +50,7 @@ export default function MessagesClient({
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const poll = useCallback(async () => {
+  const fetchFull = useCallback(async () => {
     try {
       const res = await fetch(`/api/messages?with=${trainer.id}`, { cache: 'no-store' });
       if (!res.ok) return;
@@ -72,13 +72,65 @@ export default function MessagesClient({
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Lightweight poll every 8s while tab is visible
+  // Realtime: SSE stream pushes new messages as they arrive, with a polling fallback
   useEffect(() => {
-    const id = setInterval(() => {
-      if (document.visibilityState === 'visible') void poll();
-    }, 8000);
-    return () => clearInterval(id);
-  }, [poll]);
+    let es: EventSource | null = null;
+    let pollId: ReturnType<typeof setInterval> | null = null;
+
+    function startPolling() {
+      pollId = setInterval(() => {
+        if (document.visibilityState === 'visible') void fetchFull();
+      }, 8000);
+    }
+
+    try {
+      es = new EventSource(`/api/messages/stream?with=${trainer.id}`);
+      es.onmessage = (evt) => {
+        try {
+          const payload = JSON.parse(evt.data) as Array<{
+            id: string;
+            content: string;
+            senderId: string;
+            createdAt: string;
+          }>;
+          if (!Array.isArray(payload) || payload.length === 0) return;
+          setMessages((prev) => {
+            const existingIds = new Set(prev.filter((m) => !m.id.startsWith('temp-')).map((m) => m.id));
+            const incoming = payload
+              .filter((m) => !existingIds.has(m.id))
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                fromMe: m.senderId === selfId,
+                at: m.createdAt,
+              }));
+            if (!incoming.length) return prev;
+            // Drop optimistic temps that now have a real id with the same content
+            const withoutDupes = prev.filter(
+              (m) =>
+                !(m.id.startsWith('temp-') &&
+                  incoming.some((x) => x.fromMe === m.fromMe && x.content === m.content)),
+            );
+            return [...withoutDupes, ...incoming];
+          });
+        } catch {
+          // Malformed frame — ignore
+        }
+      };
+      es.onerror = () => {
+        es?.close();
+        es = null;
+        if (!pollId) startPolling();
+      };
+    } catch {
+      startPolling();
+    }
+
+    return () => {
+      es?.close();
+      if (pollId) clearInterval(pollId);
+    };
+  }, [trainer.id, selfId, fetchFull]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -99,7 +151,7 @@ export default function MessagesClient({
         body: JSON.stringify({ receiverId: trainer.id, content }),
       });
       if (!res.ok) throw new Error('Could not send');
-      await poll();
+      await fetchFull();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send');
       setMessages((prev) => prev.filter((m) => m.id !== tempId));

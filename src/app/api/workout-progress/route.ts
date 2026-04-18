@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { sendPRAchievedEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,35 +43,112 @@ export async function POST(request: NextRequest) {
       workoutDate = workoutSession.startTime || new Date();
     }
 
-    // Save progress for each exercise
-    const progressEntries = await Promise.all(
-      exercises.map(async (exercise: { 
-        exerciseId: string; 
-        exerciseName?: string;
-        weight?: number; 
-        reps?: number; 
-        sets?: number; 
-        duration?: number; 
-        notes?: string 
-      }) => {
-        return prisma.workoutProgress.create({
-          data: {
+    // Save progress for each exercise and collect PR candidates
+    const progressEntries: Awaited<ReturnType<typeof prisma.workoutProgress.create>>[] = [];
+    const prEvents: Array<{
+      exerciseId: string;
+      exerciseName: string;
+      newWeight: number;
+      previousWeight: number | null;
+      reps: number | null;
+    }> = [];
+
+    for (const exercise of exercises as Array<{
+      exerciseId: string;
+      exerciseName?: string;
+      weight?: number;
+      reps?: number;
+      sets?: number;
+      duration?: number;
+      notes?: string;
+    }>) {
+      // Compute prior max BEFORE creating the new row so we compare correctly
+      let priorMax: number | null = null;
+      let exerciseName = exercise.exerciseName ?? 'Exercise';
+      if (exercise.weight && exercise.weight > 0) {
+        const prior = await prisma.workoutProgress.findFirst({
+          where: {
             userId: session.user.id,
             exerciseId: exercise.exerciseId,
-            workoutSessionId: workoutSessionId,
-            weight: exercise.weight || null,
-            sets: exercise.sets || null,
-            reps: exercise.reps || null,
-            notes: exercise.notes || null,
-            date: workoutDate
-          }
+            weight: { not: null },
+          },
+          orderBy: { weight: 'desc' },
+          select: { weight: true, exercise: { select: { name: true } } },
         });
-      })
-    );
+        priorMax = prior?.weight ?? null;
+        if (prior?.exercise.name) exerciseName = prior.exercise.name;
+      }
 
-    return NextResponse.json({ 
+      const created = await prisma.workoutProgress.create({
+        data: {
+          userId: session.user.id,
+          exerciseId: exercise.exerciseId,
+          workoutSessionId: workoutSessionId,
+          weight: exercise.weight || null,
+          sets: exercise.sets || null,
+          reps: exercise.reps || null,
+          notes: exercise.notes || null,
+          date: workoutDate,
+        },
+        include: { exercise: { select: { name: true } } },
+      });
+      progressEntries.push(created);
+
+      if (
+        exercise.weight &&
+        exercise.weight > 0 &&
+        (priorMax == null || exercise.weight > priorMax)
+      ) {
+        prEvents.push({
+          exerciseId: exercise.exerciseId,
+          exerciseName: created.exercise.name ?? exerciseName,
+          newWeight: exercise.weight,
+          previousWeight: priorMax,
+          reps: exercise.reps ?? null,
+        });
+      }
+    }
+
+    // Fire-and-forget PR emails to the assigned trainer (if any)
+    if (prEvents.length > 0) {
+      void (async () => {
+        try {
+          const athlete = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: {
+              name: true,
+              assignedTrainer: { select: { email: true, name: true } },
+            },
+          });
+          const trainer = athlete?.assignedTrainer;
+          if (!trainer?.email) return;
+          for (const pr of prEvents) {
+            await sendPRAchievedEmail({
+              trainerEmail: trainer.email,
+              trainerName: trainer.name,
+              athleteName: athlete?.name ?? null,
+              exerciseName: pr.exerciseName,
+              newWeight: pr.newWeight,
+              previousWeight: pr.previousWeight,
+              reps: pr.reps,
+              clientId: session.user.id,
+            });
+          }
+        } catch (e) {
+          console.warn('[email:pr] dispatch failed:', e);
+        }
+      })();
+    }
+
+    return NextResponse.json({
       message: 'Workout progress saved successfully',
-      progress: progressEntries
+      progress: progressEntries,
+      prs: prEvents.map((p) => ({
+        exerciseId: p.exerciseId,
+        exerciseName: p.exerciseName,
+        newWeight: p.newWeight,
+        previousWeight: p.previousWeight,
+      })),
     });
 
   } catch (error) {
