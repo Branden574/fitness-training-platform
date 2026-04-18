@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { requireClientSession } from '@/lib/client-data';
+import { requireClientSession, getClientContext } from '@/lib/client-data';
 import { prisma } from '@/lib/prisma';
 import ActiveWorkoutClient from './active-workout-client';
 import ActiveWorkoutDesktop from './active-workout-desktop';
@@ -13,6 +13,7 @@ export default async function ActiveWorkoutPage({
 }) {
   const session = await requireClientSession();
   const { sessionId } = await params;
+  const ctx = await getClientContext(session.user.id);
 
   const ws = await prisma.workoutSession.findFirst({
     where: { id: sessionId, userId: session.user.id },
@@ -89,7 +90,11 @@ export default async function ActiveWorkoutPage({
   return (
     <>
       <ActiveWorkoutClient initial={payload} />
-      <ActiveWorkoutDesktop initial={payload} />
+      <ActiveWorkoutDesktop
+        initial={payload}
+        athleteInitials={ctx.initials}
+        athleteName={ctx.name ?? ctx.email}
+      />
     </>
   );
 }

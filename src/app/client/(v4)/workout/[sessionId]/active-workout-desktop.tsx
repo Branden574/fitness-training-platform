@@ -61,7 +61,15 @@ interface SetLog {
 
 const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9] as const;
 
-export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayload }) {
+export default function ActiveWorkoutDesktop({
+  initial,
+  athleteInitials,
+  athleteName,
+}: {
+  initial: InitialPayload;
+  athleteInitials?: string;
+  athleteName?: string;
+}) {
   const router = useRouter();
   const [exerciseIdx, setExerciseIdx] = useState(0);
   const [logsByExercise, setLogsByExercise] = useState<Record<string, SetLog[]>>(() =>
@@ -270,6 +278,8 @@ export default function ActiveWorkoutDesktop({ initial }: { initial: InitialPayl
         active="workout"
         breadcrumbs={breadcrumbs}
         title="Active Session"
+        athleteInitials={athleteInitials}
+        athleteName={athleteName}
         headerRight={
           <>
             <Chip kind={paused ? 'warn' : 'live'}>
