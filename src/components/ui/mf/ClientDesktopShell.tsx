@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import {
   Home,
   Layers,
@@ -10,6 +11,7 @@ import {
   TrendingUp,
   MessageSquare,
   Bell,
+  LogOut,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -134,7 +136,7 @@ export default function ClientDesktopShell({
           </div>
         </div>
 
-        <nav className="px-2 py-3 flex-1" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <nav className="px-2 py-3 flex-1" style={{ display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
           {NAV.map((n) => {
             const Icon = n.i;
             const isActive = resolved === n.k;
@@ -176,6 +178,26 @@ export default function ClientDesktopShell({
             );
           })}
         </nav>
+        <div
+          style={{ padding: 12, borderTop: '1px solid var(--mf-hairline)' }}
+        >
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+            className="flex items-center gap-2.5 px-2.5 py-2 text-sm w-full"
+            style={{
+              borderRadius: 6,
+              color: 'var(--mf-fg-dim)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <LogOut size={15} />
+            <span className="flex-1">Sign out</span>
+          </button>
+        </div>
       </aside>
 
       <main className="flex-1 flex flex-col" style={{ overflow: 'hidden' }}>

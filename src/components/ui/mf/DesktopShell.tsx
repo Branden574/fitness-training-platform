@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { signOut } from 'next-auth/react';
 import {
   Users,
   Layers,
@@ -17,6 +18,7 @@ import {
   ShoppingBag,
   Search,
   Bell,
+  LogOut,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -195,6 +197,26 @@ export default function DesktopShell({
             {footer}
           </div>
         ) : null}
+        <div
+          style={{ padding: 12, borderTop: '1px solid var(--mf-hairline)' }}
+        >
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+            className="flex items-center gap-2.5 px-2.5 py-2 text-sm w-full"
+            style={{
+              borderRadius: 6,
+              color: 'var(--mf-fg-dim)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <LogOut size={15} />
+            <span className="flex-1">Sign out</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main */}
