@@ -7,6 +7,7 @@ import {
   Chip,
   DesktopShell,
 } from '@/components/ui/mf';
+import LibrarySearchClient from './library-search-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,10 @@ export default async function TrainerExercisesPage() {
       headerRight={<Btn variant="primary" icon={Plus}>New exercise</Btn>}
     >
       <div style={{ padding: 24, maxWidth: 1400 }}>
+        <LibrarySearchClient />
+
         <div className="flex items-center gap-3" style={{ marginBottom: 16 }}>
+          <div className="mf-eyebrow" style={{ marginRight: 8 }}>LOCAL</div>
           <div className="mf-card flex gap-1" style={{ padding: 4 }}>
             {CATEGORIES.map((t, i) => {
               const active = i === 0;
@@ -94,10 +98,25 @@ export default async function TrainerExercisesPage() {
                 e.difficulty === 'ADVANCED' ? 'warn' : e.difficulty === 'INTERMEDIATE' ? 'ok' : 'default';
               return (
                 <div key={e.id} className="mf-card" style={{ overflow: 'hidden' }}>
-                  <AthletePh
-                    label={e.name.split(' ').slice(0, 2).join(' ').toUpperCase()}
-                    h={140}
-                  />
+                  {e.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={e.imageUrl}
+                      alt={e.name}
+                      style={{
+                        width: '100%',
+                        height: 140,
+                        objectFit: 'cover',
+                        display: 'block',
+                        background: 'var(--mf-surface-3)',
+                      }}
+                    />
+                  ) : (
+                    <AthletePh
+                      label={e.name.split(' ').slice(0, 2).join(' ').toUpperCase()}
+                      h={140}
+                    />
+                  )}
                   <div style={{ padding: 12 }}>
                     <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
                       <div
