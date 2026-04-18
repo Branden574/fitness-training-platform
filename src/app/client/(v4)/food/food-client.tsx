@@ -70,7 +70,7 @@ export default function FoodClient({ initial }: { initial: InitialData }) {
     .toUpperCase();
 
   return (
-    <main style={{ padding: 0, position: 'relative' }}>
+    <main className="md:hidden" style={{ padding: 0, position: 'relative' }}>
       {/* Header */}
       <div
         className="flex items-center justify-between"

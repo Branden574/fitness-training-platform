@@ -1,6 +1,7 @@
-import { requireClientSession, startOfToday } from '@/lib/client-data';
+import { requireClientSession, getClientContext, startOfToday } from '@/lib/client-data';
 import { prisma } from '@/lib/prisma';
 import FoodClient from './food-client';
+import FoodDesktop from './food-desktop';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +85,15 @@ async function getFoodData(userId: string) {
 
 export default async function ClientFoodPage() {
   const session = await requireClientSession();
-  const data = await getFoodData(session.user.id);
+  const [ctx, data] = await Promise.all([
+    getClientContext(session.user.id),
+    getFoodData(session.user.id),
+  ]);
 
-  return <FoodClient initial={data} />;
+  return (
+    <>
+      <FoodClient initial={data} />
+      <FoodDesktop ctx={ctx} initial={data} />
+    </>
+  );
 }
