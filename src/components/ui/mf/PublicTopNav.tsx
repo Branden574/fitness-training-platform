@@ -72,7 +72,7 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/auth/signin" className="hidden sm:inline-flex">
+          <Link href="/auth/signin">
             <Btn variant="ghost">Sign in</Btn>
           </Link>
           <Link href="/auth/signup">

@@ -5,6 +5,7 @@ export {
 } from './CelebrationProvider';
 export { CelebrationHost } from './CelebrationHost';
 export { TabTransition } from './TabTransition';
+export { ScreenTransition } from './ScreenTransition';
 export { BootGate } from './BootGate';
 export { BootLoader } from './BootLoader';
 export type {
