@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
   }
 
   const code = parsed.data.code.toUpperCase();
-  const trainer = await prisma.user.findUnique({
+  // findFirst instead of findUnique — trainerReferralCode isn't @unique in the
+  // schema yet (deferred until a dedicated migration can add the constraint).
+  const trainer = await prisma.user.findFirst({
     where: { trainerReferralCode: code },
     select: {
       role: true,

@@ -80,8 +80,13 @@ model User {
   coachNotesAsClient     CoachNote[]         @relation("CoachNotesClient")
   subscription           Subscription?
   trainerApplications    ContactSubmission[] @relation("TrainerApplications")
-  trainerSlug            String?             @unique
-  trainerReferralCode    String?             @unique
+  // NOTE: @unique on trainerSlug + trainerReferralCode is DEFERRED. Railway's
+  // `prisma db push` refuses to add unique constraints without --accept-data-loss,
+  // and we removed that flag after the earlier shop-drop. Collision avoidance is
+  // handled in code by trainerIdentity.ts (retry loops + findFirst checks). A
+  // dedicated migration will add the actual unique index later.
+  trainerSlug            String?
+  trainerReferralCode    String?
   trainerIsPublic        Boolean             @default(false)
   trainerAcceptingClients Boolean            @default(true)
 
@@ -91,6 +96,8 @@ model User {
   @@index([isActive])
   @@index([lastLogin])
   @@index([createdAt])
+  @@index([trainerSlug])
+  @@index([trainerReferralCode])
   @@map("users")
 }
 

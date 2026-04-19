@@ -23,9 +23,11 @@ export async function generateSlug(
   const base = slugify(name) || 'trainer';
   let candidate = base;
   let suffix = 1;
-  // Linear probe — 10 collisions is astronomically unlikely for a single trainer
+  // Linear probe — 10 collisions is astronomically unlikely for a single trainer.
+  // Uses findFirst because trainerSlug is not @unique in the schema yet (deferred
+  // — Railway db push can't add the constraint without --accept-data-loss).
   while (
-    await prisma.user.findUnique({
+    await prisma.user.findFirst({
       where: { trainerSlug: candidate },
       select: { id: true },
     })
@@ -40,7 +42,7 @@ export async function generateSlug(
 export async function generateReferralCode(prisma: PrismaClient): Promise<string> {
   for (let i = 0; i < 5; i++) {
     const code = makeCode();
-    const existing = await prisma.user.findUnique({
+    const existing = await prisma.user.findFirst({
       where: { trainerReferralCode: code },
       select: { id: true },
     });
