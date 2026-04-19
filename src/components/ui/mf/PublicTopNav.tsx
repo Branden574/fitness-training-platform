@@ -75,8 +75,8 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
           <Link href="/auth/signin">
             <Btn variant="ghost">Sign in</Btn>
           </Link>
-          <Link href="/auth/signup">
-            <Btn variant="primary" icon={ArrowRight}>Start training</Btn>
+          <Link href="/apply">
+            <Btn variant="primary" icon={ArrowRight}>Apply</Btn>
           </Link>
         </div>
       </div>

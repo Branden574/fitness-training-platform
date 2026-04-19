@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ChevronRight, User, Lock } from 'lucide-react';
 import { requireTrainerSession } from '@/lib/trainer-data';
 import { DesktopShell } from '@/components/ui/mf';
+import SharingPanelClient from './sharing-panel-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,8 @@ export default async function TrainerSettingsPage() {
           })}
         </div>
 
+        <SharingPanelClient />
+
         <div
           className="mf-card"
           style={{ padding: 24, marginTop: 24, borderStyle: 'dashed' }}
@@ -61,7 +64,7 @@ export default async function TrainerSettingsPage() {
           <div className="mf-eyebrow" style={{ marginBottom: 8 }}>COMING</div>
           <div className="mf-fg-dim" style={{ fontSize: 13, lineHeight: 1.5 }}>
             Coach-side preferences (default session times, availability, auto-reply templates,
-            notification routing) land in Phase 7. For now, essentials live in Account above.
+            notification routing) land in a future phase. For now, essentials live in Account above.
           </div>
         </div>
       </div>

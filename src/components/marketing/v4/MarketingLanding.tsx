@@ -217,14 +217,14 @@ export default function MarketingLanding() {
                 knows the difference between RPE 7 and RPE 9.
               </p>
               <div className="flex flex-wrap items-center gap-3" style={{ marginTop: 32 }}>
-                <Link href="/auth/signup">
+                <Link href="/apply">
                   <Btn variant="primary" icon={ArrowRight} style={{ height: 48, padding: '0 24px' }}>
-                    Start 14-day trial
+                    Apply
                   </Btn>
                 </Link>
                 <Link href="/auth/signin">
                   <Btn icon={Play} style={{ height: 48, padding: '0 24px' }}>
-                    See the app
+                    Sign in
                   </Btn>
                 </Link>
               </div>
@@ -531,9 +531,9 @@ export default function MarketingLanding() {
                   </div>
                 ))}
               </div>
-              <Link href="/auth/signup" style={{ display: 'inline-block', marginTop: 32 }}>
+              <Link href="/apply" style={{ display: 'inline-block', marginTop: 32 }}>
                 <Btn variant="primary" icon={ArrowRight}>
-                  Tour the {tab} view
+                  Apply as {tab === 'trainer' ? 'a trainer' : 'a client'}
                 </Btn>
               </Link>
             </div>
@@ -664,13 +664,13 @@ export default function MarketingLanding() {
             <span className="mf-accent">Track everything.</span>
           </h2>
           <div className="flex items-center justify-center gap-3" style={{ marginTop: 32 }}>
-            <Link href="/auth/signup">
+            <Link href="/apply">
               <Btn variant="primary" icon={ArrowRight} style={{ height: 48, padding: '0 32px' }}>
-                Start 14-day trial
+                Apply
               </Btn>
             </Link>
             <Link href="/auth/signin">
-              <Btn style={{ height: 48, padding: '0 32px' }}>See the app</Btn>
+              <Btn style={{ height: 48, padding: '0 32px' }}>Sign in</Btn>
             </Link>
           </div>
         </div>
