@@ -111,8 +111,16 @@ export async function PUT(request: Request) {
       const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profiles');
       await mkdir(uploadsDir, { recursive: true });
 
-      // Generate unique filename
-      const ext = file.name.split('.').pop() || 'jpg';
+      // Derive extension from the validated MIME type — never trust file.name,
+      // which is user-controlled (e.g. "shell.php.jpg" would otherwise extract .jpg
+      // while leaving a server-executable suffix in the stored filename).
+      const mimeToExt: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+      };
+      const ext = mimeToExt[file.type] ?? 'jpg';
       const filename = `${session.user.id}-${Date.now()}.${ext}`;
       const filepath = path.join(uploadsDir, filename);
 

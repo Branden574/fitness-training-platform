@@ -68,6 +68,7 @@ const ADMIN_NAV: DesktopShellNavItem[] = [
   { k: 'billing',     l: 'Billing',       i: CreditCard,      href: '/admin/billing' },
   { k: 'audit',       l: 'Audit Log',     i: Shield,          href: '/admin/audit' },
   { k: 'shop',        l: 'Shop',          i: ShoppingBag,     href: '/admin/shop' },
+  { k: 'settings',    l: 'Settings',      i: Settings,        href: '/admin/settings' },
 ];
 
 function BrandMark({ role }: { role: DesktopShellRole }) {
