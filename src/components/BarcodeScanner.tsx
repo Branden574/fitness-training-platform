@@ -126,7 +126,6 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
 
         Quagga.init({
           inputStream: {
-            name: 'Live',
             type: 'LiveStream',
             target: scannerRef.current,
             constraints: {

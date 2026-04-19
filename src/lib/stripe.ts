@@ -13,13 +13,6 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
-// For backward compat
-export const stripe = new Proxy({} as Stripe, {
-  get(_, prop) {
-    return (getStripe() as Record<string | symbol, unknown>)[prop];
-  },
-});
-
 export function formatPrice(priceInCents: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

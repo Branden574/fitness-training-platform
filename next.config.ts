@@ -8,14 +8,10 @@ if (process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.includes('[your-railway
 
 const nextConfig: NextConfig = {
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
+    // ESLint cleanup is deferred — see TODO in docs. TypeScript strictness is
+    // back on (ignoreBuildErrors removed), which is the security-relevant gate.
+    // ESLint here is style/idiom-only.
     ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true,
   },
   env: {
     // Ensure NEXTAUTH_URL has a valid fallback during build
