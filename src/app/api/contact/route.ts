@@ -6,12 +6,20 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
+// Primary public applicant schema. All NEW fields (trainerId, goal, goalOther)
+// are optional so existing callers sending only name/email/phone/message keep working.
 const contactSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(120),
   email: z.string().email('Invalid email format'),
   phone: z.string().optional(),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
-  // Optional enhanced fields
+  message: z.string().max(500).optional(),
+
+  // NEW — multi-trainer apply flow
+  trainerId: z.string().cuid().optional(),
+  goal: z.enum(['get-stronger', 'lose-weight-recomp', 'other']).optional(),
+  goalOther: z.string().max(200).optional(),
+
+  // Enhanced intake (legacy — still accepted for older callers)
   age: z.string().optional(),
   fitnessLevel: z.string().optional(),
   fitnessGoals: z.string().optional(),
@@ -19,6 +27,29 @@ const contactSchema = z.object({
   injuries: z.string().optional(),
   availability: z.string().optional(),
 });
+
+function composeMessage(
+  message: string | undefined,
+  goal: 'get-stronger' | 'lose-weight-recomp' | 'other' | undefined,
+  goalOther: string | undefined,
+): string {
+  const goalLabel =
+    goal === 'get-stronger'
+      ? 'Get stronger'
+      : goal === 'lose-weight-recomp'
+        ? 'Lose weight / recomp'
+        : goal === 'other'
+          ? goalOther?.trim() || 'Other'
+          : null;
+
+  const header = goalLabel ? `[Goal: ${goalLabel}]` : null;
+  const body = message?.trim() || null;
+
+  if (header && body) return `${header}\n\n${body}`;
+  if (header) return header;
+  if (body) return body;
+  return '(no message)';
+}
 
 export async function POST(request: Request) {
   try {
@@ -28,18 +59,41 @@ export async function POST(request: Request) {
     if (!rl.allowed) return rateLimitResponse(rl.resetIn);
 
     const body = await request.json();
-
-    // Validate the request body
     const validatedData = contactSchema.parse(body);
-    
-    // Save to database
+    const normalizedEmail = validatedData.email.toLowerCase().trim();
+
+    // Resolve optional trainerId → validate public trainer → flag waitlist if
+    // trainer has paused intake. Invalid trainerIds are silently coerced to null
+    // so bad links never error the applicant.
+    let assignedTrainerId: string | null = null;
+    let waitlist = false;
+    if (validatedData.trainerId) {
+      const trainer = await prisma.user.findUnique({
+        where: { id: validatedData.trainerId },
+        select: {
+          role: true,
+          trainerIsPublic: true,
+          trainerAcceptingClients: true,
+        },
+      });
+      if (trainer && trainer.role === 'TRAINER' && trainer.trainerIsPublic) {
+        assignedTrainerId = validatedData.trainerId;
+        if (!trainer.trainerAcceptingClients) waitlist = true;
+      }
+    }
+
+    const composedMessage = composeMessage(
+      validatedData.message,
+      validatedData.goal,
+      validatedData.goalOther,
+    );
+
     const contactSubmission = await prisma.contactSubmission.create({
       data: {
         name: validatedData.name,
-        email: validatedData.email,
+        email: normalizedEmail,
         phone: validatedData.phone || null,
-        message: validatedData.message,
-        // Enhanced fitness assessment fields
+        message: composedMessage,
         age: validatedData.age || null,
         fitnessLevel: validatedData.fitnessLevel || null,
         fitnessGoals: validatedData.fitnessGoals || null,
@@ -47,36 +101,52 @@ export async function POST(request: Request) {
         injuries: validatedData.injuries || null,
         availability: validatedData.availability || null,
         status: 'NEW',
+        trainerId: assignedTrainerId,
+        waitlist,
       },
     });
 
-    // Here you could also send an email notification to the trainer
-    // For now, we'll just return success
-    
-    return NextResponse.json(
-      { 
+    const response = NextResponse.json(
+      {
         message: 'Contact form submitted successfully!',
-        id: contactSubmission.id 
+        id: contactSubmission.id,
       },
-      { status: 201 }
+      { status: 201 },
     );
-    
+
+    // /apply/success reads this short-lived httpOnly cookie to render the
+    // "you applied with X" confirmation without exposing any PII in the URL.
+    response.cookies.set(
+      'mf_apply_success',
+      JSON.stringify({
+        trainerId: assignedTrainerId,
+        email: normalizedEmail,
+      }),
+      {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60,
+      },
+    );
+
+    return response;
   } catch (error) {
     console.error('Contact form error:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
+        {
           message: 'Validation error',
-          errors: error.issues 
+          errors: error.issues,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
+
     return NextResponse.json(
       { message: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
