@@ -26,6 +26,10 @@ export async function generateSlug(
   // Linear probe — 10 collisions is astronomically unlikely for a single trainer.
   // Uses findFirst because trainerSlug is not @unique in the schema yet (deferred
   // — Railway db push can't add the constraint without --accept-data-loss).
+  // TOCTOU note: two concurrent trainer promotions with identical names could
+  // both reserve the same slug. Probability at current scale is near-zero but
+  // the correct long-term fix is a partial unique index added via dedicated
+  // migration once Railway can run `migrate deploy`.
   while (
     await prisma.user.findFirst({
       where: { trainerSlug: candidate },

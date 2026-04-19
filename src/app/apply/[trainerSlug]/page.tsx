@@ -16,9 +16,12 @@ export default async function ApplyDirectPage({
 }) {
   const { trainerSlug } = await params;
 
-  // trainerSlug isn't @unique in the schema yet (deferred) — findFirst is required.
+  // trainerSlug isn't @unique in the schema yet (deferred) — findFirst with a
+  // deterministic orderBy so a TOCTOU-introduced duplicate would consistently
+  // resolve to the same trainer rather than flipping between them per request.
   const trainer = await prisma.user.findFirst({
     where: { trainerSlug },
+    orderBy: { createdAt: 'asc' },
     select: {
       id: true,
       name: true,

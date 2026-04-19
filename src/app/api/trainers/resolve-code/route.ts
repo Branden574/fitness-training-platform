@@ -31,10 +31,13 @@ export async function POST(request: NextRequest) {
   }
 
   const code = parsed.data.code.toUpperCase();
-  // findFirst instead of findUnique — trainerReferralCode isn't @unique in the
-  // schema yet (deferred until a dedicated migration can add the constraint).
+  // findFirst (not findUnique) because trainerReferralCode isn't @unique in the
+  // schema yet — deferred until a partial unique index can be applied. Deterministic
+  // ordering is important: if a TOCTOU race ever allowed a duplicate, we want
+  // the same trainer served every time rather than an arbitrary winner.
   const trainer = await prisma.user.findFirst({
     where: { trainerReferralCode: code },
+    orderBy: { createdAt: 'asc' },
     select: {
       role: true,
       trainerSlug: true,

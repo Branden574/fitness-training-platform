@@ -31,17 +31,24 @@ export async function GET() {
   });
 
   if (!me?.assignedTrainer) {
-    return NextResponse.json({ trainer: null });
+    return NextResponse.json(
+      { trainer: null },
+      { headers: { 'Cache-Control': 'private, no-store' } },
+    );
   }
 
   const t = me.assignedTrainer;
-  return NextResponse.json({
-    trainer: {
-      id: t.id,
-      name: t.name,
-      initials: initials(t.name),
-      photoUrl: t.image,
-      slug: t.trainerSlug,
+  // Only display-safe fields in the response — no internal `id` exposed since
+  // clients don't need it for rendering; dropping to reduce ambient surface area.
+  return NextResponse.json(
+    {
+      trainer: {
+        name: t.name,
+        initials: initials(t.name),
+        photoUrl: t.image,
+        slug: t.trainerSlug,
+      },
     },
-  });
+    { headers: { 'Cache-Control': 'private, no-store' } },
+  );
 }

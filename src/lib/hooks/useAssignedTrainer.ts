@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 export interface AssignedTrainer {
-  id: string;
   name: string;
   initials: string;
   photoUrl: string | null;

@@ -15,10 +15,13 @@ export async function POST() {
 
   try {
     const identity = await ensureTrainerIdentity(session.user.id, prisma);
-    return NextResponse.json({
-      slug: identity.slug,
-      referralCode: identity.referralCode,
-    });
+    return NextResponse.json(
+      {
+        slug: identity.slug,
+        referralCode: identity.referralCode,
+      },
+      { headers: { 'Cache-Control': 'private, no-store' } },
+    );
   } catch (error) {
     console.error('ensureTrainerIdentity failed:', error);
     return NextResponse.json(

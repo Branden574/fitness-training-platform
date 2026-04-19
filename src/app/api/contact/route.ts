@@ -116,6 +116,8 @@ export async function POST(request: Request) {
 
     // /apply/success reads this short-lived httpOnly cookie to render the
     // "you applied with X" confirmation without exposing any PII in the URL.
+    // Payload is treated as display-only by the success page (the page re-
+    // queries the trainer by id from the DB for authoritative rendering).
     response.cookies.set(
       'mf_apply_success',
       JSON.stringify({
@@ -124,6 +126,7 @@ export async function POST(request: Request) {
       }),
       {
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge: 60,

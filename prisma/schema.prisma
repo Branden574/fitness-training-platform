@@ -98,6 +98,10 @@ model User {
   @@index([createdAt])
   @@index([trainerSlug])
   @@index([trainerReferralCode])
+  // Supports /api/trainers/search — narrows to the TRAINER+public subset
+  // before the ILIKE name filter. name ILIKE '%q%' can't use a B-tree index
+  // regardless (leading wildcard), so this composite is the real optimization.
+  @@index([role, trainerIsPublic])
   @@map("users")
 }
 
