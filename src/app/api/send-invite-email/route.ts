@@ -2,35 +2,62 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if user is authenticated and is a trainer
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'TRAINER') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (
+      !session?.user ||
+      (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN')
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { clientEmail, clientName, inviteCode } = await request.json();
+    const { clientName, inviteCode } = await request.json();
 
-    if (!clientEmail || !clientName || !inviteCode) {
+    if (!clientName || !inviteCode) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // HTML-escape user input to prevent injection in email template
+    // Load the invitation server-side so we can both verify ownership AND use
+    // the invitation's stored email as the "to" address — never trust an
+    // attacker-supplied clientEmail.
+    const invitation = await prisma.invitation.findUnique({
+      where: { code: inviteCode },
+      select: { email: true, invitedBy: true, status: true },
+    });
+
+    if (!invitation) {
+      return NextResponse.json({ error: 'Invalid invitation' }, { status: 404 });
+    }
+
+    // Ownership check: trainers may only send mail for invitations they issued.
+    // Admins may send any invitation.
+    if (
+      session.user.role === 'TRAINER' &&
+      invitation.invitedBy !== session.user.id
+    ) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // HTML-escape caller-supplied displayable strings
     const escapeHtml = (str: string) =>
-      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 
     const safeClientName = escapeHtml(clientName);
     const safeInviteCode = escapeHtml(inviteCode);
+    const clientEmail = invitation.email;
 
     // Get the base URL for the invite link
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';

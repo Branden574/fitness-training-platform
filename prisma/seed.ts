@@ -119,17 +119,20 @@ async function main() {
   ];
   const exercises: Array<{ id: string; name: string }> = [];
   for (const e of exerciseDefs) {
-    const existing = await prisma.exercise.findFirst({ where: { name: e.name } });
-    const ex = existing
-      ? existing
-      : await prisma.exercise.create({
-          data: {
-            name: e.name,
-            muscleGroups: e.muscles as Prisma.JsonArray,
-            equipment: e.equipment as Prisma.JsonArray,
-            difficulty: e.difficulty,
-          },
-        });
+    const ex = await prisma.exercise.upsert({
+      where: { name: e.name },
+      update: {
+        muscleGroups: e.muscles as Prisma.JsonArray,
+        equipment: e.equipment as Prisma.JsonArray,
+        difficulty: e.difficulty,
+      },
+      create: {
+        name: e.name,
+        muscleGroups: e.muscles as Prisma.JsonArray,
+        equipment: e.equipment as Prisma.JsonArray,
+        difficulty: e.difficulty,
+      },
+    });
     exercises.push({ id: ex.id, name: ex.name });
   }
   const exByName = (n: string) => exercises.find((x) => x.name === n)!.id;

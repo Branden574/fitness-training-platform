@@ -50,12 +50,39 @@ export function middleware(request: NextRequest) {
   response.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()')
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
   const isDev = process.env.NODE_ENV === 'development';
+  // NOTE: script-src still needs 'unsafe-inline' because Next.js injects data scripts
+  // inline. Proper fix is a nonce-based CSP (generate per-request nonce in middleware,
+  // attach to <Script nonce={...}>). Tracked as M-2 follow-up. Other directives are
+  // tightened below to reduce blast radius even while script-src stays permissive.
   const scriptSrc = isDev
     ? "'self' 'unsafe-inline' 'unsafe-eval'"
     : "'self' 'unsafe-inline'";
+  // Narrow connect-src to specific hosts we actually talk to, instead of all of https:
+  const connectSrc = [
+    "'self'",
+    'https://api.stripe.com',
+    'https://checkout.stripe.com',
+    'https://api.resend.com',
+    'https://api.nal.usda.gov',
+    'https://exercisedb.p.rapidapi.com',
+    'https://www.googleapis.com',
+  ].join(' ');
   response.headers.set(
     'Content-Security-Policy',
-    `default-src 'self'; script-src ${scriptSrc} https://www.youtube.com https://www.youtube-nocookie.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https:;`
+    [
+      `default-src 'self'`,
+      `script-src ${scriptSrc} https://www.youtube.com https://www.youtube-nocookie.com https://js.stripe.com`,
+      `style-src 'self' 'unsafe-inline'`,
+      `img-src 'self' data: https:`,
+      `font-src 'self' data:`,
+      `connect-src ${connectSrc}`,
+      `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://js.stripe.com https://checkout.stripe.com`,
+      `media-src 'self' https:`,
+      `object-src 'none'`,
+      `base-uri 'self'`,
+      `form-action 'self'`,
+      `frame-ancestors 'none'`,
+    ].join('; '),
   )
 
   return response

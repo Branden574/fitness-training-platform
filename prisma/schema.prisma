@@ -185,7 +185,7 @@ model ClientProfile {
 
 model Exercise {
   id                  String               @id @default(cuid())
-  name                String
+  name                String               @unique
   description         String?
   instructions        Json?
   muscleGroups        Json?
@@ -199,7 +199,6 @@ model Exercise {
   workoutProgress     WorkoutProgress[]
   programDayExercises ProgramDayExercise[]
 
-  @@index([name])
   @@index([difficulty])
   @@map("exercises")
 }
@@ -238,7 +237,8 @@ model WorkoutExercise {
   exercise   Exercise @relation(fields: [exerciseId], references: [id])
   workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
 
-  @@unique([workoutId, exerciseId])
+  @@index([workoutId])
+  @@index([exerciseId])
   @@map("workout_exercises")
 }
 
@@ -290,8 +290,8 @@ model WorkoutProgress {
   date             DateTime       @default(now())
   createdAt        DateTime       @default(now())
   exercise         Exercise       @relation(fields: [exerciseId], references: [id])
-  user             User           @relation(fields: [userId], references: [id])
-  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id])
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
   @@index([exerciseId])
@@ -364,7 +364,7 @@ model FoodEntry {
   updatedAt DateTime @updatedAt
   foodId    String?
   food      Food?    @relation(fields: [foodId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
   @@index([date])
@@ -469,7 +469,7 @@ model ProgressEntry {
   energy       Int?
   sleep        Float?
   createdAt    DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@index([userId, date])
@@ -485,12 +485,13 @@ model Message {
   fileUrl    String?
   read       Boolean     @default(false)
   createdAt  DateTime    @default(now())
-  receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id])
-  sender     User        @relation("MessageSender", fields: [senderId], references: [id])
+  receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User        @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([senderId])
   @@index([receiverId])
   @@index([createdAt])
+  @@index([receiverId, read])
   @@map("messages")
 }
 
@@ -504,7 +505,7 @@ model Notification {
   actionUrl     String?
   appointmentId String?
   createdAt     DateTime         @default(now())
-  user          User             @relation(fields: [userId], references: [id])
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([read])

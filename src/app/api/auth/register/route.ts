@@ -27,15 +27,20 @@ export async function POST(request: Request) {
     
     // Normalize email to lowercase for consistency
     const normalizedEmail = validatedData.email.toLowerCase().trim();
-    
-    // Validate invitation code
-    const invitation = await prisma.invitation.findUnique({
-      where: { code: validatedData.invitationCode }
+
+    // Lookup invitation by (code, email) together so a valid code alone isn't
+    // sufficient — an attacker must guess both. Single generic failure message
+    // prevents enumerating which half was wrong.
+    const invitation = await prisma.invitation.findFirst({
+      where: {
+        code: validatedData.invitationCode,
+        email: normalizedEmail,
+      },
     });
 
     if (!invitation) {
       return NextResponse.json(
-        { message: 'Invalid invitation code' },
+        { message: 'Invalid invitation code or email' },
         { status: 400 }
       );
     }
@@ -50,13 +55,6 @@ export async function POST(request: Request) {
     if (new Date() > invitation.expiresAt) {
       return NextResponse.json(
         { message: 'Invitation has expired' },
-        { status: 400 }
-      );
-    }
-
-    if (invitation.email.toLowerCase().trim() !== normalizedEmail) {
-      return NextResponse.json(
-        { message: 'Email does not match the invitation' },
         { status: 400 }
       );
     }
