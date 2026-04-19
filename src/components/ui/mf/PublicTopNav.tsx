@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import Btn from './Btn';
 
 export interface PublicTopNavProps {
-  activeSection?: 'platform' | 'pricing' | 'trainers' | 'clients' | 'shop' | null;
+  activeSection?: 'platform' | 'pricing' | 'trainers' | 'clients' | null;
 }
 
 function BrandMark({ size = 28 }: { size?: number }) {
@@ -69,7 +69,6 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
             <Link href="/?as=trainer#role-split" className={linkClass('trainers')}>For Trainers</Link>
             <Link href="/?as=client#role-split" className={linkClass('clients')}>For Clients</Link>
             <Link href="/#pricing" className={linkClass('pricing')}>Pricing</Link>
-            <Link href="/shop" className={linkClass('shop')}>Shop</Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">

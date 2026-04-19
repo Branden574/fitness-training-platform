@@ -15,7 +15,6 @@ import {
   Activity,
   CreditCard,
   Shield,
-  ShoppingBag,
   Search,
   Bell,
   LogOut,
@@ -67,7 +66,6 @@ const ADMIN_NAV: DesktopShellNavItem[] = [
   { k: 'contacts',    l: 'Contacts',      i: User,            href: '/admin/contacts' },
   { k: 'billing',     l: 'Billing',       i: CreditCard,      href: '/admin/billing' },
   { k: 'audit',       l: 'Audit Log',     i: Shield,          href: '/admin/audit' },
-  { k: 'shop',        l: 'Shop',          i: ShoppingBag,     href: '/admin/shop' },
   { k: 'settings',    l: 'Settings',      i: Settings,        href: '/admin/settings' },
 ];
 

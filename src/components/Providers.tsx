@@ -3,7 +3,6 @@
 import { SessionProvider } from 'next-auth/react';
 import { ReactNode } from 'react';
 import ThemeProvider from './ThemeProvider';
-import { CartProvider } from '@/lib/CartContext';
 import { ToastProvider } from './Toast';
 import {
   BootGate,
@@ -23,15 +22,13 @@ export default function Providers({ children }: ProvidersProps) {
       refetchOnWindowFocus={true}
     >
       <ThemeProvider>
-        <CartProvider>
-          <ToastProvider>
-            <CelebrationProvider>
-              <BootGate />
-              {children}
-              <CelebrationHost />
-            </CelebrationProvider>
-          </ToastProvider>
-        </CartProvider>
+        <ToastProvider>
+          <CelebrationProvider>
+            <BootGate />
+            {children}
+            <CelebrationHost />
+          </CelebrationProvider>
+        </ToastProvider>
       </ThemeProvider>
     </SessionProvider>
   );

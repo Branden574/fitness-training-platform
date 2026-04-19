@@ -73,7 +73,6 @@ model User {
   workoutProgress        WorkoutProgress[]
   workoutSessions        WorkoutSession[]
   createdWorkouts        Workout[]
-  orders                 Order[]
   createdPrograms        Program[]           @relation("ProgramCreator")
   clientAssignments      ProgramAssignment[] @relation("ClientAssignments")
   assignedPrograms       ProgramAssignment[] @relation("TrainerAssignments")
@@ -669,125 +668,9 @@ enum InvitationStatus {
 
 // ─── ECOMMERCE MODELS ───
 
-model ProductCategory {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  description String?
-  sortOrder   Int       @default(0)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  products    Product[]
-}
-
-model Product {
-  id                String           @id @default(cuid())
-  name              String
-  slug              String           @unique
-  shortDescription  String?
-  description       String?
-  price             Int // Price in cents (e.g. 2999 = $29.99)
-  compareAtPrice    Int? // Original price for sale display (cents)
-  sku               String?
-  stock             Int              @default(0)
-  lowStockThreshold Int              @default(5)
-  trackInventory    Boolean          @default(true)
-  isActive          Boolean          @default(true)
-  isFeatured        Boolean          @default(false)
-  featuredOrder     Int              @default(0)
-  categoryId        String?
-  category          ProductCategory? @relation(fields: [categoryId], references: [id])
-  images            ProductImage[]
-  orderItems        OrderItem[]
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-
-  @@index([slug])
-  @@index([isActive, isFeatured])
-  @@index([categoryId])
-}
-
-model ProductImage {
-  id        String   @id @default(cuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  url       String
-  alt       String?
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-
-  @@index([productId])
-}
-
-model Order {
-  id                    String            @id @default(cuid())
-  orderNumber           String            @unique
-  customerEmail         String
-  customerName          String?
-  userId                String? // If logged-in user
-  user                  User?             @relation(fields: [userId], references: [id])
-  status                OrderStatus       @default(PENDING)
-  paymentStatus         PaymentStatus     @default(UNPAID)
-  fulfillmentStatus     FulfillmentStatus @default(UNFULFILLED)
-  subtotal              Int // Cents
-  tax                   Int               @default(0)
-  total                 Int // Cents
-  stripeSessionId       String?           @unique
-  stripePaymentIntentId String?           @unique
-  notes                 String?
-  pickupDate            DateTime?
-  pickupTime            String? // e.g. "10:00 AM - 11:00 AM"
-  pickupName            String? // Name for pickup
-  pickupPhone           String? // Phone for pickup contact
-  items                 OrderItem[]
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-
-  @@index([customerEmail])
-  @@index([userId])
-  @@index([stripeSessionId])
-  @@index([orderNumber])
-}
-
-model OrderItem {
-  id          String  @id @default(cuid())
-  orderId     String
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product @relation(fields: [productId], references: [id])
-  productName String // Snapshot at time of purchase
-  price       Int // Price in cents at time of purchase
-  quantity    Int
-  total       Int // price * quantity
-
-  @@index([orderId])
-  @@index([productId])
-}
-
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PROCESSING
-  READY_FOR_PICKUP
-  PICKED_UP
-  CANCELLED
-  REFUNDED
-}
-
-enum PaymentStatus {
-  UNPAID
-  PAID
-  PARTIALLY_REFUNDED
-  REFUNDED
-  FAILED
-}
-
-enum FulfillmentStatus {
-  UNFULFILLED
-  READY_FOR_PICKUP
-  PICKED_UP
-}
+// Shop models (Product, Order, etc.) removed — feature retired.
+// Subscription (below) is kept because it's a separate feature for
+// trainer/platform billing and uses its own webhook + admin billing page.
 
 // ══════════════════════════════════════════════════════════════════
 // V4 Phase 8 additions — Program builder, coach notes, feature flags,
