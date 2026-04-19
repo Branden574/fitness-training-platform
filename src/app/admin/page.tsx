@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { RotateCw, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { requireAdminSession, initialsFor, relativeShort } from '@/lib/admin-data';
+import RefreshButton from '@/components/admin/RefreshButton';
 import { prisma } from '@/lib/prisma';
 import {
   Avatar,
@@ -158,7 +159,7 @@ export default async function AdminOverviewPage() {
       headerRight={
         <>
           <Btn variant="ghost" icon={Filter}>30 DAYS</Btn>
-          <Btn icon={RotateCw}>Refresh</Btn>
+          <RefreshButton />
         </>
       }
     >

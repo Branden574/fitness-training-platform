@@ -39,10 +39,18 @@ export async function POST(request: Request) {
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'progress', session.user.id);
     await mkdir(uploadsDir, { recursive: true });
 
+    // Derive extension from the validated MIME type — never from user-controlled
+    // file.name (would let shell.php be stored with the attacker's suffix).
+    const mimeToExt: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+
     // Save files and collect URLs
     const photoUrls: string[] = [];
     for (const file of files) {
-      const ext = file.name.split('.').pop() || 'jpg';
+      const ext = mimeToExt[file.type] ?? 'jpg';
       const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filepath = path.join(uploadsDir, filename);
       const bytes = await file.arrayBuffer();
