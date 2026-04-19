@@ -11,7 +11,6 @@ const registerSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)'),
   invitationCode: z.string().min(1, 'Invitation code is required'),
-  role: z.enum(['CLIENT', 'TRAINER']).optional().default('CLIENT'),
 });
 
 export async function POST(request: Request) {
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
         name: validatedData.name,
         email: normalizedEmail,
         password: hashedPassword,
-        role: validatedData.role,
+        role: 'CLIENT',
         trainerId: invitation.invitedBy, // Link client to the trainer who invited them
       },
       select: {

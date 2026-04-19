@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -98,7 +99,7 @@ export async function GET(request: Request) {
     const entriesWithPhotos = await prisma.progressEntry.findMany({
       where: {
         userId,
-        photos: { not: null },
+        NOT: { photos: { equals: Prisma.DbNull } },
       },
       select: {
         id: true,

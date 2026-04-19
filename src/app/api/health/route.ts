@@ -11,16 +11,14 @@ export async function GET() {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       database: 'connected',
-      environment: process.env.NODE_ENV || 'development'
     }, { status: 200 });
   } catch (error) {
     console.error('Health check failed:', error);
-    
+
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
       database: 'disconnected',
-      error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 503 });
   }
 }

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: user.id,
         fitnessLevel: fitnessLevel || 'BEGINNER',
-        fitnessGoals: goals ? JSON.stringify([goals]) : null,
+        fitnessGoals: goals ? [goals] : undefined,
       }
     });
 

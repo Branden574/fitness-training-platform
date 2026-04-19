@@ -11,6 +11,7 @@ import {
   UserMinus,
 } from 'lucide-react';
 import { ContactSubmission } from '@/types';
+import { useToast } from '@/components/Toast';
 
 interface Client {
   id: string;

@@ -47,7 +47,15 @@ export async function GET() {
         prisma.user.findMany({
           orderBy: { createdAt: 'desc' },
           take: 50,
-          include: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true,
+            lastLogin: true,
+            loginCount: true,
+            createdAt: true,
             _count: {
               select: {
                 foodEntries: true,
