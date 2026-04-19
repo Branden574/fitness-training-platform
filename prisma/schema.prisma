@@ -79,6 +79,11 @@ model User {
   coachNotesAsTrainer    CoachNote[]         @relation("CoachNotesTrainer")
   coachNotesAsClient     CoachNote[]         @relation("CoachNotesClient")
   subscription           Subscription?
+  trainerApplications    ContactSubmission[] @relation("TrainerApplications")
+  trainerSlug            String?             @unique
+  trainerReferralCode    String?             @unique
+  trainerIsPublic        Boolean             @default(false)
+  trainerAcceptingClients Boolean            @default(true)
 
   @@index([email])
   @@index([role])
@@ -528,11 +533,15 @@ model ContactSubmission {
   injuries        String?
   availability    String?
   status          ContactStatus @default(NEW)
+  trainerId       String?
+  trainer         User?         @relation("TrainerApplications", fields: [trainerId], references: [id], onDelete: SetNull)
+  waitlist        Boolean       @default(false)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   @@index([status])
   @@index([createdAt])
+  @@index([trainerId, status])
   @@map("contact_submissions")
 }
 
