@@ -13,15 +13,21 @@ import {
   type CelebrationOverrides,
   type CelebrationPreset,
 } from './celebrations';
+import type { CelebrationCoach } from './Celebration';
 
 interface ActiveCelebration {
   preset: CelebrationPreset;
+  coach?: CelebrationCoach;
   id: number;
+}
+
+export interface CelebrateOptions extends CelebrationOverrides {
+  coach?: CelebrationCoach;
 }
 
 interface CelebrationContextValue {
   active: ActiveCelebration | null;
-  celebrate: (kind: CelebrationKind, overrides?: CelebrationOverrides) => void;
+  celebrate: (kind: CelebrationKind, options?: CelebrateOptions) => void;
   dismiss: () => void;
 }
 
@@ -31,9 +37,14 @@ export function CelebrationProvider({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<ActiveCelebration | null>(null);
 
   const celebrate = useCallback(
-    (kind: CelebrationKind, overrides?: CelebrationOverrides) => {
+    (kind: CelebrationKind, options?: CelebrateOptions) => {
       const base = CELEBRATIONS[kind];
-      setActive({ preset: { ...base, ...overrides }, id: Date.now() });
+      const { coach, ...presetOverrides } = options ?? {};
+      setActive({
+        preset: { ...base, ...presetOverrides },
+        coach,
+        id: Date.now(),
+      });
     },
     [],
   );

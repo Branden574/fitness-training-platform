@@ -5,12 +5,20 @@ import type { CelebrationPreset } from './celebrations';
 import { CelebrationIcon } from './CelebrationIcon';
 import { Confetti } from './Confetti';
 
+export interface CelebrationCoach {
+  initials: string;
+  firstName: string;
+}
+
 interface Props {
   preset: CelebrationPreset;
   onClose?: () => void;
+  coach?: CelebrationCoach;
 }
 
-export function Celebration({ preset, onClose }: Props) {
+const DEFAULT_COACH: CelebrationCoach = { initials: 'BM', firstName: 'BRENT' };
+
+export function Celebration({ preset, onClose, coach = DEFAULT_COACH }: Props) {
   const [show, setShow] = useState(false);
   const rafRef = useRef<number | null>(null);
 
@@ -265,7 +273,7 @@ export function Celebration({ preset, onClose }: Props) {
               color: '#F4F4F5',
             }}
           >
-            BM
+            {coach.initials}
           </div>
           <div>
             <div
@@ -276,7 +284,7 @@ export function Celebration({ preset, onClose }: Props) {
                 letterSpacing: '.15em',
               }}
             >
-              COACH BRENT
+              COACH {coach.firstName.toUpperCase()}
             </div>
             <div
               style={{

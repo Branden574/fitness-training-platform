@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useAssignedTrainer } from '@/lib/hooks/useAssignedTrainer';
 
 export type ClientDesktopKey =
   | 'today'
@@ -76,6 +77,11 @@ export default function ClientDesktopShell({
 }: ClientDesktopShellProps) {
   const pathname = usePathname();
   const resolved = active ?? deriveActive(pathname);
+  const { trainer } = useAssignedTrainer();
+  const brandDisplayName = trainer?.name
+    ? trainer.name.toUpperCase()
+    : 'MARTINEZ/FIT';
+  const brandSubLabel = trainer ? 'YOUR COACH' : 'ATHLETE · WEB';
 
   return (
     <div data-mf className="flex mf-bg mf-fg" style={{ minHeight: '100vh' }}>
@@ -98,10 +104,10 @@ export default function ClientDesktopShell({
           </div>
           <div>
             <div className="mf-font-display" style={{ fontSize: 14, letterSpacing: '-0.01em', lineHeight: 1 }}>
-              MARTINEZ/FIT
+              {brandDisplayName}
             </div>
             <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 9, marginTop: 2 }}>
-              ATHLETE · WEB
+              {brandSubLabel}
             </div>
           </div>
         </div>
