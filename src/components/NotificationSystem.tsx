@@ -121,40 +121,65 @@ export default function NotificationSystem({ userId, userRole }: NotificationSys
     const popup = document.createElement('div');
     popup.className = 'fixed top-4 right-4 z-[60] bg-red-500 text-white p-4 rounded-lg shadow-lg max-w-sm animate-slide-in';
     
-    // Create close button with proper event handler
+    // Build content via createElement/textContent instead of innerHTML, so any
+    // user-controlled strings (title, message, clientName from the DB) are
+    // escaped by the browser and cannot inject script or markup.
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const makeXIcon = (classes: string) => {
+      const svg = document.createElementNS(SVG_NS, 'svg');
+      svg.setAttribute('class', classes);
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('stroke', 'currentColor');
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+      svg.appendChild(path);
+      return svg;
+    };
+
     const closeButton = document.createElement('button');
     closeButton.className = 'flex-shrink-0 text-white hover:text-gray-200 transition-colors';
-    closeButton.innerHTML = `
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    `;
+    closeButton.setAttribute('aria-label', 'Dismiss notification');
+    closeButton.appendChild(makeXIcon('h-4 w-4'));
     closeButton.onclick = () => {
       if (popup.parentNode) {
         popup.remove();
       }
     };
-    
-    // Create the main content
+
     const content = document.createElement('div');
     content.className = 'flex items-start space-x-3';
-    content.innerHTML = `
-      <div class="flex-shrink-0">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </div>
-      <div class="flex-1">
-        <h4 class="font-semibold">${notification.title}</h4>
-        <p class="text-sm mt-1">${notification.message}</p>
-        ${notification.clientName && notification.appointmentTime ? 
-          `<p class="text-xs mt-2 opacity-75">${notification.clientName} • ${new Date(notification.appointmentTime).toLocaleString()}</p>` : 
-          ''
-        }
-      </div>
-    `;
-    
-    // Append close button to content
+
+    const iconWrap = document.createElement('div');
+    iconWrap.className = 'flex-shrink-0';
+    iconWrap.appendChild(makeXIcon('h-6 w-6'));
+
+    const textWrap = document.createElement('div');
+    textWrap.className = 'flex-1';
+
+    const titleEl = document.createElement('h4');
+    titleEl.className = 'font-semibold';
+    titleEl.textContent = notification.title;
+
+    const messageEl = document.createElement('p');
+    messageEl.className = 'text-sm mt-1';
+    messageEl.textContent = notification.message;
+
+    textWrap.appendChild(titleEl);
+    textWrap.appendChild(messageEl);
+
+    if (notification.clientName && notification.appointmentTime) {
+      const metaEl = document.createElement('p');
+      metaEl.className = 'text-xs mt-2 opacity-75';
+      metaEl.textContent = `${notification.clientName} • ${new Date(notification.appointmentTime).toLocaleString()}`;
+      textWrap.appendChild(metaEl);
+    }
+
+    content.appendChild(iconWrap);
+    content.appendChild(textWrap);
     content.appendChild(closeButton);
     popup.appendChild(content);
     

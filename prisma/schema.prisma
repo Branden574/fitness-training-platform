@@ -185,7 +185,7 @@ model ClientProfile {
 
 model Exercise {
   id                  String               @id @default(cuid())
-  name                String               @unique
+  name                String
   description         String?
   instructions        Json?
   muscleGroups        Json?
@@ -199,6 +199,10 @@ model Exercise {
   workoutProgress     WorkoutProgress[]
   programDayExercises ProgramDayExercise[]
 
+  // NOTE: @unique on `name` was removed — production has duplicate exercises
+  // and `prisma db push` refuses to add the constraint without data loss.
+  // Dedupe will happen via a dedicated admin task, then this can be restored.
+  @@index([name])
   @@index([difficulty])
   @@map("exercises")
 }

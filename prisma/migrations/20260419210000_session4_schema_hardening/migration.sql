@@ -1,15 +1,8 @@
--- DB-M2: Exercise.name must be unique so seed upserts are idempotent and
--- WorkoutExercise can legitimately reference an exercise by name.
--- Dedupe first (keep lowest id per name), then add the unique constraint.
-WITH duplicates AS (
-  SELECT id,
-         ROW_NUMBER() OVER (PARTITION BY name ORDER BY "createdAt" ASC, id ASC) AS rn
-  FROM "exercises"
-)
-DELETE FROM "exercises" WHERE id IN (SELECT id FROM duplicates WHERE rn > 1);
-
-DROP INDEX IF EXISTS "exercises_name_idx";
-CREATE UNIQUE INDEX "exercises_name_key" ON "exercises"("name");
+-- DB-M2: Exercise.name @unique deferred — production has duplicate exercise
+-- names and `prisma db push` refuses to apply the constraint without explicit
+-- data-loss acknowledgement. A dedicated follow-up migration will handle the
+-- dedupe + unique separately so it's an intentional, reviewed change.
+-- (The dedupe SQL is preserved in git history at commit 0c4dfd4 if needed.)
 
 -- DB-M3: Drop the unique constraint that prevented the same exercise from
 -- appearing twice in a workout (legitimate pattern: warm-up + working sets).
