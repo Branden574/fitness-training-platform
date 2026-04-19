@@ -258,7 +258,7 @@ model WorkoutSession {
   user             User               @relation(fields: [userId], references: [id])
   workout          Workout            @relation(fields: [workoutId], references: [id])
 
-  @@unique([workoutId, userId])
+  @@index([userId, workoutId, startTime])
   @@index([userId, startTime])
   @@index([workoutId])
   @@map("workout_sessions")
@@ -295,6 +295,7 @@ model WorkoutProgress {
 
   @@index([userId, date])
   @@index([exerciseId])
+  @@index([userId, exerciseId])
   @@map("workout_progress")
 }
 

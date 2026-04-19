@@ -43,17 +43,7 @@ export async function POST(request: NextRequest) {
       workoutDate = workoutSession.startTime || new Date();
     }
 
-    // Save progress for each exercise and collect PR candidates
-    const progressEntries: Awaited<ReturnType<typeof prisma.workoutProgress.create>>[] = [];
-    const prEvents: Array<{
-      exerciseId: string;
-      exerciseName: string;
-      newWeight: number;
-      previousWeight: number | null;
-      reps: number | null;
-    }> = [];
-
-    for (const exercise of exercises as Array<{
+    type IncomingExercise = {
       exerciseId: string;
       exerciseName?: string;
       weight?: number;
@@ -61,52 +51,72 @@ export async function POST(request: NextRequest) {
       sets?: number;
       duration?: number;
       notes?: string;
-    }>) {
-      // Compute prior max BEFORE creating the new row so we compare correctly
-      let priorMax: number | null = null;
-      let exerciseName = exercise.exerciseName ?? 'Exercise';
-      if (exercise.weight && exercise.weight > 0) {
-        const prior = await prisma.workoutProgress.findFirst({
-          where: {
+    };
+    const incoming = exercises as IncomingExercise[];
+    const exerciseIds = incoming.map((e) => e.exerciseId);
+
+    // Batch lookup: prior max weight per exercise (1 query instead of N).
+    const priorMaxRows = await prisma.workoutProgress.groupBy({
+      by: ['exerciseId'],
+      where: {
+        userId: session.user.id,
+        exerciseId: { in: exerciseIds },
+        weight: { not: null },
+      },
+      _max: { weight: true },
+    });
+    const priorMaxMap = new Map<string, number | null>(
+      priorMaxRows.map((r) => [r.exerciseId, r._max.weight ?? null]),
+    );
+
+    // Batch lookup: exercise names (1 query instead of N includes).
+    const exerciseRecords = await prisma.exercise.findMany({
+      where: { id: { in: exerciseIds } },
+      select: { id: true, name: true },
+    });
+    const exerciseNameMap = new Map(exerciseRecords.map((e) => [e.id, e.name]));
+
+    // Transactional create: all rows commit together, or none do.
+    const progressEntries = await prisma.$transaction(
+      incoming.map((exercise) =>
+        prisma.workoutProgress.create({
+          data: {
             userId: session.user.id,
             exerciseId: exercise.exerciseId,
-            weight: { not: null },
+            workoutSessionId: workoutSessionId,
+            weight: exercise.weight || null,
+            sets: exercise.sets || null,
+            reps: exercise.reps || null,
+            notes: exercise.notes || null,
+            date: workoutDate,
           },
-          orderBy: { weight: 'desc' },
-          select: { weight: true, exercise: { select: { name: true } } },
-        });
-        priorMax = prior?.weight ?? null;
-        if (prior?.exercise.name) exerciseName = prior.exercise.name;
-      }
+          include: { exercise: { select: { name: true } } },
+        }),
+      ),
+    );
 
-      const created = await prisma.workoutProgress.create({
-        data: {
-          userId: session.user.id,
-          exerciseId: exercise.exerciseId,
-          workoutSessionId: workoutSessionId,
-          weight: exercise.weight || null,
-          sets: exercise.sets || null,
-          reps: exercise.reps || null,
-          notes: exercise.notes || null,
-          date: workoutDate,
-        },
-        include: { exercise: { select: { name: true } } },
+    // Detect PRs against the pre-transaction priorMax (don't include the just-written rows).
+    const prEvents: Array<{
+      exerciseId: string;
+      exerciseName: string;
+      newWeight: number;
+      previousWeight: number | null;
+      reps: number | null;
+    }> = [];
+    for (const exercise of incoming) {
+      if (!exercise.weight || exercise.weight <= 0) continue;
+      const priorMax = priorMaxMap.get(exercise.exerciseId) ?? null;
+      if (priorMax != null && exercise.weight <= priorMax) continue;
+      prEvents.push({
+        exerciseId: exercise.exerciseId,
+        exerciseName:
+          exerciseNameMap.get(exercise.exerciseId) ??
+          exercise.exerciseName ??
+          'Exercise',
+        newWeight: exercise.weight,
+        previousWeight: priorMax,
+        reps: exercise.reps ?? null,
       });
-      progressEntries.push(created);
-
-      if (
-        exercise.weight &&
-        exercise.weight > 0 &&
-        (priorMax == null || exercise.weight > priorMax)
-      ) {
-        prEvents.push({
-          exerciseId: exercise.exerciseId,
-          exerciseName: created.exercise.name ?? exerciseName,
-          newWeight: exercise.weight,
-          previousWeight: priorMax,
-          reps: exercise.reps ?? null,
-        });
-      }
     }
 
     // Fire-and-forget PR emails to the assigned trainer (if any)

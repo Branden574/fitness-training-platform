@@ -98,14 +98,26 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
     },
   });
 
-  // Decrement inventory for each item
+  // Atomic conditional decrement — prevents overselling under concurrent checkouts.
+  // If stock is insufficient, the UPDATE affects 0 rows and we flag the order for manual
+  // review (payment already captured — can't silently refund).
   for (const item of existingOrder.items) {
-    await prisma.product.update({
-      where: { id: item.productId },
-      data: {
-        stock: { decrement: item.quantity },
-      },
-    });
+    const rowsAffected = await prisma.$executeRaw`
+      UPDATE "Product"
+      SET "stock" = "stock" - ${item.quantity}
+      WHERE "id" = ${item.productId} AND "stock" >= ${item.quantity}
+    `;
+    if (rowsAffected !== 1) {
+      console.error(
+        `Oversold: order=${orderId} product=${item.productId} requested=${item.quantity}`,
+      );
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          notes: `Oversold item ${item.productId} (requested ${item.quantity}) — manual review required`,
+        },
+      });
+    }
   }
 }
 
