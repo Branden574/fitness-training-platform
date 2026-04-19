@@ -5,6 +5,11 @@ import { ReactNode } from 'react';
 import ThemeProvider from './ThemeProvider';
 import { CartProvider } from '@/lib/CartContext';
 import { ToastProvider } from './Toast';
+import {
+  BootGate,
+  CelebrationHost,
+  CelebrationProvider,
+} from './animations';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -20,7 +25,11 @@ export default function Providers({ children }: ProvidersProps) {
       <ThemeProvider>
         <CartProvider>
           <ToastProvider>
-            {children}
+            <CelebrationProvider>
+              <BootGate />
+              {children}
+              <CelebrationHost />
+            </CelebrationProvider>
           </ToastProvider>
         </CartProvider>
       </ThemeProvider>
