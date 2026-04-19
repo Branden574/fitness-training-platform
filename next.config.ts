@@ -17,6 +17,15 @@ const nextConfig: NextConfig = {
     // Ensure NEXTAUTH_URL has a valid fallback during build
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
   },
+  async redirects() {
+    return [
+      {
+        source: '/contact',
+        destination: '/apply',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

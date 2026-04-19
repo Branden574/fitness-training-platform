@@ -3,7 +3,6 @@
 import { useRef } from 'react';
 import Link from "next/link";
 import Image from "next/image";
-import ContactForm from "@/components/ContactForm";
 import { Phone, Mail, MapPin, ArrowRight, CheckCircle2, Star, ChevronRight } from "lucide-react";
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
@@ -331,7 +330,20 @@ export default function HomeAnimations({
             </FadeLeft>
 
             <FadeRight delay={0.2}>
-              <ContactForm />
+              <div className="rounded-xl bg-[#1e2433] border border-[#2d3548] p-8 text-center">
+                <h3 className="text-xl font-bold text-white mb-3">
+                  Ready to get started?
+                </h3>
+                <p className="text-[#9ca3af] mb-6">
+                  Invite-only coaching — applications reviewed within 48 hours.
+                </p>
+                <Link
+                  href="/apply"
+                  className="inline-flex items-center justify-center bg-[#FF4D1C] text-black font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition"
+                >
+                  Apply →
+                </Link>
+              </div>
             </FadeRight>
           </div>
         </div>
