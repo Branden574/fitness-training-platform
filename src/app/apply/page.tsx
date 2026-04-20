@@ -1,4 +1,3 @@
-import PublicTopNav from '@/components/ui/mf/PublicTopNav';
 import ApplyGenericClient from './apply-generic-client';
 
 export const metadata = {
@@ -8,7 +7,6 @@ export const metadata = {
 export default function ApplyPage() {
   return (
     <>
-      <PublicTopNav />
       <main
         data-mf
         className="mf-bg mf-fg"

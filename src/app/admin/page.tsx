@@ -1,11 +1,9 @@
 import Link from 'next/link';
-import { Filter } from 'lucide-react';
 import { requireAdminSession, initialsFor, relativeShort } from '@/lib/admin-data';
 import RefreshButton from '@/components/admin/RefreshButton';
 import { prisma } from '@/lib/prisma';
 import {
   Avatar,
-  Btn,
   Chip,
   DesktopShell,
   StatCard,
@@ -156,12 +154,7 @@ export default async function AdminOverviewPage() {
       active="stats"
       title="Platform Overview"
       breadcrumbs="ADMIN / OVERVIEW"
-      headerRight={
-        <>
-          <Btn variant="ghost" icon={Filter}>30 DAYS</Btn>
-          <RefreshButton />
-        </>
-      }
+      headerRight={<RefreshButton />}
     >
       <div style={{ padding: 24, maxWidth: 1400 }}>
         {/* Stat strip */}
@@ -301,7 +294,7 @@ export default async function AdminOverviewPage() {
                 className="mf-fg-mute mf-font-mono"
                 style={{ padding: 24, textAlign: 'center', fontSize: 11, letterSpacing: '0.1em' }}
               >
-                EVERYONE'S LOGGING
+                EVERYONE&apos;S LOGGING
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

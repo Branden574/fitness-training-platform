@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import PublicTopNav from '@/components/ui/mf/PublicTopNav';
 import { prisma } from '@/lib/prisma';
 import { computeTrainerStats } from '@/lib/trainerStats';
 import ProfileSections from './profile-sections';
@@ -86,7 +85,6 @@ export default async function TrainerProfilePage({
 
   return (
     <>
-      <PublicTopNav />
       <main
         data-mf
         className="mf-bg mf-fg"

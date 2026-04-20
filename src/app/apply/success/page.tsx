@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import PublicTopNav from '@/components/ui/mf/PublicTopNav';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +27,6 @@ export default async function ApplySuccessPage() {
 
   return (
     <>
-      <PublicTopNav />
       <main
         data-mf
         className="mf-bg mf-fg"

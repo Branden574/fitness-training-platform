@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import PublicTopNav from '@/components/ui/mf/PublicTopNav';
 import { prisma } from '@/lib/prisma';
 import ApplyDirectClient from './apply-direct-client';
 
@@ -37,7 +36,6 @@ export default async function ApplyDirectPage({
 
   return (
     <>
-      <PublicTopNav />
       <main
         data-mf
         className="mf-bg mf-fg"

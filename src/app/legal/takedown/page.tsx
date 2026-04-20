@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import PublicTopNav from '@/components/ui/mf/PublicTopNav';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +71,6 @@ function TakedownInner() {
 
   return (
     <>
-      <PublicTopNav />
       <main
         data-mf
         className="mf-bg mf-fg"

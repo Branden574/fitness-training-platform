@@ -39,6 +39,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Brent Martinez Fitness - Transform Your Life",
   description: "Professional personal training and nutrition coaching with Brent Martinez. Achieve your fitness goals with personalized workouts, meal plans, and expert guidance.",
+  appleWebApp: {
+    capable: true,
+    title: 'Martinez/Fitness',
+    statusBarStyle: 'black-translucent',
+  },
 };
 
 export const viewport = {
@@ -47,6 +52,7 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover' as const,
+  themeColor: '#0A0A0B',
 };
 
 export default function RootLayout({

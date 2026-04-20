@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useState, type ReactNode, type FormEvent } from 'react';
 import { signOut } from 'next-auth/react';
 import {
   Users,
@@ -115,6 +116,32 @@ export default function DesktopShell({
 }: DesktopShellProps) {
   const navItems = nav ?? (role === 'admin' ? ADMIN_NAV : TRAINER_NAV);
   const resolvedMeta = brandMeta ?? (role === 'admin' ? 'ADMIN · V4' : 'TRAINER · V4');
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchValue, setSearchValue] = useState(() => searchParams?.get('q') ?? '');
+
+  const notificationsHref = role === 'admin' ? '/admin/contacts?status=NEW' : '/trainer/messages';
+
+  const onSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const q = searchValue.trim();
+    // Pages that already read `q` from the URL: /admin/users, /admin/contacts
+    const targetPath =
+      pathname?.startsWith('/admin')
+        ? pathname.startsWith('/admin/contacts') || pathname.startsWith('/admin/users')
+          ? pathname
+          : '/admin/users'
+        : pathname?.startsWith('/trainer/exercises')
+          ? pathname
+          : '/trainer';
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    if (q) params.set('q', q);
+    else params.delete('q');
+    const qs = params.toString();
+    router.push(qs ? `${targetPath}?${qs}` : targetPath);
+  };
 
   return (
     <div
@@ -251,7 +278,7 @@ export default function DesktopShell({
             ) : null}
           </div>
           <div className="flex items-center gap-2">
-            <div style={{ position: 'relative' }}>
+            <form onSubmit={onSearchSubmit} style={{ position: 'relative' }}>
               <Search
                 size={14}
                 className="mf-fg-mute"
@@ -261,10 +288,14 @@ export default function DesktopShell({
                 className="mf-input"
                 style={{ height: 36, paddingLeft: 36, paddingRight: 12, width: 240 }}
                 placeholder={searchPlaceholder}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                aria-label="Search"
               />
-            </div>
+            </form>
             {headerRight}
-            <button
+            <Link
+              href={notificationsHref}
               className="mf-btn mf-btn-ghost"
               style={{ height: 36, width: 36, padding: 0, position: 'relative' }}
               aria-label="Notifications"
@@ -281,7 +312,7 @@ export default function DesktopShell({
                   background: 'var(--mf-accent)',
                 }}
               />
-            </button>
+            </Link>
           </div>
         </div>
         <div className="flex-1 mf-scroll" style={{ overflowY: 'auto' }}>

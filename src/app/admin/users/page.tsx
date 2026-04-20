@@ -1,4 +1,5 @@
-import { Plus, Filter, MoreHorizontal } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, MoreHorizontal } from 'lucide-react';
 import { requireAdminSession, initialsFor, relativeShort } from '@/lib/admin-data';
 import { prisma } from '@/lib/prisma';
 import {
@@ -96,10 +97,9 @@ export default async function AdminUsersPage({
       title="Users"
       breadcrumbs="ADMIN / USERS"
       headerRight={
-        <>
-          <Btn variant="ghost" icon={Filter}>Filters</Btn>
+        <Link href="/admin/invitations">
           <Btn variant="primary" icon={Plus}>Invite</Btn>
-        </>
+        </Link>
       }
     >
       <div style={{ padding: 24, maxWidth: 1400 }}>

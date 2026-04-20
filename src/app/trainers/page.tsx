@@ -1,4 +1,3 @@
-import PublicTopNav from '@/components/ui/mf/PublicTopNav';
 import { prisma } from '@/lib/prisma';
 import DirectoryClient from './directory-client';
 
@@ -39,7 +38,6 @@ export default async function TrainersDirectoryPage() {
 
   return (
     <>
-      <PublicTopNav />
       <main
         data-mf
         className="mf-bg mf-fg"

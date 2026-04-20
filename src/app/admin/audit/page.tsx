@@ -1,9 +1,9 @@
-import { ArrowDown } from 'lucide-react';
 import { requireAdminSession, relativeShort } from '@/lib/admin-data';
 import { prisma } from '@/lib/prisma';
 import { getAllFlags } from '@/lib/feature-flags';
-import { Btn, DesktopShell, StatusDot } from '@/components/ui/mf';
+import { DesktopShell, StatusDot } from '@/components/ui/mf';
 import FlagTogglesClient from './flag-toggles-client';
+import ExportCsvClient, { type ExportRow } from './export-csv-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +50,22 @@ export default async function AdminAuditPage({
     take: 50,
   });
 
+  const exportRows: ExportRow[] = [
+    ...events.map((e) => ({
+      type: 'admin',
+      createdAt: e.createdAt.toISOString(),
+      actor: e.adminEmail ?? '',
+      action: e.action ?? '',
+      target: e.targetEmail ?? e.targetUserId ?? '',
+    })),
+    ...recentLogins.map((l) => ({
+      type: 'login',
+      createdAt: l.createdAt.toISOString(),
+      actor: l.email ?? '',
+      action: l.success ? 'LOGIN_SUCCESS' : `LOGIN_FAILED:${l.reason ?? 'unknown'}`,
+      target: '',
+    })),
+  ];
 
   return (
     <DesktopShell
@@ -57,7 +73,7 @@ export default async function AdminAuditPage({
       active="audit"
       title="Audit Log"
       breadcrumbs="ADMIN / AUDIT"
-      headerRight={<Btn variant="ghost" icon={ArrowDown}>Export CSV</Btn>}
+      headerRight={<ExportCsvClient range={range} rows={exportRows} />}
     >
       <div style={{ padding: 24, maxWidth: 1200 }}>
         {/* Range + summary */}
