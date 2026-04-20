@@ -18,6 +18,7 @@ export default function ApplyGenericClient() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [searched, setSearched] = useState(false);
   const [selection, setSelection] = useState<{
     id: string | null;
     name: string | null;
@@ -29,6 +30,7 @@ export default function ApplyGenericClient() {
   useEffect(() => {
     if (query.trim().length < 2) {
       setResults([]);
+      setSearched(false);
       return;
     }
     const t = setTimeout(async () => {
@@ -38,7 +40,10 @@ export default function ApplyGenericClient() {
       if (res.ok) {
         const data = await res.json();
         setResults(data.results ?? []);
+      } else {
+        setResults([]);
       }
+      setSearched(true);
     }, 200);
     return () => clearTimeout(t);
   }, [query]);
@@ -76,6 +81,23 @@ export default function ApplyGenericClient() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+
+        {searched && results.length === 0 && selection.id === null && (
+          <div
+            className="mf-fg-dim"
+            style={{
+              marginTop: 8,
+              padding: '10px 12px',
+              border: '1px dashed var(--mf-hairline, #1F1F22)',
+              borderRadius: 4,
+              fontSize: 12,
+            }}
+          >
+            No trainers match &ldquo;{query.trim()}&rdquo;. If your coach gave
+            you a referral code, use it below — or pick &ldquo;No
+            preference&rdquo; and we&apos;ll match you.
+          </div>
+        )}
 
         {results.length > 0 && (
           <div
