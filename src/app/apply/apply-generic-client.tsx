@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApplyForm } from '@/components/apply/ApplyForm';
 
@@ -26,6 +26,8 @@ export default function ApplyGenericClient() {
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [noPreferenceConfirmed, setNoPreferenceConfirmed] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -117,6 +119,7 @@ export default function ApplyGenericClient() {
                   setSelectedPhone(r.contactPhone);
                   setResults([]);
                   setQuery(r.name);
+                  setNoPreferenceConfirmed(false);
                 }}
                 style={{
                   width: '100%',
@@ -196,15 +199,36 @@ export default function ApplyGenericClient() {
           onClick={() => {
             setSelection({ id: null, name: null });
             setSelectedPhone(null);
+            setNoPreferenceConfirmed(true);
+            // Scroll the apply form into view so the click feels like a
+            // concrete step forward rather than a no-op when the page state
+            // was already at the default.
+            requestAnimationFrame(() => {
+              formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
           }}
           className="mf-btn"
-          style={{ width: '100%', height: 40 }}
+          aria-pressed={noPreferenceConfirmed && !selection.id}
+          style={{
+            width: '100%',
+            height: 40,
+            background:
+              noPreferenceConfirmed && !selection.id
+                ? 'var(--mf-accent)'
+                : undefined,
+            color:
+              noPreferenceConfirmed && !selection.id ? '#0A0A0B' : undefined,
+          }}
         >
-          No preference — match me
+          {noPreferenceConfirmed && !selection.id
+            ? '✓ No preference — filling below'
+            : 'No preference — match me'}
         </button>
       </div>
 
-      <ApplyForm selection={selection} trainerPhone={selectedPhone} />
+      <div ref={formRef}>
+        <ApplyForm selection={selection} trainerPhone={selectedPhone} />
+      </div>
     </div>
   );
 }
