@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useState, type ReactNode, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type CSSProperties,
+} from 'react';
 
 interface Props {
   /** Change this value to trigger the transition (typically the pathname). */
@@ -23,21 +29,38 @@ function deriveLabel(screenKey: string): string {
  * animation handoff. ~520ms total.
  */
 export function TabTransition({ screenKey, label: labelProp, children }: Props) {
-  const [cur, setCur] = useState(screenKey);
   const [content, setContent] = useState<ReactNode>(children);
   const [state, setState] = useState<State>('idle');
   const [label, setLabel] = useState(labelProp ?? deriveLabel(screenKey));
 
+  // Refs instead of state for values that the transition effect reads but
+  // must NOT re-trigger it. Previously `cur` was state + an effect dep, so
+  // setCur() inside the effect re-ran the effect and its cleanup clobbered
+  // the pending "in/idle" timeout — freezing every tab change on the loading
+  // overlay. Same risk with `children` (parent re-renders hand in a fresh
+  // ReactNode reference every pass).
+  const curRef = useRef(screenKey);
+  const childrenRef = useRef<ReactNode>(children);
+  childrenRef.current = children;
+
+  // Sync children into content when we're not mid-transition. This covers
+  // data re-fetches on the same screen (e.g. router.refresh) without playing
+  // the loader.
   useEffect(() => {
-    if (screenKey === cur) {
+    if (state === 'idle' && curRef.current === screenKey) {
       setContent(children);
-      return;
     }
+  }, [children, screenKey, state]);
+
+  // Drive the transition only off screenKey + labelProp. cur/children live
+  // in refs so they can't trip the cleanup mid-flight.
+  useEffect(() => {
+    if (screenKey === curRef.current) return;
+    curRef.current = screenKey;
     setLabel(labelProp ?? deriveLabel(screenKey));
     setState('out');
     const t1 = setTimeout(() => {
-      setCur(screenKey);
-      setContent(children);
+      setContent(childrenRef.current);
       setState('loading');
     }, 180);
     const t2 = setTimeout(() => {
@@ -46,11 +69,16 @@ export function TabTransition({ screenKey, label: labelProp, children }: Props) 
         requestAnimationFrame(() => setState('idle')),
       );
     }, 520);
+    // Defensive fallback: if anything throws or the rAF chain is skipped
+    // (e.g. tab backgrounded), force the overlay off after ~1.2s so the
+    // screen can never remain stuck on "LOADING · X".
+    const tFallback = setTimeout(() => setState('idle'), 1200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(tFallback);
     };
-  }, [screenKey, children, cur, labelProp]);
+  }, [screenKey, labelProp]);
 
   const contentStyle = (): CSSProperties => {
     if (state === 'out')
