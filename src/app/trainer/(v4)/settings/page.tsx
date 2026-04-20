@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight, User, Lock } from 'lucide-react';
+import { ChevronRight, User, Lock, Image as ImageIcon, MessageSquare, Sparkles } from 'lucide-react';
 import { requireTrainerSession } from '@/lib/trainer-data';
 import { DesktopShell } from '@/components/ui/mf';
 import SharingPanelClient from './sharing-panel-client';
@@ -12,6 +12,9 @@ export default async function TrainerSettingsPage() {
   const rows: Array<{ label: string; href?: string; Icon: typeof User }> = [
     { label: `Signed in as ${session.user.email}`, Icon: User },
     { label: 'Change password', href: '/auth/change-password', Icon: Lock },
+    { label: 'Edit public profile', href: '/trainer/settings/profile', Icon: ImageIcon },
+    { label: 'Manage testimonials', href: '/trainer/settings/testimonials', Icon: MessageSquare },
+    { label: 'Manage transformations', href: '/trainer/settings/transformations', Icon: Sparkles },
   ];
 
   return (
