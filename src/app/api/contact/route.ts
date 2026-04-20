@@ -6,8 +6,12 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
-// Primary public applicant schema. All NEW fields (trainerId, goal, goalOther)
-// are optional so existing callers sending only name/email/phone/message keep working.
+// Primary public applicant schema. All NEW fields (trainerId, goal) are
+// optional so existing callers sending only name/email/phone/message keep
+// working. `goal` is now free-text (was enum get-stronger / lose-weight-recomp
+// / other; preset buttons were replaced with a textarea so trainers see the
+// applicant's intent in their own words). `goalOther` is still accepted and
+// merged into `goal` for backward compatibility with cached clients.
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(120),
   email: z.string().email('Invalid email format'),
@@ -16,8 +20,8 @@ const contactSchema = z.object({
 
   // NEW — multi-trainer apply flow
   trainerId: z.string().cuid().optional(),
-  goal: z.enum(['get-stronger', 'lose-weight-recomp', 'other']).optional(),
-  goalOther: z.string().max(200).optional(),
+  goal: z.string().max(300).optional(),
+  goalOther: z.string().max(300).optional(),
 
   // Enhanced intake (legacy — still accepted for older callers)
   age: z.string().optional(),
@@ -30,17 +34,20 @@ const contactSchema = z.object({
 
 function composeMessage(
   message: string | undefined,
-  goal: 'get-stronger' | 'lose-weight-recomp' | 'other' | undefined,
+  goal: string | undefined,
   goalOther: string | undefined,
 ): string {
-  const goalLabel =
-    goal === 'get-stronger'
-      ? 'Get stronger'
-      : goal === 'lose-weight-recomp'
-        ? 'Lose weight / recomp'
-        : goal === 'other'
-          ? goalOther?.trim() || 'Other'
-          : null;
+  // Backward compat: map legacy enum values from cached form bundles into
+  // readable labels; otherwise trust whatever text the applicant typed.
+  let goalLabel: string | null = null;
+  if (goal) {
+    if (goal === 'get-stronger') goalLabel = 'Get stronger';
+    else if (goal === 'lose-weight-recomp') goalLabel = 'Lose weight / recomp';
+    else if (goal === 'other') goalLabel = goalOther?.trim() || 'Other';
+    else goalLabel = goal.trim() || null;
+  } else if (goalOther?.trim()) {
+    goalLabel = goalOther.trim();
+  }
 
   const header = goalLabel ? `[Goal: ${goalLabel}]` : null;
   const body = message?.trim() || null;

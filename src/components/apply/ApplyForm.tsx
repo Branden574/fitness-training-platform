@@ -14,8 +14,6 @@ export interface ApplyFormProps {
   waitlist?: boolean;
 }
 
-type Goal = 'get-stronger' | 'lose-weight-recomp' | 'other';
-
 export function ApplyForm({
   selection,
   trainerPhone,
@@ -25,9 +23,7 @@ export function ApplyForm({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [goal, setGoal] = useState<Goal | null>(null);
-  const [goalOther, setGoalOther] = useState('');
-  const [message, setMessage] = useState('');
+  const [goal, setGoal] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +32,10 @@ export function ApplyForm({
     setError(null);
     if (!name.trim() || !email.trim()) {
       setError('Name and email are required.');
+      return;
+    }
+    if (goal.trim().length < 3) {
+      setError('Tell your trainer what you\u2019re trying to do — at least a few words.');
       return;
     }
     setSubmitting(true);
@@ -48,9 +48,7 @@ export function ApplyForm({
           email: email.trim(),
           phone: phone.trim() || undefined,
           trainerId: selection.id ?? undefined,
-          goal: goal ?? undefined,
-          goalOther: goal === 'other' ? goalOther.trim() : undefined,
-          message: message.trim() || undefined,
+          goal: goal.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -158,50 +156,20 @@ export function ApplyForm({
         />
       </Field>
 
-      <Field label="WHAT ARE YOU TRYING TO DO?">
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {(['get-stronger', 'lose-weight-recomp', 'other'] as const).map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => setGoal(g)}
-              style={{
-                height: 36,
-                padding: '0 14px',
-                background:
-                  goal === g ? 'var(--mf-accent, #FF4D1C)' : 'transparent',
-                color: goal === g ? '#0A0A0B' : 'var(--mf-fg, #F4F4F5)',
-                border: '1px solid var(--mf-hairline, #1F1F22)',
-                borderRadius: 4,
-                fontSize: 12,
-                cursor: 'pointer',
-              }}
-            >
-              {g === 'get-stronger' && 'Get stronger'}
-              {g === 'lose-weight-recomp' && 'Lose weight / recomp'}
-              {g === 'other' && 'Other →'}
-            </button>
-          ))}
-        </div>
-        {goal === 'other' && (
-          <input
-            className="mf-input"
-            style={{ marginTop: 8 }}
-            placeholder="Describe your goal"
-            value={goalOther}
-            onChange={(e) => setGoalOther(e.target.value)}
-            maxLength={200}
-          />
-        )}
-      </Field>
-
-      <Field label="MESSAGE (OPTIONAL)">
+      <Field
+        label="WHAT ARE YOU TRYING TO DO?"
+        required
+        hint="Tell your trainer what you want to accomplish — they read this before reaching out."
+      >
         <textarea
           className="mf-input"
-          rows={4}
-          maxLength={500}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          rows={3}
+          maxLength={300}
+          minLength={3}
+          required
+          placeholder="e.g. Lose 20 lbs by summer, get stronger for hiking season, rehab a shoulder…"
+          value={goal}
+          onChange={(e) => setGoal(e.target.value)}
         />
       </Field>
 
