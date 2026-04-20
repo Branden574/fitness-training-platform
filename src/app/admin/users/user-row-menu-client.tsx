@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MoreHorizontal, KeyRound, Power, ExternalLink } from 'lucide-react';
 
 interface Props {
@@ -21,19 +22,66 @@ export default function UserRowMenuClient({
   trainerSlug,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [isActive, setIsActive] = useState(initialActive);
   const [busy, setBusy] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; right: number } | null>(
+    null,
+  );
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Position the portal-rendered menu relative to the button in viewport coords
+  // so the dropdown escapes any ancestor `overflow: hidden` (the users table is
+  // wrapped in a card with clipped corners). Recompute on scroll/resize so the
+  // menu stays anchored.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const btn = buttonRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      setCoords({
+        top: r.bottom + 4,
+        right: Math.max(8, window.innerWidth - r.right),
+      });
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (
+        (buttonRef.current && buttonRef.current.contains(target)) ||
+        (menuRef.current && menuRef.current.contains(target))
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   const toggleActive = async () => {
@@ -95,9 +143,105 @@ export default function UserRowMenuClient({
   const publicProfileHref =
     userRole === 'TRAINER' && trainerSlug ? `/t/${trainerSlug}` : null;
 
+  const menu =
+    open && coords && mounted ? (
+      <div
+        ref={menuRef}
+        role="menu"
+        style={{
+          position: 'fixed',
+          top: coords.top,
+          right: coords.right,
+          minWidth: 220,
+          background: 'var(--mf-surface-2, #0E0E10)',
+          border: '1px solid var(--mf-hairline, #1F1F22)',
+          borderRadius: 6,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          zIndex: 1000,
+          padding: 4,
+          fontSize: 13,
+          color: 'var(--mf-fg, #F4F4F5)',
+        }}
+      >
+        {publicProfileHref && (
+          <MenuItem
+            icon={<ExternalLink size={14} />}
+            label="View public profile"
+            onClick={() => {
+              window.open(publicProfileHref, '_blank', 'noopener,noreferrer');
+              setOpen(false);
+            }}
+          />
+        )}
+        <MenuItem
+          icon={<Power size={14} />}
+          label={isActive ? 'Deactivate account' : 'Reactivate account'}
+          onClick={toggleActive}
+          disabled={busy}
+          danger={isActive}
+        />
+        <MenuItem
+          icon={<KeyRound size={14} />}
+          label="Reset password"
+          onClick={resetPassword}
+          disabled={busy}
+        />
+
+        {tempPassword && (
+          <div
+            style={{
+              marginTop: 4,
+              padding: 10,
+              background: 'var(--mf-surface-3, #14141A)',
+              border: '1px solid var(--mf-hairline)',
+              borderRadius: 4,
+              fontSize: 11,
+            }}
+          >
+            <div className="mf-fg-dim" style={{ marginBottom: 4 }}>
+              TEMP PASSWORD — share securely
+            </div>
+            <div
+              className="mf-font-mono"
+              style={{
+                wordBreak: 'break-all',
+                marginBottom: 6,
+                color: 'var(--mf-accent)',
+              }}
+            >
+              {tempPassword}
+            </div>
+            <button
+              type="button"
+              onClick={copyTemp}
+              className="mf-btn mf-btn-ghost"
+              style={{ height: 24, fontSize: 11 }}
+            >
+              Copy
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 4,
+              padding: '6px 10px',
+              color: '#fca5a5',
+              fontSize: 11,
+            }}
+          >
+            {error}
+          </div>
+        )}
+      </div>
+    ) : null;
+
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="User actions"
@@ -107,99 +251,8 @@ export default function UserRowMenuClient({
       >
         <MoreHorizontal size={14} />
       </button>
-
-      {open && (
-        <div
-          role="menu"
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: 'calc(100% + 4px)',
-            minWidth: 220,
-            background: 'var(--mf-surface-2, #0E0E10)',
-            border: '1px solid var(--mf-hairline)',
-            borderRadius: 6,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            zIndex: 40,
-            padding: 4,
-            fontSize: 13,
-          }}
-        >
-          {publicProfileHref && (
-            <MenuItem
-              icon={<ExternalLink size={14} />}
-              label="View public profile"
-              onClick={() => {
-                window.open(publicProfileHref, '_blank', 'noopener,noreferrer');
-                setOpen(false);
-              }}
-            />
-          )}
-          <MenuItem
-            icon={<Power size={14} />}
-            label={isActive ? 'Deactivate account' : 'Reactivate account'}
-            onClick={toggleActive}
-            disabled={busy}
-            danger={isActive}
-          />
-          <MenuItem
-            icon={<KeyRound size={14} />}
-            label="Reset password"
-            onClick={resetPassword}
-            disabled={busy}
-          />
-
-          {tempPassword && (
-            <div
-              style={{
-                marginTop: 4,
-                padding: 10,
-                background: 'var(--mf-surface-3, #14141A)',
-                border: '1px solid var(--mf-hairline)',
-                borderRadius: 4,
-                fontSize: 11,
-              }}
-            >
-              <div className="mf-fg-dim" style={{ marginBottom: 4 }}>
-                TEMP PASSWORD — share securely
-              </div>
-              <div
-                className="mf-font-mono"
-                style={{
-                  wordBreak: 'break-all',
-                  marginBottom: 6,
-                  color: 'var(--mf-accent)',
-                }}
-              >
-                {tempPassword}
-              </div>
-              <button
-                type="button"
-                onClick={copyTemp}
-                className="mf-btn mf-btn-ghost"
-                style={{ height: 24, fontSize: 11 }}
-              >
-                Copy
-              </button>
-            </div>
-          )}
-
-          {error && (
-            <div
-              role="alert"
-              style={{
-                marginTop: 4,
-                padding: '6px 10px',
-                color: '#fca5a5',
-                fontSize: 11,
-              }}
-            >
-              {error}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+      {mounted && menu ? createPortal(menu, document.body) : null}
+    </>
   );
 }
 
