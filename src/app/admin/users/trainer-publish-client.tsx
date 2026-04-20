@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface Props {
   userId: string;
@@ -9,10 +8,8 @@ interface Props {
 }
 
 export default function TrainerPublishClient({ userId, initialPublic }: Props) {
-  const router = useRouter();
   const [isPublic, setIsPublic] = useState(initialPublic);
   const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const toggle = async () => {
@@ -29,13 +26,12 @@ export default function TrainerPublishClient({ userId, initialPublic }: Props) {
       }
       const data = await res.json();
       setIsPublic(!!data.trainerIsPublic);
-      startTransition(() => router.refresh());
     } finally {
       setLoading(false);
     }
   };
 
-  const busy = loading || isPending;
+  const busy = loading;
 
   return (
     <button

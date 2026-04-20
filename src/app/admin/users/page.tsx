@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, MoreHorizontal } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { requireAdminSession, initialsFor, relativeShort } from '@/lib/admin-data';
 import { prisma } from '@/lib/prisma';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/mf';
 import AdminUsersFilterClient from './users-filter-client';
 import TrainerPublishClient from './trainer-publish-client';
+import UserRowMenuClient from './user-row-menu-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -227,7 +228,14 @@ export default async function AdminUsersPage({
                   )}
                 </div>
                 <div className="flex justify-end">
-                  <MoreHorizontal size={14} className="mf-fg-mute" />
+                  <UserRowMenuClient
+                    userId={u.id}
+                    userEmail={u.email}
+                    userName={u.name}
+                    userRole={u.role}
+                    isActive={u.isActive}
+                    trainerSlug={u.trainerSlug}
+                  />
                 </div>
               </div>
             );
