@@ -7,21 +7,41 @@ export const dynamic = 'force-dynamic';
 
 const MEALS = ['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER'] as const;
 
-async function getFoodData(userId: string) {
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseDateParam(raw: string | undefined): Date {
+  if (!raw) return startOfToday();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!m) return startOfToday();
+  const parsed = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  parsed.setHours(0, 0, 0, 0);
+  if (Number.isNaN(parsed.getTime())) return startOfToday();
   const today = startOfToday();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+  if (parsed.getTime() > today.getTime()) return today;
+  return parsed;
+}
+
+async function getFoodData(userId: string, viewDate: Date) {
+  const dayStart = new Date(viewDate);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayStart.getDate() + 1);
 
   const [entries, mealPlan, trainer] = await Promise.all([
     prisma.foodEntry.findMany({
-      where: { userId, date: { gte: today, lt: tomorrow } },
+      where: { userId, date: { gte: dayStart, lt: dayEnd } },
       orderBy: [{ mealType: 'asc' }, { createdAt: 'asc' }],
     }),
     prisma.mealPlan.findFirst({
       where: {
         userId,
-        startDate: { lte: today },
-        endDate: { gte: today },
+        startDate: { lte: dayStart },
+        endDate: { gte: dayStart },
       },
       orderBy: { startDate: 'desc' },
       include: { trainer: { select: { name: true } } },
@@ -83,17 +103,43 @@ async function getFoodData(userId: string) {
   };
 }
 
-export default async function ClientFoodPage() {
+interface SearchParams {
+  date?: string;
+}
+
+export default async function ClientFoodPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const session = await requireClientSession();
+  const sp = await searchParams;
+  const viewDate = parseDateParam(sp.date);
+  const dateStr = toLocalDateStr(viewDate);
+  const todayStr = toLocalDateStr(startOfToday());
+  const isToday = dateStr === todayStr;
+
   const [ctx, data] = await Promise.all([
     getClientContext(session.user.id),
-    getFoodData(session.user.id),
+    getFoodData(session.user.id, viewDate),
   ]);
+
+  const prevDate = new Date(viewDate);
+  prevDate.setDate(prevDate.getDate() - 1);
+  const nextDate = new Date(viewDate);
+  nextDate.setDate(nextDate.getDate() + 1);
 
   return (
     <>
       <FoodClient initial={data} />
-      <FoodDesktop ctx={ctx} initial={data} />
+      <FoodDesktop
+        ctx={ctx}
+        initial={data}
+        viewDate={dateStr}
+        prevDate={toLocalDateStr(prevDate)}
+        nextDate={isToday ? null : toLocalDateStr(nextDate)}
+        todayDate={todayStr}
+      />
     </>
   );
 }

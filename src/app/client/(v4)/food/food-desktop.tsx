@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Loader2, MoreHorizontal, Camera, Copy, FolderOpen } from 'lucide-react';
+import { Plus, Search, Loader2, MoreHorizontal, Camera, Copy, FolderOpen, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Btn, Chip, ClientDesktopShell, SrcPill, type FoodSource } from '@/components/ui/mf';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import type { ClientContext } from '@/lib/client-data';
@@ -80,14 +81,31 @@ function formatDesktopTitle(d: Date): string {
   return `Food Log · ${weekday}, ${month} ${d.getDate()}`;
 }
 
+function parseLocalDate(yyyyMmDd: string): Date {
+  const [y, m, d] = yyyyMmDd.split('-').map(Number);
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
 export default function FoodDesktop({
   ctx,
   initial,
+  viewDate,
+  prevDate,
+  nextDate,
+  todayDate,
 }: {
   ctx: ClientContext;
   initial: InitialData;
+  viewDate: string;
+  prevDate: string;
+  nextDate: string | null;
+  todayDate: string;
 }) {
   const router = useRouter();
+  const isViewingToday = viewDate === todayDate;
+  const viewDateObj = parseLocalDate(viewDate);
   const [q, setQ] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -126,7 +144,6 @@ export default function FoodDesktop({
   async function logFood(it: SearchResult, meal: MealType) {
     setPending(it.id);
     setError(null);
-    const dateStr = new Date().toLocaleDateString('en-CA');
     try {
       const res = await fetch('/api/food-entries', {
         method: 'POST',
@@ -140,7 +157,7 @@ export default function FoodDesktop({
           carbs: it.carbs,
           fat: it.fat,
           mealType: meal,
-          date: dateStr,
+          date: viewDate,
         }),
       });
       if (!res.ok) throw new Error('Could not save entry');
@@ -184,13 +201,91 @@ export default function FoodDesktop({
     <div className="hidden md:block">
       <ClientDesktopShell
         active="food"
-        title={formatDesktopTitle(new Date())}
-        breadcrumbs="NUTRITION"
+        title={formatDesktopTitle(viewDateObj)}
+        breadcrumbs={isViewingToday ? 'NUTRITION' : 'NUTRITION · HISTORY'}
         athleteInitials={ctx.initials}
         athleteName={ctx.name ?? ctx.email}
         athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
         headerRight={
           <>
+            <div
+              className="mf-card"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: 2,
+                height: 36,
+              }}
+            >
+              <Link
+                href={`/client/food?date=${prevDate}`}
+                aria-label="Previous day"
+                className="mf-btn mf-btn-ghost"
+                style={{ height: 32, width: 32, padding: 0 }}
+              >
+                <ChevronLeft size={14} />
+              </Link>
+              <label
+                className="mf-font-mono"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '0 10px',
+                  height: 32,
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  cursor: 'pointer',
+                  color: 'var(--mf-fg)',
+                }}
+              >
+                <Calendar size={12} />
+                <input
+                  type="date"
+                  value={viewDate}
+                  max={todayDate}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    if (next) router.push(`/client/food?date=${next}`);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'inherit',
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit',
+                    letterSpacing: 'inherit',
+                    padding: 0,
+                    colorScheme: 'dark',
+                  }}
+                />
+              </label>
+              <Link
+                href={nextDate ? `/client/food?date=${nextDate}` : '#'}
+                aria-label="Next day"
+                aria-disabled={!nextDate}
+                tabIndex={nextDate ? 0 : -1}
+                onClick={(e) => {
+                  if (!nextDate) e.preventDefault();
+                }}
+                className="mf-btn mf-btn-ghost"
+                style={{
+                  height: 32,
+                  width: 32,
+                  padding: 0,
+                  opacity: nextDate ? 1 : 0.35,
+                  pointerEvents: nextDate ? 'auto' : 'none',
+                }}
+              >
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+            {!isViewingToday && (
+              <Link href={`/client/food?date=${todayDate}`}>
+                <Btn>Today</Btn>
+              </Link>
+            )}
             <Chip>{`${Math.round(initial.totals.calories)} / ${initial.target.calories} KCAL`}</Chip>
             <Btn icon={Copy} disabled>
               Copy yesterday
@@ -743,7 +838,6 @@ export default function FoodDesktop({
       {scannerOpen && (
         <BarcodeScanner
           onResult={async (product) => {
-            const dateStr = new Date().toLocaleDateString('en-CA');
             try {
               await fetch('/api/food-entries', {
                 method: 'POST',
@@ -757,7 +851,7 @@ export default function FoodDesktop({
                   carbs: product.carbs,
                   fat: product.fat,
                   mealType: logTarget,
-                  date: dateStr,
+                  date: viewDate,
                 }),
               });
               setScannerOpen(false);
