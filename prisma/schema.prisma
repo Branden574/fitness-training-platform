@@ -80,6 +80,7 @@ model User {
   coachNotesAsClient     CoachNote[]         @relation("CoachNotesClient")
   subscription           Subscription?
   trainerApplications    ContactSubmission[] @relation("TrainerApplications")
+  trainerAgreement       TrainerAgreement?   @relation("UserAgreement")
   // NOTE: @unique on trainerSlug + trainerReferralCode is DEFERRED. Railway's
   // `prisma db push` refuses to add unique constraints without --accept-data-loss,
   // and we removed that flag after the earlier shop-drop. Collision avoidance is
@@ -167,17 +168,28 @@ model ApiRequestLog {
 }
 
 model Trainer {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  bio             String?
-  specializations Json?
-  experience      Int      @default(0)
-  certifications  Json?
-  hourlyRate      Float?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  bio                String?
+  specializations    Json?
+  experience         Int       @default(0)
+  certifications     Json?
+  hourlyRate         Float?
+  photoUrl           String?
+  location           String?
+  instagramHandle    String?
+  priceTier          String?
+  specialties        String[]  @default([])
+  acceptsInPerson    Boolean   @default(false)
+  acceptsOnline      Boolean   @default(false)
+  profilePublishedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testimonials       TrainerTestimonial[]
+  transformations    TrainerTransformation[]
 
+  @@index([profilePublishedAt])
   @@map("trainers")
 }
 
@@ -857,4 +869,84 @@ model Subscription {
   @@index([stripeCustomerId])
   @@index([status])
   @@map("subscriptions")
+}
+
+// ═══════════════════════════════════════════════════════════
+// Phase 2 — Multi-trainer directory models
+// ═══════════════════════════════════════════════════════════
+
+model TrainerTestimonial {
+  id           String   @id @default(cuid())
+  trainerId    String
+  quote        String
+  attribution  String
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  trainer      Trainer  @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  @@index([trainerId, order])
+  @@map("trainer_testimonials")
+}
+
+enum TransformationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REMOVED
+}
+
+model TrainerTransformation {
+  id              String               @id @default(cuid())
+  trainerId       String
+  beforePhotoUrl  String
+  afterPhotoUrl   String
+  caption         String?
+  durationWeeks   Int?
+  status          TransformationStatus @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime             @default(now())
+  trainer         Trainer              @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  @@index([trainerId, status])
+  @@index([status, createdAt])
+  @@map("trainer_transformations")
+}
+
+model TrainerAgreement {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  version    String
+  acceptedAt DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+  user       User     @relation("UserAgreement", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trainer_agreements")
+}
+
+enum TakedownStatus {
+  OPEN
+  REVIEWING
+  RESOLVED_REMOVED
+  RESOLVED_KEPT
+}
+
+model ContentTakedownRequest {
+  id             String         @id @default(cuid())
+  contentType    String
+  contentId      String
+  reporterEmail  String
+  reporterName   String?
+  reason         String
+  status         TakedownStatus @default(OPEN)
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime       @default(now())
+
+  @@index([status, createdAt])
+  @@map("content_takedown_requests")
 }
