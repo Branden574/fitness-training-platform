@@ -7,6 +7,7 @@ interface TrainerProfile {
   photoUrl: string | null;
   location: string | null;
   instagramHandle: string | null;
+  contactPhone: string | null;
   bio: string | null;
   specialties: string[];
   experience: number;
@@ -61,6 +62,7 @@ function ProfileForm() {
         photoUrl: null,
         location: null,
         instagramHandle: null,
+        contactPhone: null,
         bio: null,
         specialties: [],
         experience: 0,
@@ -159,6 +161,7 @@ function ProfileForm() {
           bio: profile.bio ?? undefined,
           location: profile.location ?? undefined,
           instagramHandle: profile.instagramHandle ?? undefined,
+          contactPhone: profile.contactPhone ?? null,
           specialties: profile.specialties,
           experience: profile.experience,
           certifications: profile.certifications,
@@ -309,6 +312,21 @@ function ProfileForm() {
               flex: 1,
             }}
           />
+        </div>
+      </Section>
+
+      <Section title="CONTACT PHONE (shown on your apply page)">
+        <input
+          type="tel"
+          className="mf-input"
+          placeholder="(559) 365-2946"
+          value={profile.contactPhone ?? ''}
+          onChange={(e) => update('contactPhone', e.target.value)}
+          maxLength={32}
+        />
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
+          Leave blank to hide the FASTEST REPLY card. Applicants see this
+          number as a one-tap SMS link on your /apply page.
         </div>
       </Section>
 

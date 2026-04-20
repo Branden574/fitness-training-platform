@@ -6,10 +6,12 @@ import { ApplyForm } from '@/components/apply/ApplyForm';
 export default function ApplyDirectClient({
   trainerId,
   trainerName,
+  trainerPhone,
   waitlist,
 }: {
   trainerId: string;
   trainerName: string;
+  trainerPhone: string | null;
   waitlist: boolean;
 }) {
   const initials = trainerName
@@ -52,6 +54,7 @@ export default function ApplyDirectClient({
 
       <ApplyForm
         selection={{ id: trainerId, name: trainerName }}
+        trainerPhone={trainerPhone}
         waitlist={waitlist}
       />
     </div>

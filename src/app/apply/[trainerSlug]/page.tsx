@@ -27,6 +27,7 @@ export default async function ApplyDirectPage({
       image: true,
       trainerAcceptingClients: true,
       trainerIsPublic: true,
+      trainer: { select: { contactPhone: true } },
     },
   });
 
@@ -75,6 +76,7 @@ export default async function ApplyDirectPage({
             <ApplyDirectClient
               trainerId={trainer.id}
               trainerName={trainer.name ?? 'Coach'}
+              trainerPhone={trainer.trainer?.contactPhone ?? null}
               waitlist={!trainer.trainerAcceptingClients}
             />
           </div>

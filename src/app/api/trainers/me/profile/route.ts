@@ -21,6 +21,16 @@ const schema = z.object({
   hourlyRate: z.number().min(0).max(10000).nullable().optional(),
   acceptsInPerson: z.boolean().optional(),
   acceptsOnline: z.boolean().optional(),
+  contactPhone: z
+    .string()
+    .max(32)
+    // Allow digits, spaces, parens, dashes, dots, plus. Require 7+ digits.
+    .refine(
+      (v) => v === '' || (v.replace(/\D/g, '').length >= 7 && /^[0-9+().\-\s]+$/.test(v)),
+      'Enter a valid phone (digits, +, -, (), spaces only)',
+    )
+    .optional()
+    .nullable(),
 });
 
 function normalizeSpecialty(tag: string): string {
@@ -56,6 +66,10 @@ export async function PATCH(request: NextRequest) {
   if (parsed.data.specialties) {
     const normalized = parsed.data.specialties.map(normalizeSpecialty);
     data.specialties = Array.from(new Set(normalized));
+  }
+  if (parsed.data.contactPhone !== undefined) {
+    const trimmed = parsed.data.contactPhone?.trim() ?? null;
+    data.contactPhone = trimmed ? trimmed : null;
   }
 
   const trainer = await prisma.trainer.update({

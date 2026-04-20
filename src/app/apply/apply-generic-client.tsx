@@ -11,6 +11,7 @@ interface SearchResult {
   photoUrl: string | null;
   initials: string;
   acceptingClients: boolean;
+  contactPhone: string | null;
 }
 
 export default function ApplyGenericClient() {
@@ -21,6 +22,7 @@ export default function ApplyGenericClient() {
     id: string | null;
     name: string | null;
   }>({ id: null, name: null });
+  const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
 
@@ -90,6 +92,7 @@ export default function ApplyGenericClient() {
                 type="button"
                 onClick={() => {
                   setSelection({ id: r.id, name: r.name });
+                  setSelectedPhone(r.contactPhone);
                   setResults([]);
                   setQuery(r.name);
                 }}
@@ -168,7 +171,10 @@ export default function ApplyGenericClient() {
 
         <button
           type="button"
-          onClick={() => setSelection({ id: null, name: null })}
+          onClick={() => {
+            setSelection({ id: null, name: null });
+            setSelectedPhone(null);
+          }}
           className="mf-btn"
           style={{ width: '100%', height: 40 }}
         >
@@ -176,7 +182,7 @@ export default function ApplyGenericClient() {
         </button>
       </div>
 
-      <ApplyForm selection={selection} />
+      <ApplyForm selection={selection} trainerPhone={selectedPhone} />
     </div>
   );
 }

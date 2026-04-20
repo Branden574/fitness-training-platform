@@ -182,6 +182,10 @@ model Trainer {
   specialties        String[]  @default([])
   acceptsInPerson    Boolean   @default(false)
   acceptsOnline      Boolean   @default(false)
+  // Public contact phone for the apply page FASTEST REPLY card — nullable so
+  // the card hides for trainers who haven't configured one yet. Stored in the
+  // raw format the trainer enters; normalized to digits in the sms: href.
+  contactPhone       String?
   profilePublishedAt DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt

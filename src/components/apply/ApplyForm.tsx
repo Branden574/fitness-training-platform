@@ -10,7 +10,7 @@ interface TrainerSelection {
 
 export interface ApplyFormProps {
   selection: TrainerSelection;
-  trainerPhone?: string;
+  trainerPhone?: string | null;
   waitlist?: boolean;
 }
 
@@ -18,7 +18,7 @@ type Goal = 'get-stronger' | 'lose-weight-recomp' | 'other';
 
 export function ApplyForm({
   selection,
-  trainerPhone = '(559) 365-2946',
+  trainerPhone,
   waitlist = false,
 }: ApplyFormProps) {
   const router = useRouter();
@@ -66,52 +66,57 @@ export function ApplyForm({
     }
   };
 
-  const phoneHref = `sms:${trainerPhone.replace(/[^\d+]/g, '')}`;
+  const hasPhone = !!trainerPhone && trainerPhone.trim().length > 0;
+  const phoneHref = hasPhone ? `sms:${trainerPhone!.replace(/[^\d+]/g, '')}` : '';
 
   return (
     <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
-      {/* Direct channel card */}
-      <div
-        style={{
-          padding: 16,
-          background: 'var(--mf-surface-2, #0E0E10)',
-          border: '1px solid var(--mf-hairline, #1F1F22)',
-          borderRadius: 6,
-        }}
-      >
+      {/* Direct channel card — only rendered when the selected trainer has
+          configured a contact phone in their profile. Generic /apply hides
+          this until the applicant picks a trainer. */}
+      {hasPhone && (
         <div
-          className="mf-eyebrow"
-          style={{ marginBottom: 8 }}
-        >
-          FASTEST REPLY
-        </div>
-        <a
-          href={phoneHref}
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            height: 40,
-            padding: '0 16px',
-            background: 'var(--mf-accent, #FF4D1C)',
-            color: '#0A0A0B',
-            fontFamily: 'var(--font-mf-mono), monospace',
-            fontSize: 11,
-            letterSpacing: '.18em',
-            fontWeight: 700,
-            borderRadius: 4,
-            textDecoration: 'none',
+            padding: 16,
+            background: 'var(--mf-surface-2, #0E0E10)',
+            border: '1px solid var(--mf-hairline, #1F1F22)',
+            borderRadius: 6,
           }}
         >
-          Text · {trainerPhone}
-        </a>
-        <div
-          className="mf-fg-dim"
-          style={{ fontSize: 11, marginTop: 8 }}
-        >
-          Or write it out below.
+          <div
+            className="mf-eyebrow"
+            style={{ marginBottom: 8 }}
+          >
+            FASTEST REPLY
+          </div>
+          <a
+            href={phoneHref}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              height: 40,
+              padding: '0 16px',
+              background: 'var(--mf-accent, #FF4D1C)',
+              color: '#0A0A0B',
+              fontFamily: 'var(--font-mf-mono), monospace',
+              fontSize: 11,
+              letterSpacing: '.18em',
+              fontWeight: 700,
+              borderRadius: 4,
+              textDecoration: 'none',
+            }}
+          >
+            Text · {trainerPhone}
+          </a>
+          <div
+            className="mf-fg-dim"
+            style={{ fontSize: 11, marginTop: 8 }}
+          >
+            Or write it out below.
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Selection chip */}
       <div
