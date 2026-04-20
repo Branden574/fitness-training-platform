@@ -5,7 +5,13 @@ import { ArrowRight } from 'lucide-react';
 import Btn from './Btn';
 
 export interface PublicTopNavProps {
-  activeSection?: 'platform' | 'pricing' | 'trainers' | 'clients' | null;
+  activeSection?:
+    | 'platform'
+    | 'pricing'
+    | 'trainers'
+    | 'clients'
+    | 'trainers-dir'
+    | null;
 }
 
 function BrandMark({ size = 28 }: { size?: number }) {
@@ -68,6 +74,7 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
             <Link href="/#platform" className={linkClass('platform')}>Platform</Link>
             <Link href="/?as=trainer#role-split" className={linkClass('trainers')}>For Trainers</Link>
             <Link href="/?as=client#role-split" className={linkClass('clients')}>For Clients</Link>
+            <Link href="/trainers" className={linkClass('trainers-dir')}>Trainers</Link>
             <Link href="/#pricing" className={linkClass('pricing')}>Pricing</Link>
           </nav>
         </div>

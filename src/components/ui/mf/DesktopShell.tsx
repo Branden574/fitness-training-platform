@@ -15,6 +15,8 @@ import {
   Activity,
   CreditCard,
   Shield,
+  Camera,
+  AlertTriangle,
   Search,
   Bell,
   LogOut,
@@ -66,6 +68,8 @@ const ADMIN_NAV: DesktopShellNavItem[] = [
   { k: 'contacts',    l: 'Contacts',      i: User,            href: '/admin/contacts' },
   { k: 'billing',     l: 'Billing',       i: CreditCard,      href: '/admin/billing' },
   { k: 'audit',       l: 'Audit Log',     i: Shield,          href: '/admin/audit' },
+  { k: 'transformations', l: 'Transformations', i: Camera,    href: '/admin/transformations' },
+  { k: 'takedowns',   l: 'Takedowns',     i: AlertTriangle,   href: '/admin/takedowns' },
   { k: 'settings',    l: 'Settings',      i: Settings,        href: '/admin/settings' },
 ];
 
