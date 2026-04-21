@@ -600,6 +600,11 @@ model Invitation {
   phone      String?
   code       String           @unique
   invitedBy  String
+  // Role the redeemer will be granted when the code is accepted. Defaults to
+  // CLIENT for backward compat (any existing Invitation row predating this
+  // column reads as CLIENT). Admin issues TRAINER invites for hand-onboarded
+  // coaches + foundation testers.
+  role       String           @default("CLIENT")
   status     InvitationStatus @default(PENDING)
   expiresAt  DateTime
   acceptedAt DateTime?
