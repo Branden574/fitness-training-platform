@@ -1,5 +1,6 @@
 import { requireClientSession } from '@/lib/client-data';
 import { BottomTabs } from '@/components/ui/mf';
+import NativePushRegistrar from '@/components/notifications/NativePushRegistrar';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,7 @@ export default async function ClientV4Layout({ children }: { children: React.Rea
 
   return (
     <div data-mf className="mf-bg mf-fg" style={{ minHeight: '100vh' }}>
+      <NativePushRegistrar />
       <div className="flex justify-center md:hidden" style={{ minHeight: '100vh' }}>
         <div
           className="flex flex-col"

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
+import NativePushRegistrar from '@/components/notifications/NativePushRegistrar';
 
 export type DesktopShellRole = 'trainer' | 'admin';
 
@@ -383,6 +384,7 @@ export default function DesktopShell({
           </div>
         </div>
         <PushNotificationPrompt />
+        <NativePushRegistrar />
         <div className="flex-1 mf-scroll" style={{ overflowY: 'auto' }}>
           {children}
         </div>

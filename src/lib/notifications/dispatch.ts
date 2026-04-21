@@ -4,6 +4,7 @@ import type { NotificationType, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { publishToUser } from './sse-registry';
 import { sendPushToUser } from '@/lib/push';
+import { sendNativePushToUser } from '@/lib/nativePush';
 
 // The ONE authorized place to create a Notification row. All 14 existing
 // `prisma.notification.create` call sites get migrated through this helper in
@@ -204,15 +205,23 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
     }
 
     if (decision.push) {
-      // Fire-and-forget from the dispatch perspective so the caller's response
-      // returns promptly; errors inside `sendPushToUser` are already contained.
-      sendPushToUser(input.userId, {
+      const pushPayload = {
         title: input.title,
         body: input.body,
         url: input.actionUrl ?? '/',
         tag: input.type,
         data: { notificationId: created.id, type: input.type },
-      }).catch((e) => console.warn('[dispatchNotification] push send failed:', e));
+      };
+      // Fire-and-forget from the dispatch perspective so the caller's response
+      // returns promptly; errors inside each sender are already contained.
+      // Web-push (browsers) + native push (Capacitor iOS/Android) run in
+      // parallel — one user's laptop browser and phone both light up.
+      sendPushToUser(input.userId, pushPayload).catch((e) =>
+        console.warn('[dispatchNotification] web push failed:', e),
+      );
+      sendNativePushToUser(input.userId, pushPayload).catch((e) =>
+        console.warn('[dispatchNotification] native push failed:', e),
+      );
     }
   } catch (err) {
     // Swallow everything. A failed notification must NEVER break the caller's

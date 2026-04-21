@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useAssignedTrainer } from '@/lib/hooks/useAssignedTrainer';
+import NativePushRegistrar from '@/components/notifications/NativePushRegistrar';
 
 export type ClientDesktopKey =
   | 'today'
@@ -251,6 +252,7 @@ export default function ClientDesktopShell({
         <div className="flex-1 mf-scroll" style={{ overflowY: 'auto' }}>
           {children}
         </div>
+        <NativePushRegistrar />
       </main>
     </div>
   );

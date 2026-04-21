@@ -65,6 +65,7 @@ model User {
   sentMessages            Message[]               @relation("MessageSender")
   notifications           Notification[]
   pushSubscriptions       PushSubscription[]
+  devicePushTokens        DevicePushToken[]
   notificationPreference  NotificationPreference?
   nutritionPlans          NutritionPlan[]
   progressEntries         ProgressEntry[]
@@ -614,6 +615,33 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+// Per-user native device push tokens registered by the Capacitor app. One
+// row per (user × device). FCM tokens for Android come directly from the
+// Firebase SDK embedded via @capacitor/push-notifications. iOS tokens are
+// either raw APNS device tokens (if the app ships without Firebase iOS SDK)
+// or FCM tokens (if Firebase Messaging iOS SDK is added). The `platform`
+// column lets the server sender route correctly. Rows auto-delete on 404/
+// UNREGISTERED responses from the provider.
+model DevicePushToken {
+  id         String             @id @default(cuid())
+  userId     String
+  token      String             @unique
+  platform   DevicePushPlatform
+  appVersion String?
+  deviceName String?
+  lastSeenAt DateTime           @default(now())
+  createdAt  DateTime           @default(now())
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("device_push_tokens")
+}
+
+enum DevicePushPlatform {
+  IOS
+  ANDROID
 }
 
 // Per-user notification preferences. Each type-specific toggle gates both
