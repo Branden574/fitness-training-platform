@@ -168,13 +168,7 @@ export default function LibrarySearchClient() {
       )}
 
       {results.length > 0 && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 12,
-          }}
-        >
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {results.map((r) => {
             const key = r.externalId || r.name;
             const state = importStates[key] ?? 'idle';

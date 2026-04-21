@@ -135,13 +135,7 @@ export default function ExerciseCategoryFilterClient({
           IMPORT FROM THE LIBRARY.
         </div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 12,
-          }}
-        >
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((e) => {
             const muscles = muscleString(e.muscleGroups);
             const equip = equipString(e.equipment);

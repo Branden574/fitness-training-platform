@@ -166,14 +166,12 @@ export default function BillingClient({ initial }: Props) {
                 : "Pick a plan to get listed in the public trainer directory, or stay on the trial until it expires."}
             </div>
             <div
-              style={{
-                display: 'grid',
-                gap: 10,
-                marginTop: 16,
-                gridTemplateColumns: initial.hasSubscription
-                  ? '1fr'
-                  : 'repeat(2, 1fr)',
-              }}
+              className={
+                initial.hasSubscription
+                  ? 'grid gap-2.5 grid-cols-1'
+                  : 'grid gap-2.5 grid-cols-1 sm:grid-cols-2'
+              }
+              style={{ marginTop: 16 }}
             >
               {initial.hasSubscription ? (
                 <button

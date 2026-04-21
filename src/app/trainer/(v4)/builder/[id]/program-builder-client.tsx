@@ -338,20 +338,15 @@ export default function ProgramBuilderClient({
         </div>
       </div>
 
-      {/* Week grid + day editor */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 16 }}>
+      {/* Week grid + day editor. On mobile the day editor stacks under the
+          week grid; on md+ the editor is a sticky 360px column on the right. */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-[1fr_360px]">
         <div>
           <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
             WEEK {week.weekNumber}
             {week.name ? ` · ${week.name}` : ''}
           </div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              gap: 8,
-            }}
-          >
+          <div className="grid gap-2 grid-cols-2 md:grid-cols-7">
             {week.days.map((d, di) => {
               const isSel = selectedDayIdx === di;
               const isRest = d.sessionType.toLowerCase() === 'rest';
@@ -434,14 +429,13 @@ export default function ProgramBuilderClient({
           </div>
         </div>
 
-        {/* Day editor */}
+        {/* Day editor. Sticky at md+ so the editor stays in view while
+            scrolling the week grid; on mobile it stacks under the grid. */}
         <div
-          className="mf-card"
+          className="mf-card md:sticky md:top-[88px]"
           style={{
             padding: 16,
             alignSelf: 'start',
-            position: 'sticky',
-            top: 88,
           }}
         >
           {!day ? (
@@ -1160,7 +1154,7 @@ function MealPlanEditor({
           </label>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+        <div className="grid gap-2 grid-cols-2 md:grid-cols-4">
           <label style={{ display: 'block' }}>
             <FieldLabel>KCAL / DAY</FieldLabel>
             <input

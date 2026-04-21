@@ -200,11 +200,11 @@ export default async function TrainerNutritionPage({
         />
       }
     >
-      <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-        {/* Client rail */}
+      <div className="flex flex-col md:flex-row md:h-full md:overflow-hidden">
+        {/* Client rail — sidebar on desktop, scrollable strip on mobile */}
         <div
-          className="mf-s1 shrink-0 flex flex-col"
-          style={{ width: 280, borderRight: '1px solid var(--mf-hairline)' }}
+          className="mf-s1 shrink-0 flex flex-col w-full md:w-[280px] md:border-r md:max-h-none max-h-[240px]"
+          style={{ borderBottom: '1px solid var(--mf-hairline)', borderRightColor: 'var(--mf-hairline)' }}
         >
           <div
             style={{
@@ -404,7 +404,7 @@ export default async function TrainerNutritionPage({
                 {active.plan ? (
                   <>
                     {/* Targets row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+                    <div className="grid gap-3 grid-cols-2 md:grid-cols-4" style={{ marginBottom: 24 }}>
                       <StatCard
                         label="DAILY CALORIES"
                         value={active.plan.dailyCalorieTarget.toLocaleString()}

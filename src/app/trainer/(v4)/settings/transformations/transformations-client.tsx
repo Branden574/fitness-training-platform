@@ -107,7 +107,7 @@ function TransformationsList() {
           Agreement. You accept full responsibility per those terms. Uploads go to
           admin review before appearing on your public profile.
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
           <FileField
             label="BEFORE PHOTO"
             inputRef={beforeRef}
