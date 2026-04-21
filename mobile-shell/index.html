@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Martinez Fitness</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: #0A0A0B;
+        color: #F4F4F5;
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .brand {
+        padding: 24px;
+        max-width: 360px;
+      }
+      .mark {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 16px;
+        background: #FF4D1C;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin: 0 0 8px;
+      }
+      p {
+        font-size: 13px;
+        line-height: 1.5;
+        color: #A1A1A6;
+        margin: 0;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      .mark { animation: pulse 1.6s ease-in-out infinite; }
+    </style>
+  </head>
+  <body>
+    <!--
+      Capacitor shell fallback. In normal operation the app loads the live
+      web app (server.url in capacitor.config.ts); this page only renders if
+      the device is offline during first launch or the remote server is
+      unreachable. Kept intentionally minimal — no JS, no network calls.
+    -->
+    <div class="brand">
+      <div class="mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A0A0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m7 13-2 2 3 3 2-2" />
+          <path d="m17 11 2-2-3-3-2 2" />
+        </svg>
+      </div>
+      <h1>Martinez / Fitness</h1>
+      <p>Reconnecting… open the app again when you're back online.</p>
+    </div>
+  </body>
+</html>

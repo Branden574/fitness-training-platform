@@ -44,3 +44,14 @@ next-env.d.ts
 /design-handoff
 Martinez Fitness-handoff.zip
 v4-health-check.log
+
+# Capacitor — keep project scaffolding committed, ignore build artifacts
+/ios/App/Pods
+/ios/App/build
+/ios/DerivedData
+/ios/capacitor-cordova-ios-plugins
+/android/build
+/android/app/build
+/android/.gradle
+/android/local.properties
+/android/capacitor-cordova-android-plugins
