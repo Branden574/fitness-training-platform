@@ -17,6 +17,8 @@ interface TrainerProfile {
   acceptsInPerson: boolean;
   acceptsOnline: boolean;
   trainerIsPublic: boolean;
+  replyFromEmail: string | null;
+  replyFromName: string | null;
 }
 
 const TIERS: Array<{ value: string; label: string }> = [
@@ -47,16 +49,37 @@ function ProfileForm() {
 
   useEffect(() => {
     (async () => {
-      // Load initial profile by hitting ensure-identity (auto-creates Trainer row
-      // if needed) and /api/trainers/me/testimonials (just to bootstrap Trainer).
-      // Simplest: POST ensure-identity then GET something. Since there's no GET
-      // for full profile yet, we fetch the Trainer row via a lightweight endpoint.
-      // For now: render zero-state and save-back creates the row via PATCH.
+      // Load saved profile so the editor reflects what's already in the DB
+      // instead of showing a blank form every visit. Falls back to an empty
+      // editor on any failure — the first PATCH still seeds fields normally.
       try {
-        const res = await fetch('/api/trainers/me/agreement', { cache: 'no-store' });
-        if (!res.ok) return;
-      } finally {
-        // The profile page reads data lazily — PATCH seeds fields as trainer fills them.
+        const res = await fetch('/api/trainers/me/profile', {
+          cache: 'no-store',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setProfile({
+            photoUrl: data.photoUrl ?? null,
+            location: data.location ?? null,
+            instagramHandle: data.instagramHandle ?? null,
+            contactPhone: data.contactPhone ?? null,
+            bio: data.bio ?? null,
+            specialties: (data.specialties ?? []) as string[],
+            experience: typeof data.experience === 'number' ? data.experience : 0,
+            certifications: (data.certifications ?? []) as string[],
+            priceTier: data.priceTier ?? null,
+            hourlyRate: data.hourlyRate ?? null,
+            acceptsInPerson: !!data.acceptsInPerson,
+            acceptsOnline: !!data.acceptsOnline,
+            trainerIsPublic: !!data.trainerIsPublic,
+            replyFromEmail: data.replyFromEmail ?? null,
+            replyFromName: data.replyFromName ?? null,
+          });
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // fall through to empty state
       }
       setProfile({
         photoUrl: null,
@@ -72,6 +95,8 @@ function ProfileForm() {
         acceptsInPerson: false,
         acceptsOnline: false,
         trainerIsPublic: false,
+        replyFromEmail: null,
+        replyFromName: null,
       });
       setLoading(false);
     })();
@@ -169,6 +194,8 @@ function ProfileForm() {
           hourlyRate: profile.hourlyRate ?? undefined,
           acceptsInPerson: profile.acceptsInPerson,
           acceptsOnline: profile.acceptsOnline,
+          replyFromEmail: profile.replyFromEmail ?? null,
+          replyFromName: profile.replyFromName ?? null,
         }),
       });
       if (!res.ok) {
@@ -328,6 +355,33 @@ function ProfileForm() {
           Leave blank to hide the FASTEST REPLY card. Applicants see this
           number as a one-tap SMS link on your /apply page.
         </div>
+      </Section>
+
+      <Section title="REPLY-TO EMAIL (optional)">
+        <input
+          type="email"
+          className="mf-input"
+          placeholder="coach@yourdomain.com"
+          value={profile.replyFromEmail ?? ''}
+          onChange={(e) => update('replyFromEmail', e.target.value)}
+          maxLength={200}
+        />
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
+          When a new applicant fills your /apply form, your notification
+          email has Reply-To set to this address so hitting Reply sends to
+          you directly. Leave blank to use your account email.
+        </div>
+      </Section>
+
+      <Section title="REPLY-FROM NAME (optional)">
+        <input
+          type="text"
+          className="mf-input"
+          placeholder="Coach John · Example Fitness"
+          value={profile.replyFromName ?? ''}
+          onChange={(e) => update('replyFromName', e.target.value)}
+          maxLength={120}
+        />
       </Section>
 
       <Section title="BIO (max 500 chars)">
