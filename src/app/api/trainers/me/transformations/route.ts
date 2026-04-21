@@ -6,12 +6,7 @@ import { ensureTrainerRow } from '@/lib/trainerRow';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { nanoid } from 'nanoid';
-
-const MIME_TO_EXT: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-};
+import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 
 async function savePhoto(
   file: File,
@@ -19,9 +14,12 @@ async function savePhoto(
   id: string,
   phase: 'before' | 'after',
 ): Promise<string> {
-  const ext = MIME_TO_EXT[file.type];
-  if (!ext) throw new Error('invalid_type');
   if (file.size > 5 * 1024 * 1024) throw new Error('too_large');
+  // Sniff magic bytes — client-supplied Content-Type is untrusted.
+  const bytes = await file.arrayBuffer();
+  const kind = sniffImage(bytes);
+  if (!kind) throw new Error('invalid_type');
+  const { ext } = IMAGE_EXT[kind];
   const dir = path.join(
     process.cwd(),
     'public',
@@ -32,7 +30,7 @@ async function savePhoto(
   await mkdir(dir, { recursive: true });
   const filename = `${id}-${phase}.${ext}`;
   const filepath = path.join(dir, filename);
-  await writeFile(filepath, Buffer.from(await file.arrayBuffer()));
+  await writeFile(filepath, Buffer.from(bytes));
   return `/uploads/transformations/${trainerId}/${filename}`;
 }
 

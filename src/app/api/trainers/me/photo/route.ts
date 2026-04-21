@@ -5,12 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { ensureTrainerRow } from '@/lib/trainerRow';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-
-const MIME_TO_EXT: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-};
+import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -26,14 +21,20 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
-  if (!Object.keys(MIME_TO_EXT).includes(file.type)) {
-    return NextResponse.json(
-      { error: 'Invalid file type (must be JPEG, PNG, or WebP)' },
-      { status: 400 },
-    );
-  }
   if (file.size > 5 * 1024 * 1024) {
     return NextResponse.json({ error: 'File too large (max 5 MB)' }, { status: 400 });
+  }
+
+  // Sniff magic bytes — client-supplied Content-Type is untrusted. Blocks
+  // SVG + arbitrary bytes being written to public/uploads with an image
+  // content-type.
+  const bytes = await file.arrayBuffer();
+  const kind = sniffImage(bytes);
+  if (!kind) {
+    return NextResponse.json(
+      { error: 'File must be a real JPEG, PNG, GIF, or WebP image.' },
+      { status: 400 },
+    );
   }
 
   await ensureTrainerRow(session.user.id, prisma);
@@ -41,10 +42,9 @@ export async function POST(request: Request) {
   const dir = path.join(process.cwd(), 'public', 'uploads', 'trainers', session.user.id);
   await mkdir(dir, { recursive: true });
 
-  const ext = MIME_TO_EXT[file.type] ?? 'jpg';
+  const { ext } = IMAGE_EXT[kind];
   const filename = `profile-${Date.now()}.${ext}`;
   const filepath = path.join(dir, filename);
-  const bytes = await file.arrayBuffer();
   await writeFile(filepath, Buffer.from(bytes));
 
   const photoUrl = `/uploads/trainers/${session.user.id}/${filename}`;

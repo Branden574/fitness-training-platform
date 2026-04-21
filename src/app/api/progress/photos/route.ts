@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 
 // Upload progress photos for a specific date
 export async function POST(request: Request) {
@@ -23,13 +24,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No photos provided' }, { status: 400 });
     }
 
-    // Validate files
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    // Size gate only — real validation is magic-byte sniffing below. Client
+    // Content-Type is spoofable in multipart uploads, so checking file.type
+    // alone would let an attacker store arbitrary bytes as image/jpeg.
     const maxSize = 10 * 1024 * 1024; // 10MB
     for (const file of files) {
-      if (!allowedTypes.includes(file.type)) {
-        return NextResponse.json({ error: `Invalid file type: ${file.type}. Use JPEG, PNG, or WebP.` }, { status: 400 });
-      }
       if (file.size > maxSize) {
         return NextResponse.json({ error: 'File too large. Max 10MB per photo.' }, { status: 400 });
       }
@@ -39,21 +38,22 @@ export async function POST(request: Request) {
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'progress', session.user.id);
     await mkdir(uploadsDir, { recursive: true });
 
-    // Derive extension from the validated MIME type — never from user-controlled
-    // file.name (would let shell.php be stored with the attacker's suffix).
-    const mimeToExt: Record<string, string> = {
-      'image/jpeg': 'jpg',
-      'image/png': 'png',
-      'image/webp': 'webp',
-    };
-
-    // Save files and collect URLs
+    // Save files — sniff magic bytes first, reject anything that isn't a
+    // real image, derive extension from the sniffed kind (never from the
+    // user-controlled file.name or file.type).
     const photoUrls: string[] = [];
     for (const file of files) {
-      const ext = mimeToExt[file.type] ?? 'jpg';
+      const bytes = await file.arrayBuffer();
+      const kind = sniffImage(bytes);
+      if (!kind) {
+        return NextResponse.json(
+          { error: 'Each file must be a real JPEG, PNG, GIF, or WebP image.' },
+          { status: 400 },
+        );
+      }
+      const { ext } = IMAGE_EXT[kind];
       const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filepath = path.join(uploadsDir, filename);
-      const bytes = await file.arrayBuffer();
       await writeFile(filepath, Buffer.from(bytes));
       photoUrls.push(`/uploads/progress/${session.user.id}/${filename}`);
     }

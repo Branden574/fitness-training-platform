@@ -174,15 +174,24 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    
-    const where = status ? { status: status as ContactStatus } : {};
-    
+
+    // BOLA fix: trainers can only see submissions directed at them. Admin
+    // sees everything for triage + moderation. Without this scope a trainer
+    // could enumerate every applicant's PII across the whole platform.
+    const scope =
+      session.user.role === 'ADMIN'
+        ? {}
+        : { trainerId: session.user.id };
+    const where = status
+      ? { ...scope, status: status as ContactStatus }
+      : scope;
+
     const submissions = await prisma.contactSubmission.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
-    
+
     return NextResponse.json(submissions);
     
   } catch (error) {
@@ -207,7 +216,7 @@ export async function PATCH(request: Request) {
 
     const body = await request.json();
     const { id, status } = body;
-    
+
     if (!id || !status) {
       return NextResponse.json(
         { message: 'Submission ID and status are required' },
@@ -215,7 +224,26 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Update the contact submission status
+    // BOLA fix: verify the submission belongs to this trainer (or caller is
+    // admin) before letting them mutate it. Previously any TRAINER could
+    // change the status of any submission on the platform.
+    const existing = await prisma.contactSubmission.findUnique({
+      where: { id },
+      select: { id: true, trainerId: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+    if (
+      session.user.role !== 'ADMIN' &&
+      existing.trainerId !== session.user.id
+    ) {
+      return NextResponse.json(
+        { message: 'Not found' },
+        { status: 404 }, // 404 not 403 — don't leak existence of other trainers' submissions.
+      );
+    }
+
     const updatedSubmission = await prisma.contactSubmission.update({
       where: { id },
       data: { status: status as ContactStatus }

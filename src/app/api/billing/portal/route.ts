@@ -28,10 +28,9 @@ export async function POST(request: NextRequest) {
   }
 
   const stripe = getStripe()!;
-  const origin =
-    request.headers.get('origin') ??
-    process.env.NEXTAUTH_URL ??
-    'http://localhost:3000';
+  // Authoritative origin only — never trust the request Origin header for
+  // Stripe redirects.
+  const origin = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
 
   const portal = await stripe.billingPortal.sessions.create({
     customer: trainer.stripeCustomerId,

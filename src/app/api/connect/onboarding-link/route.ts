@@ -40,10 +40,9 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const origin =
-    request.headers.get('origin') ??
-    process.env.NEXTAUTH_URL ??
-    'http://localhost:3000';
+  // Authoritative origin only — never trust the request Origin header for
+  // Stripe redirects (spoofable by authenticated callers).
+  const origin = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
 
   const link = await stripe.accountLinks.create({
     account: accountId,

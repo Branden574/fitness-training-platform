@@ -187,8 +187,13 @@ export const authOptions: NextAuthOptions = {
             session.user.role = token.role || 'CLIENT';
           }
         } catch (error) {
+          // DB outage: never escalate. A user whose role was recently
+          // downgraded (e.g. trainer suspended) would otherwise keep the
+          // old role from their JWT until the DB recovers. Force CLIENT
+          // (least privilege) and log — admin routes + trainer routes
+          // both re-check role server-side, so this is safe to downgrade.
           console.error('Error fetching user role during session:', error);
-          session.user.role = token.role || 'CLIENT';
+          session.user.role = 'CLIENT';
         }
       }
       return session;

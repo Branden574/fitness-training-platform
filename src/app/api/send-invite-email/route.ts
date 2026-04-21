@@ -173,8 +173,19 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('❌ Failed to send email:', error);
+      // Return only the message string — the raw Resend error object can
+      // include headers / internal SDK state that shouldn't be echoed to
+      // the caller. Full object stays in server logs.
       return NextResponse.json(
-        { error: 'Failed to send email', details: error },
+        {
+          error: 'Failed to send email',
+          details:
+            error instanceof Error
+              ? error.message
+              : typeof error === 'object' && error && 'message' in error
+                ? String((error as { message: unknown }).message)
+                : 'Unknown error',
+        },
         { status: 500 }
       );
     }

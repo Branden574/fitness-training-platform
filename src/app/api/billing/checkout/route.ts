@@ -79,10 +79,11 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const origin =
-    request.headers.get('origin') ??
-    process.env.NEXTAUTH_URL ??
-    'http://localhost:3000';
+  // Use the server's configured NEXTAUTH_URL as the authoritative origin for
+  // Stripe redirect URLs — NEVER the request's Origin header, which an
+  // authenticated caller can spoof to redirect the trainer through Stripe
+  // to an attacker-controlled domain after checkout.
+  const origin = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
 
   const checkout = await stripe.checkout.sessions.create({
     mode: 'subscription',

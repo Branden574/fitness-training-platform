@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 
 // Get current user's profile information
 export async function GET() {
@@ -90,15 +91,6 @@ export async function PUT(request: Request) {
         );
       }
 
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      if (!allowedTypes.includes(file.type)) {
-        return NextResponse.json(
-          { message: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' },
-          { status: 400 }
-        );
-      }
-
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         return NextResponse.json(
@@ -107,25 +99,26 @@ export async function PUT(request: Request) {
         );
       }
 
+      // Sniff magic bytes — client-supplied Content-Type is untrusted.
+      // Refuses SVG and anything that's not a real image. Extension is
+      // derived from the sniffed kind, never from file.name/type.
+      const bytes = await file.arrayBuffer();
+      const kind = sniffImage(bytes);
+      if (!kind) {
+        return NextResponse.json(
+          { message: 'File must be a real JPEG, PNG, GIF, or WebP image.' },
+          { status: 400 }
+        );
+      }
+
       // Create uploads directory
       const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profiles');
       await mkdir(uploadsDir, { recursive: true });
 
-      // Derive extension from the validated MIME type — never trust file.name,
-      // which is user-controlled (e.g. "shell.php.jpg" would otherwise extract .jpg
-      // while leaving a server-executable suffix in the stored filename).
-      const mimeToExt: Record<string, string> = {
-        'image/jpeg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp',
-        'image/gif': 'gif',
-      };
-      const ext = mimeToExt[file.type] ?? 'jpg';
+      const { ext } = IMAGE_EXT[kind];
       const filename = `${session.user.id}-${Date.now()}.${ext}`;
       const filepath = path.join(uploadsDir, filename);
 
-      // Write file
-      const bytes = await file.arrayBuffer();
       await writeFile(filepath, Buffer.from(bytes));
 
       // Update user image in database
