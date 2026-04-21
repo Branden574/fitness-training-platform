@@ -185,6 +185,91 @@ export async function sendPRAchievedEmail(args: {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// Program assigned (coach assigns a program template to a client)
+// ──────────────────────────────────────────────────────────────────
+export async function sendProgramAssignedEmail(args: {
+  toEmail: string;
+  toName: string | null;
+  trainerName: string | null;
+  programName: string;
+  durationWks: number;
+  startDate: Date;
+  mealPlans: Array<{
+    name: string;
+    startWeek: number;
+    endWeek: number | null;
+    dailyCalorieTarget: number;
+    dailyProteinTarget: number;
+    dailyCarbTarget: number;
+    dailyFatTarget: number;
+  }>;
+}): Promise<void> {
+  const firstName = (args.toName ?? 'there').split(' ')[0]!;
+  const coach = args.trainerName ?? 'Your coach';
+  const startLabel = args.startDate.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  const ctaHref = `${baseUrl()}/client`;
+
+  const mealPlansHtml =
+    args.mealPlans.length === 0
+      ? ''
+      : `
+        <div style="margin:20px 0 4px 0;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.15em;color:#6E6E76;text-transform:uppercase;">
+          Nutrition · ${args.mealPlans.length} plan${args.mealPlans.length === 1 ? '' : 's'}
+        </div>
+        ${args.mealPlans
+          .map((mp) => {
+            const range =
+              mp.endWeek != null
+                ? `WK ${String(mp.startWeek).padStart(2, '0')}–${String(mp.endWeek).padStart(2, '0')}`
+                : mp.startWeek > 1
+                  ? `WK ${String(mp.startWeek).padStart(2, '0')}–END`
+                  : 'WHOLE PROGRAM';
+            return `
+              <div style="padding:12px 14px;background:#141416;border:1px solid #232327;border-radius:6px;margin-top:8px;">
+                <div style="font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.1em;color:#6E6E76;margin-bottom:4px;">
+                  ${escapeHtml(range)}
+                </div>
+                <div style="font-weight:600;font-size:14px;margin-bottom:6px;">
+                  ${escapeHtml(mp.name)}
+                </div>
+                <div style="font-family:'Courier New',monospace;font-size:11px;color:#A1A1A6;letter-spacing:0.05em;">
+                  ${mp.dailyCalorieTarget.toLocaleString()} KCAL · ${mp.dailyProteinTarget}P · ${mp.dailyCarbTarget}C · ${mp.dailyFatTarget}F
+                </div>
+              </div>
+            `;
+          })
+          .join('')}
+      `;
+
+  await safeSend({
+    to: args.toEmail,
+    subject: `${coach} assigned you a new program — ${args.programName}`,
+    tag: 'program_assigned',
+    html: renderShell({
+      eyebrow: 'NEW PROGRAM',
+      title: `${coach} assigned you ${args.programName}.`,
+      bodyHtml: `
+        <p style="margin:0 0 16px 0;">Hey ${escapeHtml(firstName)},</p>
+        <div style="padding:16px;background:#141416;border:1px solid #232327;border-radius:6px;margin:16px 0;">
+          <div style="font-weight:700;font-size:16px;margin-bottom:6px;">${escapeHtml(args.programName)}</div>
+          <div style="font-family:'Courier New',monospace;font-size:11px;color:#6E6E76;letter-spacing:0.1em;text-transform:uppercase;">
+            ${args.durationWks} WEEKS · STARTS ${escapeHtml(startLabel.toUpperCase())}
+          </div>
+        </div>
+        ${mealPlansHtml}
+        <p style="margin:20px 0 0 0;">Open the app when you're ready — your week 1 is waiting.</p>
+      `,
+      ctaLabel: 'Open program',
+      ctaHref,
+    }),
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────
 // Appointment status change (approved / denied / cancelled)
 // ──────────────────────────────────────────────────────────────────
 export type AppointmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
