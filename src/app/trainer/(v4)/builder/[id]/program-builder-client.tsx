@@ -2,7 +2,7 @@
 
 import { useState, useMemo, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, Users, Trash2, Loader2, Dumbbell, UtensilsCrossed, Edit3 } from 'lucide-react';
+import { Plus, X, Users, Trash2, Loader2, Dumbbell, UtensilsCrossed, Edit3, RefreshCw } from 'lucide-react';
 import { Avatar, Btn, Chip } from '@/components/ui/mf';
 
 type DayOfWeek = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
@@ -289,6 +289,7 @@ export default function ProgramBuilderClient({
           programId={programId}
           durationWks={durationWks}
           mealPlans={mealPlans}
+          assignmentCount={assignmentCount}
           editingPlan={editingPlan}
           setEditingPlan={setEditingPlan}
           onCreated={(plan) => setMealPlans((prev) => [...prev, plan])}
@@ -712,6 +713,7 @@ function NutritionPanel({
   programId,
   durationWks,
   mealPlans,
+  assignmentCount,
   editingPlan,
   setEditingPlan,
   onCreated,
@@ -721,12 +723,47 @@ function NutritionPanel({
   programId: string;
   durationWks: number;
   mealPlans: ProgramMealPlan[];
+  assignmentCount: number;
   editingPlan: ProgramMealPlan | 'new' | null;
   setEditingPlan: (p: ProgramMealPlan | 'new' | null) => void;
   onCreated: (plan: ProgramMealPlan) => void;
   onUpdated: (plan: ProgramMealPlan) => void;
   onDeleted: (planId: string) => void;
 }) {
+  const [republishingId, setRepublishingId] = useState<string | null>(null);
+  const [republishToast, setRepublishToast] = useState<string | null>(null);
+
+  async function republish(planId: string, planName: string) {
+    if (assignmentCount === 0) return;
+    if (
+      !confirm(
+        `Push the latest "${planName}" to every active client on this program? Their current plan for this template will be overwritten.`,
+      )
+    ) {
+      return;
+    }
+    setRepublishingId(planId);
+    setRepublishToast(null);
+    try {
+      const res = await fetch(
+        `/api/programs/${programId}/meal-plans/${planId}/republish`,
+        { method: 'POST' },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRepublishToast(data.error ?? 'Republish failed.');
+        return;
+      }
+      setRepublishToast(
+        `Updated ${data.updated} of ${data.eligible} active client${data.eligible === 1 ? '' : 's'}.`,
+      );
+    } catch {
+      setRepublishToast('Network error while republishing.');
+    } finally {
+      setRepublishingId(null);
+    }
+  }
+
   return (
     <>
       <div
@@ -746,6 +783,22 @@ function NutritionPanel({
           New meal plan
         </Btn>
       </div>
+
+      {republishToast && (
+        <div
+          className="mf-chip"
+          style={{
+            display: 'block',
+            padding: '8px 12px',
+            marginBottom: 12,
+            height: 'auto',
+            background: 'var(--mf-surface-2)',
+            borderColor: 'var(--mf-accent)',
+          }}
+        >
+          {republishToast}
+        </div>
+      )}
 
       {mealPlans.length === 0 ? (
         <div
@@ -824,6 +877,16 @@ function NutritionPanel({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {assignmentCount > 0 && (
+                    <Btn
+                      icon={republishingId === p.id ? Loader2 : RefreshCw}
+                      onClick={() => republish(p.id, p.name)}
+                      disabled={republishingId !== null}
+                      title={`Push this plan's latest values to active clients (${assignmentCount})`}
+                    >
+                      {republishingId === p.id ? 'Pushing…' : `Republish · ${assignmentCount}`}
+                    </Btn>
+                  )}
                   <Btn icon={Edit3} onClick={() => setEditingPlan(p)}>
                     Edit
                   </Btn>

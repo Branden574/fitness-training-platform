@@ -481,7 +481,7 @@ model MealItem {
 }
 
 model MealPlan {
-  id                 String   @id @default(cuid())
+  id                 String           @id @default(cuid())
   name               String
   description        String?
   userId             String
@@ -492,14 +492,22 @@ model MealPlan {
   dailyProteinTarget Float
   dailyCarbTarget    Float
   dailyFatTarget     Float
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  trainer            User     @relation("TrainerMealPlans", fields: [trainerId], references: [id])
-  user               User     @relation(fields: [userId], references: [id])
+  // Set when this MealPlan was cloned from a ProgramMealPlan template via
+  // program assignment. Nullable for ad-hoc plans (existing per-client flow)
+  // and so deleting a template via SetNull doesn't cascade-destroy client plans.
+  // Used by the /republish endpoint to target exactly the clones that came
+  // from a given template.
+  sourceTemplateId   String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  trainer            User             @relation("TrainerMealPlans", fields: [trainerId], references: [id])
+  user               User             @relation(fields: [userId], references: [id])
+  sourceTemplate     ProgramMealPlan? @relation(fields: [sourceTemplateId], references: [id], onDelete: SetNull)
   meals              Meal[]
 
   @@index([userId])
   @@index([trainerId])
+  @@index([sourceTemplateId])
   @@map("meal_plans")
 }
 
@@ -863,6 +871,7 @@ model ProgramMealPlan {
   updatedAt          DateTime      @updatedAt
   program            Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
   meals              ProgramMeal[]
+  clones             MealPlan[]
 
   @@index([programId])
   @@map("program_meal_plans")

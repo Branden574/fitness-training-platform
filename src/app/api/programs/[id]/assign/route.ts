@@ -131,6 +131,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           dailyProteinTarget: tpl.dailyProteinTarget,
           dailyCarbTarget: tpl.dailyCarbTarget,
           dailyFatTarget: tpl.dailyFatTarget,
+          sourceTemplateId: tpl.id,
         },
         select: { id: true },
       });
