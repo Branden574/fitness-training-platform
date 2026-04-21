@@ -58,14 +58,33 @@ interface SearchResult {
   barcode?: string | null;
 }
 
-export default function FoodClient({ initial }: { initial: InitialData }) {
+function parseLocalDate(yyyyMmDd: string): Date {
+  const [y, m, d] = yyyyMmDd.split('-').map(Number);
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+export default function FoodClient({
+  initial,
+  viewDate,
+  prevDate,
+  todayDate,
+}: {
+  initial: InitialData;
+  viewDate: string;
+  prevDate: string;
+  todayDate: string;
+}) {
+  const router = useRouter();
   const [drawerMeal, setDrawerMeal] = useState<MealType | null>(null);
+  const isViewingToday = viewDate === todayDate;
 
   const proteinPct = (initial.totals.protein / initial.target.protein) * 100;
   const carbsPct = (initial.totals.carbs / initial.target.carbs) * 100;
   const fatPct = (initial.totals.fat / initial.target.fat) * 100;
 
-  const todayLabel = new Date()
+  const dayLabel = parseLocalDate(viewDate)
     .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     .toUpperCase();
 
@@ -83,21 +102,70 @@ export default function FoodClient({ initial }: { initial: InitialData }) {
           className="mf-btn mf-btn-ghost"
           style={{ height: 32, width: 32, padding: 0 }}
           aria-label="Previous day"
+          onClick={() => router.push(`/client/food?date=${prevDate}`)}
         >
           <ChevronLeft size={16} />
         </button>
         <div className="text-center">
-          <div className="mf-eyebrow">{todayLabel}</div>
-          <div style={{ fontSize: 12, fontWeight: 600 }}>FOOD LOG</div>
+          <div className="mf-eyebrow">{dayLabel}</div>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>
+            {isViewingToday ? 'FOOD LOG' : 'FOOD LOG · HISTORY'}
+          </div>
         </div>
-        <button
+        <label
           className="mf-btn mf-btn-ghost"
-          style={{ height: 32, width: 32, padding: 0 }}
+          style={{
+            height: 32,
+            width: 32,
+            padding: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            position: 'relative',
+          }}
           aria-label="Pick date"
         >
           <Calendar size={16} />
-        </button>
+          <input
+            type="date"
+            value={viewDate}
+            max={todayDate}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (next) router.push(`/client/food?date=${next}`);
+            }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: 0,
+              cursor: 'pointer',
+            }}
+          />
+        </label>
       </div>
+      {!isViewingToday && (
+        <button
+          type="button"
+          onClick={() => router.push(`/client/food?date=${todayDate}`)}
+          className="mf-font-mono"
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '6px 16px',
+            background: 'var(--mf-surface-2)',
+            border: 'none',
+            borderBottom: '1px solid var(--mf-hairline)',
+            color: 'var(--mf-accent)',
+            fontSize: 10,
+            letterSpacing: '0.15em',
+            textAlign: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          ← JUMP BACK TO TODAY
+        </button>
+      )}
 
       {/* Hero: cal ring + macros */}
       <div
@@ -331,13 +399,25 @@ export default function FoodClient({ initial }: { initial: InitialData }) {
 
       {/* Drawer */}
       {drawerMeal && (
-        <LogFoodDrawer meal={drawerMeal} onClose={() => setDrawerMeal(null)} />
+        <LogFoodDrawer
+          meal={drawerMeal}
+          viewDate={viewDate}
+          onClose={() => setDrawerMeal(null)}
+        />
       )}
     </main>
   );
 }
 
-function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void }) {
+function LogFoodDrawer({
+  meal,
+  viewDate,
+  onClose,
+}: {
+  meal: MealType;
+  viewDate: string;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -380,7 +460,6 @@ function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void 
     if (picked.length === 0) return;
     setSubmitting(true);
     setError(null);
-    const dateStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
     try {
       for (const it of picked) {
         const res = await fetch('/api/food-entries', {
@@ -395,7 +474,7 @@ function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void 
             carbs: it.carbs,
             fat: it.fat,
             mealType: meal,
-            date: dateStr,
+            date: viewDate,
           }),
         });
         if (!res.ok) throw new Error('Could not save entry');
@@ -689,8 +768,8 @@ function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void 
       {scannerOpen && (
         <BarcodeScanner
           onResult={async (product) => {
-            // Auto-log scanned product as a food entry for this meal
-            const dateStr = new Date().toLocaleDateString('en-CA');
+            // Auto-log scanned product as a food entry for this meal on the
+            // currently-viewed date (mobile can now browse history).
             try {
               await fetch('/api/food-entries', {
                 method: 'POST',
@@ -704,7 +783,7 @@ function LogFoodDrawer({ meal, onClose }: { meal: MealType; onClose: () => void 
                   carbs: product.carbs,
                   fat: product.fat,
                   mealType: meal,
-                  date: dateStr,
+                  date: viewDate,
                 }),
               });
               setScannerOpen(false);

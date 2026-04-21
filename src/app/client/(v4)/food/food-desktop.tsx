@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Loader2, MoreHorizontal, Camera, Copy, FolderOpen, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, Search, Loader2, MoreHorizontal, Camera, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import CopyYesterdayClient from './copy-yesterday-client';
+import MealPlansDrawerClient from './meal-plans-drawer-client';
 import { Btn, Chip, ClientDesktopShell, SrcPill, type FoodSource } from '@/components/ui/mf';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import type { ClientContext } from '@/lib/client-data';
@@ -287,12 +289,13 @@ export default function FoodDesktop({
               </Link>
             )}
             <Chip>{`${Math.round(initial.totals.calories)} / ${initial.target.calories} KCAL`}</Chip>
-            <Btn icon={Copy} disabled>
-              Copy yesterday
-            </Btn>
-            <Btn icon={FolderOpen} disabled>
-              Meal plans
-            </Btn>
+            <CopyYesterdayClient
+              viewDate={viewDate}
+              hasEntries={Object.values(initial.grouped).some(
+                (arr) => arr.length > 0,
+              )}
+            />
+            <MealPlansDrawerClient />
           </>
         }
       >

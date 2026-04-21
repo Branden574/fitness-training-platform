@@ -131,7 +131,12 @@ export default async function ClientFoodPage({
 
   return (
     <>
-      <FoodClient initial={data} />
+      <FoodClient
+        initial={data}
+        viewDate={dateStr}
+        prevDate={toLocalDateStr(prevDate)}
+        todayDate={todayStr}
+      />
       <FoodDesktop
         ctx={ctx}
         initial={data}
