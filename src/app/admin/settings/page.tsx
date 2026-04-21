@@ -1,6 +1,7 @@
 import { requireAdminSession } from '@/lib/admin-data';
 import { DesktopShell } from '@/components/ui/mf';
 import ChangePasswordClient from './change-password-client';
+import NotificationPreferences from '@/components/notifications/NotificationPreferences';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,7 @@ export default async function AdminSettingsPage() {
           </div>
           <ChangePasswordClient />
         </section>
+        <NotificationPreferences />
       </div>
     </DesktopShell>
   );

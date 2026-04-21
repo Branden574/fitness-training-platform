@@ -3,6 +3,7 @@ import { ChevronRight, User, Lock, Image as ImageIcon, MessageSquare, Sparkles }
 import { requireTrainerSession } from '@/lib/trainer-data';
 import { DesktopShell } from '@/components/ui/mf';
 import SharingPanelClient from './sharing-panel-client';
+import NotificationPreferences from '@/components/notifications/NotificationPreferences';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,14 +61,18 @@ export default async function TrainerSettingsPage() {
 
         <SharingPanelClient />
 
+        <div style={{ marginTop: 32 }}>
+          <NotificationPreferences />
+        </div>
+
         <div
           className="mf-card"
           style={{ padding: 24, marginTop: 24, borderStyle: 'dashed' }}
         >
           <div className="mf-eyebrow" style={{ marginBottom: 8 }}>COMING</div>
           <div className="mf-fg-dim" style={{ fontSize: 13, lineHeight: 1.5 }}>
-            Coach-side preferences (default session times, availability, auto-reply templates,
-            notification routing) land in a future phase. For now, essentials live in Account above.
+            Coach-side preferences (default session times, availability, auto-reply templates)
+            land in a future phase. For now, essentials live above.
           </div>
         </div>
       </div>

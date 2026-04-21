@@ -2,6 +2,7 @@ import { requireClientSession, getClientContext } from '@/lib/client-data';
 import { prisma } from '@/lib/prisma';
 import { ClientDesktopShell } from '@/components/ui/mf';
 import SettingsClient from './settings-client';
+import NotificationPreferences from '@/components/notifications/NotificationPreferences';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,9 @@ export default async function ClientSettingsPage() {
           email={user.email}
           trainerName={ctx.trainer?.name ?? null}
         />
+        <div style={{ marginTop: 24 }}>
+          <NotificationPreferences />
+        </div>
       </main>
 
       {/* Desktop — full ClientDesktopShell wrap */}
@@ -74,6 +78,9 @@ export default async function ClientSettingsPage() {
               email={user.email}
               trainerName={ctx.trainer?.name ?? null}
             />
+            <div style={{ marginTop: 32 }}>
+              <NotificationPreferences />
+            </div>
           </div>
         </ClientDesktopShell>
       </div>
