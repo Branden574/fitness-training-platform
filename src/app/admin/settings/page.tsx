@@ -14,7 +14,16 @@ export default async function AdminSettingsPage() {
       title="Settings"
       breadcrumbs="ADMIN / SETTINGS"
     >
-      <div style={{ display: 'grid', gap: 24, maxWidth: 560 }}>
+      <div
+        style={{
+          display: 'grid',
+          gap: 24,
+          maxWidth: 560,
+          padding: '24px 20px 80px',
+          margin: '0 auto',
+          width: '100%',
+        }}
+      >
         <section>
           <div className="mf-eyebrow" style={{ marginBottom: 12 }}>
             ACCOUNT · PASSWORD

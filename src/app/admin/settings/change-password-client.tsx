@@ -64,10 +64,10 @@ export default function ChangePasswordClient() {
 
   const fieldStyle: React.CSSProperties = {
     width: '100%',
-    background: '#0E0E10',
-    border: '1px solid #1F1F22',
+    background: 'var(--mf-surface-2)',
+    border: '1px solid var(--mf-hairline)',
     borderRadius: 4,
-    color: '#F4F4F5',
+    color: 'var(--mf-fg)',
     padding: '10px 36px 10px 12px',
     fontSize: 13,
     fontFamily: 'var(--font-mf-sans), sans-serif',
@@ -80,7 +80,7 @@ export default function ChangePasswordClient() {
     transform: 'translateY(-50%)',
     background: 'transparent',
     border: 'none',
-    color: '#86868B',
+    color: 'var(--mf-fg-mute)',
     cursor: 'pointer',
     padding: 4,
     display: 'flex',
@@ -250,17 +250,13 @@ export default function ChangePasswordClient() {
       <button
         type="submit"
         disabled={loading}
+        className="mf-btn mf-btn-primary"
         style={{
           marginTop: 6,
-          height: 38,
-          background: loading ? '#1F1F22' : '#FF4D1C',
-          color: loading ? '#86868B' : '#0A0A0B',
+          height: 44,
           fontFamily: 'var(--font-mf-mono), monospace',
           fontSize: 11,
           letterSpacing: '.18em',
-          border: 'none',
-          borderRadius: 4,
-          cursor: loading ? 'not-allowed' : 'pointer',
           fontWeight: 700,
           width: '100%',
         }}
