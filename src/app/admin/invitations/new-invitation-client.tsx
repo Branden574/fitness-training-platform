@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation';
 import { Plus, X, Check, Copy, Loader2, Mail } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
 
+type InviteRole = 'CLIENT' | 'TRAINER' | 'ADMIN';
+
 export default function NewInvitationClient() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<InviteRole>('CLIENT');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState<{ code: string; email: string } | null>(null);
+  const [sent, setSent] = useState<{ code: string; email: string; role: InviteRole } | null>(null);
 
   async function handleCreate() {
     if (!email.trim()) {
@@ -28,6 +31,7 @@ export default function NewInvitationClient() {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           phone: phone.trim() || undefined,
+          role,
         }),
       });
       const data = await res.json();
@@ -38,9 +42,10 @@ export default function NewInvitationClient() {
       }
       // POST returns { invitation: { code, ... } } OR the duplicate branch returns { code }
       const code = data?.invitation?.code ?? data?.code;
-      setSent({ code, email: email.trim() });
+      setSent({ code, email: email.trim(), role });
       setEmail('');
       setPhone('');
+      setRole('CLIENT');
       setSubmitting(false);
       router.refresh();
     } catch (e) {
@@ -114,7 +119,7 @@ export default function NewInvitationClient() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-            <label className="block" style={{ marginBottom: 16 }}>
+            <label className="block" style={{ marginBottom: 12 }}>
               <div className="mf-eyebrow" style={{ marginBottom: 6 }}>PHONE · OPTIONAL</div>
               <input
                 className="mf-input"
@@ -124,6 +129,42 @@ export default function NewInvitationClient() {
                 onChange={(e) => setPhone(e.target.value)}
               />
             </label>
+            <div className="block" style={{ marginBottom: 16 }}>
+              <div className="mf-eyebrow" style={{ marginBottom: 6 }}>ROLE</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {(['CLIENT', 'TRAINER', 'ADMIN'] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className="mf-btn"
+                    style={{
+                      flex: 1,
+                      height: 36,
+                      fontSize: 12,
+                      background:
+                        role === r ? 'var(--mf-accent)' : undefined,
+                      color: role === r ? '#0A0A0B' : undefined,
+                      borderColor:
+                        role === r ? 'var(--mf-accent)' : undefined,
+                    }}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <div
+                className="mf-fg-dim"
+                style={{ fontSize: 11, marginTop: 6 }}
+              >
+                {role === 'CLIENT' &&
+                  'Standard invitation — new user joins as a client of the inviting trainer.'}
+                {role === 'TRAINER' &&
+                  'Trainer invitation — new user joins as a coach with their own Trainer row, slug, and referral code auto-generated.'}
+                {role === 'ADMIN' &&
+                  'Admin invitation — full platform access. Use sparingly.'}
+              </div>
+            </div>
             {error && (
               <div
                 className="mf-chip mf-chip-bad"
@@ -161,7 +202,7 @@ export default function NewInvitationClient() {
               >
                 <Check size={14} />
                 <span className="mf-font-mono" style={{ fontSize: 10, letterSpacing: '0.1em' }}>
-                  INVITATION ISSUED
+                  {sent.role} INVITATION ISSUED
                 </span>
               </div>
               <div

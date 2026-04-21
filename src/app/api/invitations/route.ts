@@ -13,6 +13,10 @@ const createInvitationSchema = z.object({
   name: z.string().optional(),
   phone: z.string().optional(),
   submissionId: z.string().optional(),
+  // Phase 3: admin can issue TRAINER / ADMIN invites. Only admins are allowed
+  // to pick non-CLIENT (enforced below). Defaults to CLIENT for backward
+  // compat with existing callers.
+  role: z.enum(['CLIENT', 'TRAINER', 'ADMIN']).default('CLIENT'),
 });
 
 // GET - Fetch all invitations (admin only)
@@ -20,7 +24,10 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user || session.user.role !== 'TRAINER') {
+    if (
+      !session?.user ||
+      (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN')
+    ) {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -71,6 +78,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     const validatedData = createInvitationSchema.parse(body);
+
+    // Non-CLIENT invites are admin-only. Trainers should not be able to
+    // promote others to TRAINER / ADMIN.
+    if (validatedData.role !== 'CLIENT' && session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { message: 'Only admins can issue non-CLIENT invitations' },
+        { status: 403 },
+      );
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -130,6 +146,7 @@ export async function POST(request: Request) {
         code: invitationCode,
         invitedBy: trainerId,
         expiresAt,
+        role: validatedData.role,
       }
     });
 
