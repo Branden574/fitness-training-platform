@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useState, type ReactNode, type FormEvent } from 'react';
 import { signOut } from 'next-auth/react';
 import {
@@ -119,8 +119,12 @@ export default function DesktopShell({
 
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [searchValue, setSearchValue] = useState(() => searchParams?.get('q') ?? '');
+  // Deliberately NOT calling useSearchParams() at the module top — it opts
+  // the enclosing route into dynamic rendering and has bitten us with server-
+  // component render failures on /trainer. Read query params inside the
+  // submit handler from window.location instead (safe — onSubmit only fires
+  // from a real DOM event, so `window` always exists).
+  const [searchValue, setSearchValue] = useState('');
 
   const notificationsHref = role === 'admin' ? '/admin/contacts?status=NEW' : '/trainer/messages';
 
@@ -136,7 +140,7 @@ export default function DesktopShell({
         : pathname?.startsWith('/trainer/exercises')
           ? pathname
           : '/trainer';
-    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    const params = new URLSearchParams(window.location.search);
     if (q) params.set('q', q);
     else params.delete('q');
     const qs = params.toString();
