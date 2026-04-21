@@ -111,9 +111,26 @@ export default function SignupFormClient() {
           style={{ marginTop: 3 }}
         />
         <span className="mf-fg-dim">
-          I agree to the Martinez/Fitness trainer terms + privacy policy, and
-          understand I&apos;m responsible for the accuracy of client-facing
-          claims on my profile.
+          I agree to the Martinez/Fitness{' '}
+          <Link
+            href="/legal/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mf-link"
+          >
+            trainer terms
+          </Link>{' '}
+          +{' '}
+          <Link
+            href="/legal/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mf-link"
+          >
+            privacy policy
+          </Link>
+          , and understand I&apos;m responsible for the accuracy of
+          client-facing claims on my profile.
         </span>
       </label>
       {error && (

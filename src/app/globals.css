@@ -313,6 +313,14 @@ html.mf-comfy   { --mf-pad: 1.25rem; --mf-row: 56px; }
   border-radius: 8px;
 }
 
+.mf-link {
+  color: var(--mf-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.mf-link:hover { color: var(--mf-accent-strong); }
+
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .mf-btn {
   display: inline-flex;
