@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Camera } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
 import { useCelebrate } from '@/components/animations';
 import type { CelebrationKind } from '@/components/animations/celebrations';
+import { pickProgressPhoto } from '@/lib/nativeCameraClient';
 
 type FormState = {
   date: string;
@@ -40,6 +41,26 @@ export default function LogProgressModal({
   const [form, setForm] = useState<FormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<{ file: File; previewUrl: string }[]>([]);
+
+  function revokePreviews(list: { file: File; previewUrl: string }[]) {
+    for (const p of list) URL.revokeObjectURL(p.previewUrl);
+  }
+
+  async function addPhotos() {
+    const files = await pickProgressPhoto();
+    if (files.length === 0) return;
+    const next = files.map((f) => ({ file: f, previewUrl: URL.createObjectURL(f) }));
+    setPhotos((prev) => [...prev, ...next]);
+  }
+
+  function removePhoto(idx: number) {
+    setPhotos((prev) => {
+      const gone = prev[idx];
+      if (gone) URL.revokeObjectURL(gone.previewUrl);
+      return prev.filter((_, i) => i !== idx);
+    });
+  }
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -65,12 +86,37 @@ export default function LogProgressModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        id?: string;
+        message?: string;
+        error?: string;
+      };
       if (!res.ok) {
         setError(data.message ?? data.error ?? 'Failed to save entry');
         setSubmitting(false);
         return;
       }
+
+      // Entry created — upload any staged photos. Failure here is non-fatal
+      // (entry is already saved); we surface a soft warning but still close.
+      if (photos.length > 0 && data.id) {
+        try {
+          const fd = new FormData();
+          fd.append('date', form.date);
+          fd.append('entryId', data.id);
+          for (const p of photos) fd.append('photos', p.file);
+          const up = await fetch('/api/progress/photos', { method: 'POST', body: fd });
+          if (!up.ok) {
+            const err = (await up.json().catch(() => ({}))) as { error?: string };
+            console.warn('[progress] photo upload failed:', err.error);
+          }
+        } catch (e) {
+          console.warn('[progress] photo upload errored:', e);
+        }
+      }
+
+      revokePreviews(photos);
+      setPhotos([]);
       setOpen(false);
       setForm(EMPTY);
       setSubmitting(false);
@@ -258,6 +304,85 @@ export default function LogProgressModal({
                 style={{ resize: 'vertical', fontFamily: 'inherit' }}
               />
             </Field>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div
+                className="mf-font-mono mf-fg-mute"
+                style={{
+                  fontSize: 9,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                Progress photos
+              </div>
+              {photos.length > 0 && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                    gap: 6,
+                  }}
+                >
+                  {photos.map((p, i) => (
+                    <div
+                      key={p.previewUrl}
+                      style={{
+                        position: 'relative',
+                        paddingTop: '100%',
+                        borderRadius: 6,
+                        overflow: 'hidden',
+                        border: '1px solid var(--mf-hairline)',
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={p.previewUrl}
+                        alt={`Photo ${i + 1}`}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        disabled={submitting}
+                        aria-label="Remove photo"
+                        style={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          width: 22,
+                          height: 22,
+                          borderRadius: 11,
+                          border: 'none',
+                          background: 'rgba(0,0,0,0.65)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Btn
+                icon={Camera}
+                onClick={addPhotos}
+                disabled={submitting}
+                type="button"
+              >
+                {photos.length === 0 ? 'Add photo' : 'Add another'}
+              </Btn>
+            </div>
 
             {error && (
               <div
