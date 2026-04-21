@@ -91,6 +91,12 @@ model User {
   trainerIsPublic        Boolean             @default(false)
   trainerAcceptingClients Boolean            @default(true)
 
+  // IANA timezone name (e.g. "America/Los_Angeles"). Nullable — client can
+  // leave unset; UI falls back to the browser's Intl.DateTimeFormat zone for
+  // rendering. Trainer-facing log views use this to show "when did the
+  // client actually eat this" in the client's local time, not the trainer's.
+  timezone               String?
+
   @@index([email])
   @@index([role])
   @@index([trainerId])

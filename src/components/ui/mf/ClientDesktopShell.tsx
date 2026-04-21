@@ -10,6 +10,7 @@ import {
   Apple,
   TrendingUp,
   MessageSquare,
+  Settings,
   Bell,
   LogOut,
   type LucideIcon,
@@ -23,7 +24,8 @@ export type ClientDesktopKey =
   | 'workout'
   | 'food'
   | 'progress'
-  | 'messages';
+  | 'messages'
+  | 'settings';
 
 export interface ClientDesktopShellProps {
   active?: ClientDesktopKey;
@@ -52,6 +54,7 @@ const NAV: NavItem[] = [
   { k: 'food', l: 'Food Log', i: Apple, href: '/client/food', accent: true },
   { k: 'progress', l: 'Progress', i: TrendingUp, href: '/client/progress' },
   { k: 'messages', l: 'Coach', i: MessageSquare, href: '/client/messages' },
+  { k: 'settings', l: 'Settings', i: Settings, href: '/client/settings' },
 ];
 
 function deriveActive(pathname: string | null): ClientDesktopKey {
@@ -61,6 +64,11 @@ function deriveActive(pathname: string | null): ClientDesktopKey {
   if (pathname.startsWith('/client/food')) return 'food';
   if (pathname.startsWith('/client/progress')) return 'progress';
   if (pathname.startsWith('/client/messages')) return 'messages';
+  if (
+    pathname.startsWith('/client/settings') ||
+    pathname.startsWith('/client/profile')
+  )
+    return 'settings';
   return 'today';
 }
 
