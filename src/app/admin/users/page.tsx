@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/mf';
 import AdminUsersFilterClient from './users-filter-client';
 import TrainerPublishClient from './trainer-publish-client';
+import TrainerPricingClient from './trainer-pricing-client';
 import UserRowMenuClient from './user-row-menu-client';
 
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,13 @@ export default async function AdminUsersPage({
       loginCount: true,
       trainerIsPublic: true,
       trainerSlug: true,
+      trainer: {
+        select: {
+          subscriptionTier: true,
+          monthlyPrice: true,
+          subscriptionStatus: true,
+        },
+      },
       _count: {
         select: {
           workoutSessions: true,
@@ -121,12 +129,12 @@ export default async function AdminUsersPage({
             className="mf-font-mono mf-fg-mute"
             style={{
               display: 'grid',
-              gridTemplateColumns: '2.5fr 1fr 1.2fr 1.4fr 1fr 110px 60px',
+              gridTemplateColumns: '2.3fr 0.9fr 1fr 1.2fr 1fr 110px 140px 60px',
               padding: '10px 16px',
               borderBottom: '1px solid var(--mf-hairline)',
             }}
           >
-            {['USER', 'ROLE', 'STATUS', 'JOINED', 'ACTIVITY', 'VISIBILITY', ''].map((h, i) => (
+            {['USER', 'ROLE', 'STATUS', 'JOINED', 'ACTIVITY', 'VISIBILITY', 'PRICING', ''].map((h, i) => (
               <div
                 key={i}
                 style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
@@ -157,7 +165,7 @@ export default async function AdminUsersPage({
                 key={u.id}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '2.5fr 1fr 1.2fr 1.4fr 1fr 110px 60px',
+                  gridTemplateColumns: '2.3fr 0.9fr 1fr 1.2fr 1fr 110px 140px 60px',
                   padding: '12px 16px',
                   alignItems: 'center',
                   borderBottom: i < users.length - 1 ? '1px solid var(--mf-hairline)' : 'none',
@@ -217,6 +225,30 @@ export default async function AdminUsersPage({
                     <TrainerPublishClient
                       userId={u.id}
                       initialPublic={u.trainerIsPublic}
+                    />
+                  ) : (
+                    <span
+                      className="mf-font-mono mf-fg-mute"
+                      style={{ fontSize: 10, letterSpacing: '0.1em' }}
+                    >
+                      —
+                    </span>
+                  )}
+                </div>
+                <div>
+                  {u.role === 'TRAINER' ? (
+                    <TrainerPricingClient
+                      userId={u.id}
+                      initialTier={
+                        (u.trainer?.subscriptionTier ?? null) as
+                          | 'FREE'
+                          | 'STARTER'
+                          | 'PRO'
+                          | 'CUSTOM'
+                          | null
+                      }
+                      initialPrice={u.trainer?.monthlyPrice ?? null}
+                      initialStatus={u.trainer?.subscriptionStatus ?? null}
                     />
                   ) : (
                     <span
