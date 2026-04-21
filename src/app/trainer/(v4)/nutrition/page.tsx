@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { MessageSquare, Edit, Plus, Search, Folder } from 'lucide-react';
 import { requireTrainerSession, initialsFor } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
+import { formatTimeInZone } from '@/lib/formatTime';
 import {
   Avatar,
   Bar,
@@ -41,6 +42,7 @@ export default async function TrainerNutritionPage({
       id: true,
       name: true,
       email: true,
+      timezone: true,
       mealPlans: {
         where: {
           startDate: { lte: today },
@@ -89,6 +91,7 @@ export default async function TrainerNutritionPage({
       id: c.id,
       name: c.name,
       email: c.email,
+      timezone: c.timezone,
       initials: initialsFor(c.name, c.email),
       plan,
       adherence,
@@ -122,6 +125,7 @@ export default async function TrainerNutritionPage({
     mealType: string;
     name: string;
     qty: string;
+    time: string;
     kcal: number;
     p: number;
     c: number;
@@ -172,6 +176,9 @@ export default async function TrainerNutritionPage({
       mealType: e.mealType,
       name: e.foodName,
       qty: `${e.quantity} ${e.unit}`,
+      // Format in the CLIENT's timezone so "7:30 AM breakfast" reads
+      // correctly to the trainer regardless of where either of them is.
+      time: formatTimeInZone(e.createdAt, active.timezone),
       kcal: Math.round(e.calories),
       p: Math.round(e.protein),
       c: Math.round(e.carbs),
@@ -578,9 +585,20 @@ export default async function TrainerNutritionPage({
                     >
                       <span
                         className="mf-font-mono mf-fg-mute"
-                        style={{ fontSize: 10, width: 72, textTransform: 'uppercase' }}
+                        style={{ fontSize: 10, width: 64, textTransform: 'uppercase' }}
                       >
                         {e.mealType}
+                      </span>
+                      <span
+                        className="mf-font-mono mf-fg-dim mf-tnum"
+                        style={{ fontSize: 10, width: 68 }}
+                        title={
+                          active?.timezone
+                            ? `Logged in ${active.timezone}`
+                            : 'Timezone not set — shown in server time'
+                        }
+                      >
+                        {e.time}
                       </span>
                       <span style={{ flex: 1 }}>{e.name}</span>
                       <span
