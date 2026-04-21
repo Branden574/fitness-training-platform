@@ -38,6 +38,21 @@ export default async function ProgramDetailPage({
         include: { client: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: 'desc' },
       },
+      mealPlans: {
+        orderBy: [{ order: 'asc' }, { startWeek: 'asc' }],
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          startWeek: true,
+          endWeek: true,
+          dailyCalorieTarget: true,
+          dailyProteinTarget: true,
+          dailyCarbTarget: true,
+          dailyFatTarget: true,
+          order: true,
+        },
+      },
     },
   });
   if (!program) notFound();
@@ -131,6 +146,19 @@ export default async function ProgramDetailPage({
 
         <ProgramBuilderClient
           programId={program.id}
+          durationWks={program.durationWks}
+          mealPlans={program.mealPlans.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            startWeek: p.startWeek,
+            endWeek: p.endWeek,
+            dailyCalorieTarget: p.dailyCalorieTarget,
+            dailyProteinTarget: p.dailyProteinTarget,
+            dailyCarbTarget: p.dailyCarbTarget,
+            dailyFatTarget: p.dailyFatTarget,
+            order: p.order,
+          }))}
           weeks={program.weeks.map((w) => ({
             id: w.id,
             weekNumber: w.weekNumber,
