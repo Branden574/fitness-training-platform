@@ -15,7 +15,6 @@ const config: CapacitorConfig = {
   appId: 'com.martinezfitness.app',
   appName: 'Martinez Fitness',
   webDir: 'mobile-shell',
-  bundledWebRuntime: false,
   server: {
     // Live web app. Swap to http://localhost:3000 via CAPACITOR_DEV=1 for
     // in-simulator dev. cleartext is only allowed in dev so localhost works.

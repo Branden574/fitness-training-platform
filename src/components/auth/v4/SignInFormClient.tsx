@@ -6,6 +6,15 @@ import { useRouter } from 'next/navigation';
 import { signIn, getSession } from 'next-auth/react';
 import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
+import { BootLoader } from '@/components/animations/BootLoader';
+
+const SIGN_IN_BOOT_MESSAGES: Array<[number, string, number]> = [
+  [220, 'AUTHENTICATED', 10],
+  [320, 'LOADING · ROSTER', 32],
+  [320, 'SYNCING · PROGRAMS', 58],
+  [280, 'SYNCING · NUTRITION', 78],
+  [260, 'READY · MARTINEZ FITNESS', 100],
+];
 
 export default function SignInFormClient() {
   const router = useRouter();
@@ -15,6 +24,7 @@ export default function SignInFormClient() {
   const [keepSigned, setKeepSigned] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bootDestination, setBootDestination] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,27 +40,48 @@ export default function SignInFormClient() {
 
       if (result?.error && result.error !== 'undefined') {
         setError('Invalid email or password. Please try again.');
+        setLoading(false);
       } else if (result?.ok) {
         const session = await getSession();
-        if (session?.user?.role === 'ADMIN') {
-          router.push('/admin');
-        } else if (session?.user?.role === 'TRAINER') {
-          router.push('/trainer');
-        } else {
-          router.push('/client');
-        }
+        const destination =
+          session?.user?.role === 'ADMIN'
+            ? '/admin'
+            : session?.user?.role === 'TRAINER'
+              ? '/trainer'
+              : '/client';
+        // Hand off to the full-screen BootLoader. Once it finishes we mark the
+        // session as booted so BootGate on the destination page doesn't play
+        // the same animation again, then route. Loading stays true so the
+        // button can't be double-clicked mid-boot.
+        setBootDestination(destination);
       } else {
         setError('Something went wrong. Please try again.');
+        setLoading(false);
       }
     } catch {
       setError('Something went wrong. Please try again.');
-    } finally {
       setLoading(false);
     }
   }
 
+  function handleBootDone() {
+    try {
+      sessionStorage.setItem('mf.booted', '1');
+    } catch {
+      // private-mode or storage disabled — the destination BootGate just replays
+    }
+    if (bootDestination) {
+      router.push(bootDestination);
+      router.refresh();
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <>
+      {bootDestination && (
+        <BootLoader onDone={handleBootDone} messages={SIGN_IN_BOOT_MESSAGES} />
+      )}
+      <form onSubmit={handleSubmit} noValidate>
       {error && (
         <div
           className="mf-chip mf-chip-bad"
@@ -157,5 +188,6 @@ export default function SignInFormClient() {
         </Link>
       </div>
     </form>
+    </>
   );
 }
