@@ -7,6 +7,7 @@ import { Btn } from '@/components/ui/mf';
 
 interface Props {
   missingCount: number;
+  totalCount: number;
 }
 
 interface Result {
@@ -15,13 +16,11 @@ interface Result {
   failed: number;
 }
 
-export default function FillGifsClient({ missingCount }: Props) {
+export default function FillGifsClient({ missingCount, totalCount }: Props) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  if (missingCount === 0 && !result) return null;
 
   const run = async () => {
     if (running) return;
@@ -44,7 +43,7 @@ export default function FillGifsClient({ missingCount }: Props) {
         skipped: data.skipped ?? 0,
         failed: data.failed ?? 0,
       });
-      // Refresh server component so newly-filled GIFs show in the grid.
+      // Refresh so newly-filled images show in the grid without a manual reload.
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network error');
@@ -52,6 +51,23 @@ export default function FillGifsClient({ missingCount }: Props) {
       setRunning(false);
     }
   };
+
+  // Always-visible banner per Branden 2026-04-21. Copy changes based on state:
+  // "missing" when there are unfilled rows, "all filled" when everything has an
+  // image, "Run again" after a completed run. Lets trainers re-match even when
+  // nothing is missing (in case free-exercise-db added matches for a previously
+  // failed row, or an edited name lines up with a new match).
+  const headline = result
+    ? `Filled ${result.updated} · ${result.skipped} skipped · ${result.failed} failed`
+    : missingCount > 0
+      ? `${missingCount} of ${totalCount} exercise${totalCount === 1 ? '' : 's'} missing images`
+      : `All ${totalCount} exercises have images`;
+
+  const description = result
+    ? 'Hard-refresh if any cards still look empty.'
+    : missingCount > 0
+      ? 'Matches local exercises against free-exercise-db by name and fills in images. Runs in ~5s.'
+      : 'Run again to re-match every exercise against free-exercise-db — useful if you just renamed one.';
 
   return (
     <div
@@ -67,18 +83,9 @@ export default function FillGifsClient({ missingCount }: Props) {
     >
       <ImageDown size={16} className="mf-fg-dim" />
       <div style={{ flex: 1, minWidth: 200 }}>
-        <div style={{ fontSize: 13, fontWeight: 500 }}>
-          {result
-            ? `Filled ${result.updated} GIFs · ${result.skipped} skipped · ${result.failed} failed`
-            : `${missingCount} exercise${missingCount === 1 ? '' : 's'} missing GIFs`}
-        </div>
-        <div
-          className="mf-fg-dim"
-          style={{ fontSize: 11, marginTop: 2 }}
-        >
-          {result
-            ? 'Refresh the page if cards still look empty.'
-            : 'Matches your local exercises against ExerciseDB by name and fills in GIFs where we find a hit. Runs once in ~30-60s.'}
+        <div style={{ fontSize: 13, fontWeight: 500 }}>{headline}</div>
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 2 }}>
+          {description}
         </div>
         {error && (
           <div
@@ -93,9 +100,9 @@ export default function FillGifsClient({ missingCount }: Props) {
       <Btn
         onClick={run}
         disabled={running}
-        variant={result ? 'default' : 'primary'}
+        variant={missingCount > 0 && !result ? 'primary' : 'default'}
       >
-        {running ? 'Filling…' : result ? 'Run again' : 'Fill GIFs'}
+        {running ? 'Filling…' : result ? 'Run again' : 'Fill images'}
       </Btn>
     </div>
   );

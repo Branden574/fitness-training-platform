@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check, Plus, Search as SearchIcon } from 'lucide-react';
 import { Btn, Chip } from '@/components/ui/mf';
 
@@ -18,6 +19,7 @@ interface LibraryResult {
 type ImportState = 'idle' | 'importing' | 'done' | 'error';
 
 export default function LibrarySearchClient() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<LibraryResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,6 +97,10 @@ export default function LibrarySearchClient() {
       });
       if (!res.ok) throw new Error(`Import failed (${res.status})`);
       setImportStates((s) => ({ ...s, [key]: 'done' }));
+      // Refresh the server component so the new row shows up in the local
+      // grid immediately — without this the import succeeds but the grid
+      // still shows the old count until a manual page reload.
+      router.refresh();
       // Remove from results after a short delay
       setTimeout(() => {
         setResults((prev) => prev.filter((it) => (it.externalId || it.name) !== key));

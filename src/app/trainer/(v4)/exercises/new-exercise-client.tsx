@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X } from 'lucide-react';
+import { Plus, Upload, X } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
 
 type Difficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
@@ -20,6 +20,9 @@ export default function NewExerciseClient() {
   const [instructions, setInstructions] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
     setName('');
@@ -30,6 +33,30 @@ export default function NewExerciseClient() {
     setImageUrl('');
     setVideoUrl('');
     setError(null);
+    setUploadError(null);
+  };
+
+  const handleUpload = async (file: File) => {
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append('image', file);
+      const res = await fetch('/api/exercises/upload-image', {
+        method: 'POST',
+        body,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setUploadError(data.error ?? `Upload failed (${res.status})`);
+        return;
+      }
+      if (data.imageUrl) setImageUrl(data.imageUrl);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const close = () => {
@@ -230,17 +257,62 @@ export default function NewExerciseClient() {
             </Field>
 
             <Field
-              label="IMAGE / GIF URL"
-              hint="Animated GIF or still image. Leave blank and use Fill GIFs to auto-match."
+              label="IMAGE / GIF"
+              hint="Upload your own, paste a URL, or leave blank — Fill Images can auto-match from free-exercise-db later."
             >
-              <input
-                type="url"
-                className="mf-input"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                maxLength={500}
-                placeholder="https://…"
-              />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  type="url"
+                  className="mf-input"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  maxLength={500}
+                  placeholder="https://… or click Upload"
+                  style={{ flex: 1 }}
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUpload(f);
+                    e.target.value = '';
+                  }}
+                />
+                <Btn
+                  icon={Upload}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading…' : 'Upload'}
+                </Btn>
+              </div>
+              {imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imageUrl}
+                  alt="Preview"
+                  style={{
+                    marginTop: 8,
+                    width: '100%',
+                    maxHeight: 160,
+                    objectFit: 'cover',
+                    borderRadius: 4,
+                    background: 'var(--mf-surface-3)',
+                  }}
+                />
+              )}
+              {uploadError && (
+                <div
+                  role="alert"
+                  className="mf-font-mono"
+                  style={{ fontSize: 11, color: '#fca5a5', marginTop: 6 }}
+                >
+                  {uploadError}
+                </div>
+              )}
             </Field>
 
             <Field label="VIDEO URL (optional)">

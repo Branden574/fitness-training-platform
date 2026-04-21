@@ -7,6 +7,10 @@ import { prisma } from '@/lib/prisma';
 // Exercise table is a shared global library — any TRAINER or ADMIN can edit
 // or delete entries. Clients can only read via workout programs.
 
+// Image + video URLs accept either an absolute URL (pasted external link) OR
+// a relative path like /uploads/exercises/xxx.jpg returned by the custom
+// upload endpoint. .url() would reject the relative form, so we validate
+// loosely with a length cap + empty→null coercion at the handler.
 const patchSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   description: z.string().max(500).optional().nullable(),
@@ -14,8 +18,8 @@ const patchSchema = z.object({
   muscleGroups: z.array(z.string().max(60)).max(20).optional(),
   equipment: z.array(z.string().max(60)).max(20).optional(),
   difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
-  imageUrl: z.string().url().max(500).nullable().optional(),
-  videoUrl: z.string().url().max(500).nullable().optional(),
+  imageUrl: z.string().max(500).nullable().optional(),
+  videoUrl: z.string().max(500).nullable().optional(),
 });
 
 async function requireTrainerOrAdmin() {
