@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Avatar, Bar, Btn, DesktopShell, StatCard, StatusDot } from '@/components/ui/mf';
 import type { RosterClient } from '@/lib/trainer-data';
 import RosterFilterClient from './roster-filter-client';
+import InviteAthleteClient from './invite-athlete-client';
 
 export interface RosterStats {
   totalClients: number;
@@ -27,11 +28,7 @@ export default function RosterDesktop({ roster, stats }: RosterDesktopProps) {
         title="Roster"
         breadcrumbs="TRAINER / DASHBOARD"
         brandMeta={`TRAINER · ${roster.length} ATHLETES`}
-        headerRight={
-          <Link href="/register-with-code">
-            <Btn icon={Plus}>Invite athlete</Btn>
-          </Link>
-        }
+        headerRight={<InviteAthleteClient />}
         footer={
           <Link href="/trainer/builder" style={{ display: 'block' }}>
             <Btn variant="primary" icon={Plus} className="w-full">

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, Plus, Minus, Check, X, ChevronRight, MoreHorizontal, Video } from 'lucide-react';
 import { Chip } from '@/components/ui/mf';
 import { Btn } from '@/components/ui/mf';
+import { useCelebrate } from '@/components/animations';
 
 interface ExerciseDef {
   id: string;
@@ -54,6 +55,7 @@ const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9] as const;
 
 export default function ActiveWorkoutClient({ initial }: { initial: InitialPayload }) {
   const router = useRouter();
+  const celebrate = useCelebrate();
   const [exerciseIdx, setExerciseIdx] = useState(0);
   const [logsByExercise, setLogsByExercise] = useState<Record<string, SetLog[]>>(() =>
     Object.fromEntries(
@@ -217,10 +219,22 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
 
       if (detectedPrs.length > 0) {
         setPrs(detectedPrs);
-        // Brief celebration, then redirect
+        // Fire PR celebration overlay with the actual PR details.
+        const top = detectedPrs[0]!;
+        celebrate('pr', {
+          subtitle: top.exerciseName?.toUpperCase() ?? 'PERSONAL RECORD',
+          bigNumber: `+${top.newWeight - (top.previousWeight ?? 0)} LB`,
+          bigLabel: 'PR',
+          stats:
+            detectedPrs.length > 1
+              ? [['EXERCISES', `${detectedPrs.length}`]]
+              : [],
+        });
         setTimeout(() => router.push('/client'), 3200);
       } else {
-        router.push('/client');
+        // No PR — still celebrate finishing the session.
+        celebrate('workout');
+        setTimeout(() => router.push('/client'), 2200);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');

@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Search, Plus, Trophy } from 'lucide-react';
+import { Search, Trophy } from 'lucide-react';
 import { Avatar, StatusDot, TrainerMobileTabs } from '@/components/ui/mf';
 import type { RosterClient } from '@/lib/trainer-data';
+import InviteAthleteClient from './invite-athlete-client';
 
 export interface RosterMobileStats {
   totalClients: number;
@@ -86,19 +87,7 @@ export default function RosterMobile({ roster, stats }: RosterMobileProps) {
                 >
                   <Search size={14} />
                 </button>
-                <Link
-                  href="/register-with-code"
-                  className="grid place-items-center rounded"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    background: 'var(--mf-accent)',
-                    color: 'var(--mf-accent-ink)',
-                  }}
-                  aria-label="Invite athlete"
-                >
-                  <Plus size={14} />
-                </Link>
+                <InviteAthleteClient compact />
               </div>
             </div>
             <div

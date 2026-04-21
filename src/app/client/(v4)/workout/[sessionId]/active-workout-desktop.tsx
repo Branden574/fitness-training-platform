@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCelebrate } from '@/components/animations';
 import {
   Check,
   ChevronRight,
@@ -71,6 +72,7 @@ export default function ActiveWorkoutDesktop({
   athleteName?: string;
 }) {
   const router = useRouter();
+  const celebrate = useCelebrate();
   const [exerciseIdx, setExerciseIdx] = useState(0);
   const [logsByExercise, setLogsByExercise] = useState<Record<string, SetLog[]>>(() =>
     Object.fromEntries(
@@ -241,9 +243,20 @@ export default function ActiveWorkoutDesktop({
 
       if (detectedPrs.length > 0) {
         setPrs(detectedPrs);
+        const top = detectedPrs[0]!;
+        celebrate('pr', {
+          subtitle: top.exerciseName?.toUpperCase() ?? 'PERSONAL RECORD',
+          bigNumber: `+${top.newWeight - (top.previousWeight ?? 0)} LB`,
+          bigLabel: 'PR',
+          stats:
+            detectedPrs.length > 1
+              ? [['EXERCISES', `${detectedPrs.length}`]]
+              : [],
+        });
         setTimeout(() => router.push('/client'), 3200);
       } else {
-        router.push('/client');
+        celebrate('workout');
+        setTimeout(() => router.push('/client'), 2200);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');

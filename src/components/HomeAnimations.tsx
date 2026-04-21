@@ -252,7 +252,7 @@ export default function HomeAnimations({
               If your trainer sent you a code, use it to create your account and access your personalized dashboard.
             </p>
             <Link
-              href="/register-with-code"
+              href="/auth/signup"
               className="inline-flex items-center justify-center gap-2 bg-[#6366f1] text-white font-semibold px-6 py-3 rounded-lg hover:bg-[#5558e3] transition-colors"
             >
               Enter Invitation Code <ArrowRight className="w-4 h-4" />
@@ -367,7 +367,7 @@ export default function HomeAnimations({
                 Sign In
               </Link>
               <Link
-                href="/register-with-code"
+                href="/auth/signup"
                 className="inline-flex items-center justify-center border border-[#4b5563] text-[#9ca3af] font-medium px-6 py-3 rounded-lg hover:bg-white/5 transition-colors"
               >
                 Create Account

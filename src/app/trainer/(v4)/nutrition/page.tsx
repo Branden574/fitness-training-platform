@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MessageSquare, Edit, Plus, Search, Folder } from 'lucide-react';
+import { MessageSquare, Edit, Plus } from 'lucide-react';
 import { requireTrainerSession, initialsFor } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
 import { formatTimeInZone } from '@/lib/formatTime';
@@ -12,6 +12,7 @@ import {
   StatCard,
   SrcPill,
 } from '@/components/ui/mf';
+import AssignMealPlanClient from './assign-meal-plan-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -193,11 +194,10 @@ export default async function TrainerNutritionPage({
       title="Nutrition"
       breadcrumbs="COACHING · NUTRITION"
       headerRight={
-        <>
-          <Btn icon={Search}>Search foods</Btn>
-          <Btn icon={Folder}>Templates</Btn>
-          <Btn variant="primary" icon={Plus}>Assign meal plan</Btn>
-        </>
+        <AssignMealPlanClient
+          clients={rail.map((c) => ({ id: c.id, name: c.name, email: c.email }))}
+          defaultClientId={activeId}
+        />
       }
     >
       <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
