@@ -186,6 +186,28 @@ model Trainer {
   // the card hides for trainers who haven't configured one yet. Stored in the
   // raw format the trainer enters; normalized to digits in the sms: href.
   contactPhone       String?
+
+  // Phase 3 — platform subscription billing (Martinez/Fitness charges trainer).
+  // Tier is an app-level concept; the corresponding Stripe price is resolved
+  // via env at checkout time so prices can change without a migration.
+  // monthlyPrice is a nullable admin override for foundation testers / custom
+  // deals — when set, UI shows it; subscriptionStatus=free skips Stripe entirely.
+  subscriptionTier       String?  // 'FREE' | 'STARTER' | 'PRO' | 'CUSTOM'
+  monthlyPrice           Float?
+  subscriptionStatus     String?  // 'free' | 'trialing' | 'active' | 'past_due' | 'canceled'
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+
+  // Phase 3 — Stripe Connect (trainer accepts client payments via the platform).
+  stripeConnectAccountId String?
+  connectOnboarded       Boolean  @default(false)
+  connectChargesEnabled  Boolean  @default(false)
+  connectPayoutsEnabled  Boolean  @default(false)
+
+  // Phase 5 — per-trainer reply-to routing for contact-submission notifications.
+  replyFromEmail         String?
+  replyFromName          String?
+
   profilePublishedAt DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
