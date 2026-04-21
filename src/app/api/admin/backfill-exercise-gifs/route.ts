@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { requireAdminSession } from '@/lib/admin-data';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 interface ExerciseDbItem {
@@ -65,9 +66,14 @@ async function resolveGifUrl(
 }
 
 export async function POST() {
-  try {
-    await requireAdminSession();
-  } catch {
+  // Trainer + admin can trigger — the Exercise table is a shared global
+  // library, so filling GIFs benefits every coach on the platform. Clients
+  // are excluded because they shouldn't be mutating the trainer library.
+  const session = await getServerSession(authOptions);
+  if (
+    !session?.user ||
+    (session.user.role !== 'ADMIN' && session.user.role !== 'TRAINER')
+  ) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 

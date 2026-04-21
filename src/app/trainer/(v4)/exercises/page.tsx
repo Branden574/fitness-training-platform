@@ -8,6 +8,7 @@ import {
   DesktopShell,
 } from '@/components/ui/mf';
 import LibrarySearchClient from './library-search-client';
+import FillGifsClient from './fill-gifs-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,9 @@ export default async function TrainerExercisesPage() {
   });
 
   const total = await prisma.exercise.count();
+  const missingGifs = await prisma.exercise.count({
+    where: { OR: [{ imageUrl: null }, { imageUrl: '' }] },
+  });
 
   return (
     <DesktopShell
@@ -47,6 +51,8 @@ export default async function TrainerExercisesPage() {
     >
       <div style={{ padding: 24, maxWidth: 1400 }}>
         <LibrarySearchClient />
+
+        <FillGifsClient missingCount={missingGifs} />
 
         <div className="flex items-center gap-3" style={{ marginBottom: 16 }}>
           <div className="mf-eyebrow" style={{ marginRight: 8 }}>LOCAL</div>
