@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendNewMessageEmail } from '@/lib/email';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 import { z } from 'zod';
 
 const messageSchema = z.object({
@@ -175,6 +176,27 @@ export async function POST(request: Request) {
       fromName: message.sender.name,
       fromRole: message.sender.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
       preview: message.content,
+    });
+
+    // In-app bell + OS push for the receiver. Dispatch is already fail-open
+    // so a broken notification never blocks the message itself. actionUrl
+    // routes to the recipient's messages view scoped by role.
+    const receiverRole = message.receiver.role;
+    const messagesHref =
+      receiverRole === 'TRAINER'
+        ? `/trainer/messages?with=${message.senderId}`
+        : '/client/messages';
+    const preview =
+      message.content.length > 120
+        ? `${message.content.slice(0, 120)}…`
+        : message.content;
+    void dispatchNotification({
+      userId: message.receiverId,
+      type: 'MESSAGE_RECEIVED',
+      title: `${message.sender.name ?? 'Someone'} sent a message`,
+      body: preview,
+      actionUrl: messagesHref,
+      metadata: { messageId: message.id, senderId: message.senderId },
     });
 
     return NextResponse.json(message, { status: 201 });

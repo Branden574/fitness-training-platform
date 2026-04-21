@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 // Republishes a ProgramMealPlan template to every client whose ACTIVE
 // ProgramAssignment for this program has a cloned copy (matched via
@@ -117,19 +118,19 @@ export async function POST(
     }
   });
 
-  // Notify each synced client so they know their plan changed. Fail-open;
-  // a dropped notification shouldn't mask a successful DB update.
+  // Notify each synced client so they know their plan changed. dispatch is
+  // already fail-open internally; wrapping in allSettled keeps the fan-out
+  // parallel across clients.
   if (updatedClientIds.length > 0) {
     await Promise.allSettled(
       updatedClientIds.map((clientId) =>
-        prisma.notification.create({
-          data: {
-            userId: clientId,
-            type: 'MEAL_PLAN_ASSIGNED',
-            title: 'Your meal plan was updated',
-            message: `Your coach updated "${template.name}" — targets and dates are refreshed.`,
-            actionUrl: '/client',
-          },
+        dispatchNotification({
+          userId: clientId,
+          type: 'MEAL_PLAN_ASSIGNED',
+          title: 'Your meal plan was updated',
+          body: `Your coach updated "${template.name}" — targets and dates are refreshed.`,
+          actionUrl: '/client',
+          metadata: { templateId: template.id },
         }),
       ),
     );

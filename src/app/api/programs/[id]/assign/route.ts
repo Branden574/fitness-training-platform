@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { sendProgramAssignedEmail } from '@/lib/email';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 import { z } from 'zod';
 
 const assignSchema = z.object({
@@ -170,13 +171,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         : '';
 
     await Promise.allSettled([
-      prisma.notification.create({
-        data: {
-          userId: body.clientId,
-          type: 'PROGRAM_ASSIGNED',
-          title: 'New program assigned',
-          message: `${trainerName} assigned you "${programDisplay}". Starts ${startLabel}.${mealPlanSummary}`,
-          actionUrl: '/client',
+      dispatchNotification({
+        userId: body.clientId,
+        type: 'PROGRAM_ASSIGNED',
+        title: 'New program assigned',
+        body: `${trainerName} assigned you "${programDisplay}". Starts ${startLabel}.${mealPlanSummary}`,
+        actionUrl: '/client',
+        metadata: {
+          programId: program.id,
+          assignmentId: result.assignment.id,
+          startDate: startDate.toISOString(),
         },
       }),
       sendProgramAssignedEmail({

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 const createSchema = z.object({
   clientId: z.string().min(1),
@@ -84,6 +85,19 @@ export async function POST(request: Request) {
       contextId: body.contextId ?? null,
     },
     include: { trainer: { select: { id: true, name: true, email: true } } },
+  });
+
+  // Notify the client that their coach left feedback. Body is a trimmed
+  // preview so the notification payload stays lean; client taps to read full.
+  const preview =
+    note.body.length > 140 ? `${note.body.slice(0, 140)}…` : note.body;
+  void dispatchNotification({
+    userId: body.clientId,
+    type: 'TRAINER_FEEDBACK',
+    title: `${note.trainer.name ?? 'Your coach'} left a note`,
+    body: preview,
+    actionUrl: '/client',
+    metadata: { noteId: note.id, context: note.context },
   });
 
   return NextResponse.json(note, { status: 201 });

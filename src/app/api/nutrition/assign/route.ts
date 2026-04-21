@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 export async function POST(request: Request) {
   try {
@@ -105,15 +106,13 @@ export async function POST(request: Request) {
       }
     });
 
-    // Create notification for client
-    await prisma.notification.create({
-      data: {
-        userId: clientId,
-        type: 'MEAL_PLAN_ASSIGNED',
-        title: 'New Nutrition Plan Assigned',
-        message: `You have been assigned a new nutrition plan: ${plan.name}`,
-        actionUrl: `/client/food`
-      }
+    await dispatchNotification({
+      userId: clientId,
+      type: 'MEAL_PLAN_ASSIGNED',
+      title: 'New nutrition plan assigned',
+      body: `You have been assigned a new nutrition plan: ${plan.name}`,
+      actionUrl: '/client/food',
+      metadata: { mealPlanId: plan.id },
     });
 
     return NextResponse.json({

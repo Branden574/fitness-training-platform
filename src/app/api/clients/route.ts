@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 const addClientSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -183,15 +184,13 @@ export async function POST(request: Request) {
       }
     });
 
-    // Create notification for the client
-    await prisma.notification.create({
-      data: {
-        userId: clientId,
-        title: 'New Workout Assigned',
-        message: `Your trainer has assigned you a new workout: ${workoutSession.workout.title}`,
-        type: 'WORKOUT_ASSIGNED',
-        actionUrl: '/client'
-      }
+    await dispatchNotification({
+      userId: clientId,
+      type: 'WORKOUT_ASSIGNED',
+      title: 'New workout assigned',
+      body: `Your trainer has assigned you a new workout: ${workoutSession.workout.title}`,
+      actionUrl: '/client',
+      metadata: { workoutSessionId: workoutSession.id },
     });
 
     return NextResponse.json(workoutSession, { status: 201 });
@@ -278,15 +277,14 @@ export async function PUT(request: Request) {
       }
     });
 
-    // Create welcome notification (never include passwords in notifications)
-    await prisma.notification.create({
-      data: {
-        userId: newClient.id,
-        title: 'Welcome to Your Fitness Journey!',
-        message: `You've been assigned to trainer ${trainer.name}. Please check your email for login instructions.`,
-        type: 'GENERAL',
-        actionUrl: '/client'
-      }
+    // Welcome notification — never include passwords.
+    await dispatchNotification({
+      userId: newClient.id,
+      type: 'GENERAL',
+      title: 'Welcome to your fitness journey',
+      body: `You've been assigned to trainer ${trainer.name}. Check your email for login instructions.`,
+      actionUrl: '/client',
+      metadata: { trainerId: trainer.id },
     });
 
     return NextResponse.json({

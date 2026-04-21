@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 export async function GET(request: Request) {
   try {
@@ -217,15 +218,13 @@ export async function POST(request: Request) {
       }
     });
 
-    // Create notification for client
-    await prisma.notification.create({
-      data: {
-        userId: clientId,
-        type: 'WORKOUT_ASSIGNED',
-        title: 'New Workout Assigned',
-        message: `You have been assigned a new workout: ${workoutTemplate.title}`,
-        actionUrl: `/client`
-      }
+    await dispatchNotification({
+      userId: clientId,
+      type: 'WORKOUT_ASSIGNED',
+      title: 'New workout assigned',
+      body: `You have been assigned a new workout: ${workoutTemplate.title}`,
+      actionUrl: '/client',
+      metadata: { workoutId: workoutTemplate.id, sessionId: workoutSession.id },
     });
 
     return NextResponse.json(workoutSession, { status: 201 });

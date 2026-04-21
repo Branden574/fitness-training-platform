@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 export async function POST(request: Request) {
   try {
@@ -47,15 +48,13 @@ export async function POST(request: Request) {
       }
     });
 
-    // Create notification for trainer
-    await prisma.notification.create({
-      data: {
-        userId: plan.trainerId,
-        type: 'MEAL_PLAN_ENDED',
-        title: 'Client Ended Nutrition Plan',
-        message: `${session.user.name} has ended their nutrition plan: ${plan.name}${reason ? ` (Reason: ${reason})` : ''}`,
-        actionUrl: `/trainer/nutrition`
-      }
+    await dispatchNotification({
+      userId: plan.trainerId,
+      type: 'MEAL_PLAN_ENDED',
+      title: 'Client ended nutrition plan',
+      body: `${session.user.name} ended their nutrition plan: ${plan.name}${reason ? ` (Reason: ${reason})` : ''}`,
+      actionUrl: '/trainer/nutrition',
+      metadata: { mealPlanId: plan.id, reason: reason ?? null },
     });
 
     return NextResponse.json({

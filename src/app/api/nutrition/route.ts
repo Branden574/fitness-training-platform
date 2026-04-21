@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 // Get meal plans for trainer or client
 export async function GET(request: Request) {
@@ -207,16 +208,14 @@ export async function POST(req: Request) {
       }
     });
 
-    // Only create notification if assigned to a client (not a template)
+    // Only notify if assigned to a client (not a template).
     if (clientId && clientId !== trainerId) {
-      await prisma.notification.create({
-        data: {
-          userId: clientId,
-          title: 'New Nutrition Plan Assigned',
-          message: `Your trainer has assigned you a new nutrition plan: ${name}`,
-          type: 'MEAL_PLAN_ASSIGNED',
-          actionUrl: '/client/food'
-        }
+      await dispatchNotification({
+        userId: clientId,
+        type: 'MEAL_PLAN_ASSIGNED',
+        title: 'New nutrition plan assigned',
+        body: `Your trainer has assigned you a new nutrition plan: ${name}`,
+        actionUrl: '/client/food',
       });
     }
 
@@ -304,16 +303,14 @@ export async function PUT(request: Request) {
       }
     });
 
-    // Create notification for the client if assigned
+    // Notify the client if assigned.
     if (existingPlan.userId) {
-      await prisma.notification.create({
-        data: {
-          userId: existingPlan.userId,
-          title: 'Meal Plan Updated',
-          message: `Your trainer has updated your meal plan: ${name}`,
-          type: 'MEAL_PLAN_ASSIGNED',
-          actionUrl: '/client/food'
-        }
+      await dispatchNotification({
+        userId: existingPlan.userId,
+        type: 'MEAL_PLAN_ASSIGNED',
+        title: 'Meal plan updated',
+        body: `Your trainer has updated your meal plan: ${name}`,
+        actionUrl: '/client/food',
       });
     }
 

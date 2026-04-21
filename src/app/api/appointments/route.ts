@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma, withDatabaseRetry, checkDatabaseConnection } from '@/lib/prisma';
 import { sendAppointmentStatusEmail, type AppointmentStatus } from '@/lib/email';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 // GET /api/appointments - Fetch appointments for trainer/client
 export async function GET(request: NextRequest) {
@@ -462,14 +463,12 @@ export async function PATCH(request: NextRequest) {
         const notifyUserId = actualUserId === appointment.clientId ? appointment.trainerId : appointment.clientId;
         const cancellerName = actualUserId === appointment.clientId ? updatedAppointment.client.name : updatedAppointment.trainer.name;
 
-        await prisma.notification.create({
-          data: {
-            userId: notifyUserId,
-            type: 'APPOINTMENT_CANCELLED',
-            title: 'Appointment Cancelled',
-            message: `${cancellerName} has cancelled the appointment scheduled for ${updatedAppointment.startTime.toLocaleDateString()} at ${updatedAppointment.startTime.toLocaleTimeString()}.${cancelReason ? ` Reason: ${cancelReason}` : ''}`,
-            createdAt: new Date()
-          }
+        await dispatchNotification({
+          userId: notifyUserId,
+          type: 'APPOINTMENT_CANCELLED',
+          title: 'Appointment cancelled',
+          body: `${cancellerName} cancelled the appointment on ${updatedAppointment.startTime.toLocaleDateString()} at ${updatedAppointment.startTime.toLocaleTimeString()}.${cancelReason ? ` Reason: ${cancelReason}` : ''}`,
+          metadata: { appointmentId: updatedAppointment.id, cancelReason: cancelReason ?? null },
         });
 
       } catch (notificationError) {
