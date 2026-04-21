@@ -34,8 +34,16 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   if (!pushSupported()) return null;
   try {
     const existing = await navigator.serviceWorker.getRegistration('/');
-    if (existing) return existing;
-    return await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    if (!existing) {
+      await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    }
+    // `register()` resolves as soon as registration is accepted, NOT when the
+    // SW is active. Calling pushManager.subscribe() before the SW activates
+    // throws AbortError: "no active Service Worker". `navigator.serviceWorker.ready`
+    // resolves when there's an activated SW controlling this scope, so we
+    // await that explicitly — works on both fresh install and re-opens.
+    const ready = await navigator.serviceWorker.ready;
+    return ready;
   } catch (err) {
     console.warn('[push] SW register failed:', err);
     return null;
