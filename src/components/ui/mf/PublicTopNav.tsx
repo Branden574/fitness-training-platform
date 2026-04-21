@@ -79,6 +79,13 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/for-trainers/signup"
+            className="mf-fg-dim hover:text-[color:var(--mf-fg)] hidden md:inline"
+            style={{ fontSize: 13 }}
+          >
+            Become a trainer
+          </Link>
           <Link href="/auth/signin">
             <Btn variant="ghost">Sign in</Btn>
           </Link>
