@@ -74,14 +74,23 @@ export async function POST(request: Request) {
     // Hash the password
     const hashedPassword = await bcrypt.hash(validatedData.password, 12);
 
-    // Create the user and link to trainer
+    // Honor invitation.role so admin-issued TRAINER / ADMIN invites land with
+    // the correct role. Legacy rows predating the role column read as CLIENT
+    // thanks to the @default; anything unrecognized falls back to CLIENT too.
+    const redeemerRole =
+      invitation.role === 'TRAINER' || invitation.role === 'ADMIN'
+        ? invitation.role
+        : 'CLIENT';
+
+    // TRAINER / ADMIN invites are platform onboarding, not clients-under-a-trainer,
+    // so trainerId stays null for them.
     const user = await prisma.user.create({
       data: {
         name: validatedData.name,
         email: normalizedEmail,
         password: hashedPassword,
-        role: 'CLIENT',
-        trainerId: invitation.invitedBy, // Link client to the trainer who invited them
+        role: redeemerRole,
+        trainerId: redeemerRole === 'CLIENT' ? invitation.invitedBy : null,
       },
       select: {
         id: true,
@@ -92,6 +101,16 @@ export async function POST(request: Request) {
         createdAt: true,
       }
     });
+
+    // New TRAINER users need a Trainer row + slug + referral code right away so
+    // they can be published, searched, and have a shareable /apply/{slug} link
+    // without having to visit the Sharing panel first.
+    if (redeemerRole === 'TRAINER') {
+      const { ensureTrainerRow } = await import('@/lib/trainerRow');
+      const { ensureTrainerIdentity } = await import('@/lib/trainerIdentity');
+      await ensureTrainerRow(user.id, prisma);
+      await ensureTrainerIdentity(user.id, prisma);
+    }
 
     // Mark invitation as accepted
     await prisma.invitation.update({
