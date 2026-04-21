@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/mf';
 import LibrarySearchClient from './library-search-client';
 import FillGifsClient from './fill-gifs-client';
+import ExerciseCardActionsClient from './exercise-card-actions-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,7 +104,25 @@ export default async function TrainerExercisesPage() {
               const chipKind =
                 e.difficulty === 'ADVANCED' ? 'warn' : e.difficulty === 'INTERMEDIATE' ? 'ok' : 'default';
               return (
-                <div key={e.id} className="mf-card" style={{ overflow: 'hidden' }}>
+                <div key={e.id} className="mf-card" style={{ overflow: 'hidden', position: 'relative' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 2,
+                    }}
+                  >
+                    <ExerciseCardActionsClient
+                      id={e.id}
+                      name={e.name}
+                      difficulty={e.difficulty}
+                      imageUrl={e.imageUrl}
+                      videoUrl={e.videoUrl}
+                      muscleGroups={muscles}
+                      equipment={equip}
+                    />
+                  </div>
                   {e.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img

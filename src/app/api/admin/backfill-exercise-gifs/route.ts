@@ -7,6 +7,11 @@ interface ExerciseDbItem {
   id?: string;
   name?: string;
   gifUrl?: string;
+  target?: string;
+  bodyPart?: string;
+  equipment?: string;
+  secondaryMuscles?: string[] | string;
+  instructions?: string[] | string;
 }
 
 export const dynamic = 'force-dynamic';
@@ -39,16 +44,13 @@ function scoreMatch(target: string, candidate: string): number {
   return shared / denom;
 }
 
-async function resolveGifUrl(
-  item: ExerciseDbItem,
+async function searchByName(
+  query: string,
   apiKey: string,
-): Promise<string | null> {
-  if (item.gifUrl && item.gifUrl.trim()) return item.gifUrl.trim();
-  const id = item.id;
-  if (!id) return null;
+): Promise<ExerciseDbItem[]> {
   try {
     const res = await fetch(
-      `https://exercisedb.p.rapidapi.com/exercises/exercise/${encodeURIComponent(id)}`,
+      `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(query)}`,
       {
         headers: {
           'X-RapidAPI-Key': apiKey,
@@ -57,11 +59,11 @@ async function resolveGifUrl(
         cache: 'no-store',
       },
     );
-    if (!res.ok) return null;
-    const data = (await res.json()) as ExerciseDbItem;
-    return data.gifUrl?.trim() || null;
+    if (!res.ok) return [];
+    const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
+    return Array.isArray(raw) ? raw : [raw];
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -85,83 +87,25 @@ export async function POST() {
     );
   }
 
-  const BODY_PARTS = [
-    'back',
-    'cardio',
-    'chest',
-    'lower arms',
-    'lower legs',
-    'neck',
-    'shoulders',
-    'upper arms',
-    'upper legs',
-    'waist',
-  ];
-
-  const library: ExerciseDbItem[] = [];
-  const seen = new Set<string>();
-  const fetchErrors: string[] = [];
-
-  const PAGE_SIZE = 10;
-  const MAX_PAGES_PER_BP = 40;
-  for (const bp of BODY_PARTS) {
-    let offset = 0;
-    let pages = 0;
-    for (;;) {
-      if (pages >= MAX_PAGES_PER_BP) break;
-      pages++;
-      try {
-        const res = await fetch(
-          `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${encodeURIComponent(
-            bp,
-          )}?limit=${PAGE_SIZE}&offset=${offset}`,
-          {
-            headers: {
-              'X-RapidAPI-Key': apiKey,
-              'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-            },
-            cache: 'no-store',
-          },
-        );
-        if (!res.ok) {
-          fetchErrors.push(`${bp}@${offset}: HTTP ${res.status}`);
-          break;
-        }
-        const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
-        const items = Array.isArray(raw) ? raw : [raw];
-        if (items.length === 0) break;
-        let added = 0;
-        for (const it of items) {
-          const key = String(it.id ?? it.name ?? '');
-          if (!key || seen.has(key)) continue;
-          seen.add(key);
-          library.push(it);
-          added++;
-        }
-        if (items.length < PAGE_SIZE) break;
-        // If an entire page returned only duplicates, bail out — stuck in a loop.
-        if (added === 0) break;
-        offset += items.length;
-      } catch (e) {
-        fetchErrors.push(`${bp}@${offset}: ${e instanceof Error ? e.message : 'unknown'}`);
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 80));
-    }
-  }
-
-  if (library.length === 0) {
-    return NextResponse.json(
-      { message: 'ExerciseDB returned no library items', fetchErrors },
-      { status: 502 },
-    );
-  }
-
   const missing = await prisma.exercise.findMany({
     where: { OR: [{ imageUrl: null }, { imageUrl: '' }] },
     select: { id: true, name: true },
   });
 
+  if (missing.length === 0) {
+    return NextResponse.json({
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      message: 'No exercises need GIFs.',
+    });
+  }
+
+  // Per-exercise name search instead of the old "download the whole library
+  // then fuzzy-match" approach — that was iterating 10 body parts × up to 40
+  // pages (≈4000 items) with 80ms delays before doing any matching, so users
+  // saw "Filling…" for minutes. For N missing exercises this is now ~N×3
+  // fetches; typical case finishes in 10-30s.
   const results: {
     updated: number;
     skipped: number;
@@ -177,85 +121,68 @@ export async function POST() {
     }>;
   } = { updated: 0, skipped: 0, failed: 0, details: [] };
 
+  const MATCH_THRESHOLD = 0.34;
+
   for (const ex of missing) {
     const name = (ex.name ?? '').trim();
     if (!name) {
-      results.skipped++;
-      results.details.push({ id: ex.id, name, status: 'skipped', reason: 'empty name' });
-      continue;
-    }
-
-    let best: { item: ExerciseDbItem; score: number } | null = null;
-    for (const item of library) {
-      const candidateName = item.name ?? '';
-      if (!candidateName) continue;
-      const score = scoreMatch(name, candidateName);
-      if (!best || score > best.score) best = { item, score };
-    }
-
-    const threshold = 0.34;
-
-    // Fallback: if library match is too weak, try the per-name search endpoint.
-    if (!best || best.score < threshold) {
-      const queries: string[] = [];
-      const tokens = tokenize(name);
-      const lower = name.toLowerCase();
-      if (lower) queries.push(lower);
-      if (tokens.length >= 2) queries.push(tokens.slice(-2).join(' '));
-      if (tokens.length >= 1) queries.push(tokens[tokens.length - 1]!);
-
-      for (const q of queries) {
-        try {
-          const res = await fetch(
-            `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(q)}`,
-            {
-              headers: {
-                'X-RapidAPI-Key': apiKey,
-                'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-              },
-              cache: 'no-store',
-            },
-          );
-          if (!res.ok) continue;
-          const raw = (await res.json()) as ExerciseDbItem[] | ExerciseDbItem;
-          const items = Array.isArray(raw) ? raw : [raw];
-          for (const item of items) {
-            const candidateName = item.name ?? '';
-            if (!candidateName) continue;
-            const score = scoreMatch(name, candidateName);
-            if (!best || score > best.score) best = { item, score };
-          }
-          if (best && best.score >= threshold) break;
-        } catch {
-          // try next query
-        }
-        await new Promise((r) => setTimeout(r, 80));
-      }
-    }
-
-    if (!best || best.score < threshold) {
       results.skipped++;
       results.details.push({
         id: ex.id,
         name,
         status: 'skipped',
-        reason: best
-          ? `low score ${best.score.toFixed(2)} (closest: "${best.item.name ?? ''}")`
-          : 'no library items',
-        matchedName: best?.item.name,
+        reason: 'empty name',
+      });
+      continue;
+    }
+
+    // Build a few progressively broader search queries. Longer phrases first
+    // so "barbell bench press" can hit an exact-ish match before the single
+    // token "press" drowns in results.
+    const tokens = tokenize(name);
+    const queries: string[] = [];
+    const lower = name.toLowerCase();
+    if (lower) queries.push(lower);
+    if (tokens.length >= 2) queries.push(tokens.slice(-2).join(' '));
+    if (tokens.length >= 1) queries.push(tokens[tokens.length - 1]!);
+
+    let best: { item: ExerciseDbItem; score: number } | null = null;
+    for (const q of queries) {
+      const items = await searchByName(q, apiKey);
+      for (const item of items) {
+        if (!item.gifUrl) continue; // No point matching if there's no GIF to apply
+        const candidateName = item.name ?? '';
+        if (!candidateName) continue;
+        const score = scoreMatch(name, candidateName);
+        if (!best || score > best.score) best = { item, score };
+      }
+      // Early exit if we already found a strong match — don't keep hitting
+      // the API with broader queries that'll only return weaker candidates.
+      if (best && best.score >= 0.7) break;
+      // Small delay between queries to stay polite to ExerciseDB.
+      await new Promise((r) => setTimeout(r, 80));
+    }
+
+    if (!best || best.score < MATCH_THRESHOLD) {
+      results.failed++;
+      results.details.push({
+        id: ex.id,
+        name,
+        status: 'failed',
+        reason: 'no match',
         score: best?.score,
       });
       continue;
     }
 
-    const gifUrl = await resolveGifUrl(best.item, apiKey);
+    const gifUrl = best.item.gifUrl?.trim();
     if (!gifUrl) {
-      results.skipped++;
+      results.failed++;
       results.details.push({
         id: ex.id,
         name,
-        status: 'skipped',
-        reason: `matched "${best.item.name ?? ''}" but no gifUrl returned by detail endpoint`,
+        status: 'failed',
+        reason: 'match had no gifUrl',
         matchedName: best.item.name,
         score: best.score,
       });
@@ -276,49 +203,20 @@ export async function POST() {
         score: best.score,
         gifUrl,
       });
-    } catch (e) {
+    } catch (err) {
       results.failed++;
       results.details.push({
         id: ex.id,
         name,
         status: 'failed',
-        reason: e instanceof Error ? e.message : 'db error',
+        reason: err instanceof Error ? err.message : 'db update failed',
+        matchedName: best.item.name,
+        score: best.score,
       });
     }
-    await new Promise((r) => setTimeout(r, 80));
   }
 
-  const sampleLibraryItem = library[0] ?? null;
-  let sampleDetail: unknown = null;
-  if (sampleLibraryItem?.id) {
-    try {
-      const res = await fetch(
-        `https://exercisedb.p.rapidapi.com/exercises/exercise/${encodeURIComponent(sampleLibraryItem.id)}`,
-        {
-          headers: {
-            'X-RapidAPI-Key': apiKey,
-            'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-          },
-          cache: 'no-store',
-        },
-      );
-      if (res.ok) sampleDetail = await res.json();
-    } catch {
-      sampleDetail = null;
-    }
-  }
-
-  return NextResponse.json({
-    libraryCount: library.length,
-    fetchErrors,
-    total: missing.length,
-    updated: results.updated,
-    skipped: results.skipped,
-    failed: results.failed,
-    details: results.details,
-    debug: {
-      sampleLibraryItem,
-      sampleDetail,
-    },
+  return NextResponse.json(results, {
+    headers: { 'Cache-Control': 'private, no-store' },
   });
 }
