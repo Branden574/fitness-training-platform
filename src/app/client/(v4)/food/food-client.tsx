@@ -6,6 +6,8 @@ import { Plus, Minus, X, ChevronLeft, Calendar, Search, Loader2 } from 'lucide-r
 import { Apple, Heart, Clock, Camera } from 'lucide-react';
 import { CalRing, MacroRing, SrcPill, type FoodSource } from '@/components/ui/mf';
 import BarcodeScanner from '@/components/BarcodeScanner';
+import CopyYesterdayClient from './copy-yesterday-client';
+import MealPlansDrawerClient from './meal-plans-drawer-client';
 
 const MEALS = ['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER'] as const;
 type MealType = (typeof MEALS)[number];
@@ -209,6 +211,27 @@ export default function FoodClient({
             value={Math.round(initial.totals.fat)}
             target={`${initial.target.fat}G`}
           />
+        </div>
+      </div>
+
+      {/* Mobile quick-action row: Copy yesterday + Meal plans. Reuses the
+          same client components the desktop shell renders; the arbitrary
+          [&>button]:w-full selector stretches the inline-flex .mf-btn child
+          to fill each half of the row without the clients needing a prop. */}
+      <div
+        className="flex items-center gap-2"
+        style={{ padding: '12px 16px 0' }}
+      >
+        <div className="flex-1 [&>button]:w-full">
+          <CopyYesterdayClient
+            viewDate={viewDate}
+            hasEntries={Object.values(initial.grouped).some(
+              (arr) => arr.length > 0,
+            )}
+          />
+        </div>
+        <div className="flex-1 [&>button]:w-full">
+          <MealPlansDrawerClient />
         </div>
       </div>
 
