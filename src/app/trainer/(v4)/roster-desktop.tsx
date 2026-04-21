@@ -1,3 +1,5 @@
+'use client';
+
 import { Plus, ChevronRight, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, Bar, Btn, DesktopShell, StatCard, StatusDot } from '@/components/ui/mf';
