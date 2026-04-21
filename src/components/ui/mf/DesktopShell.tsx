@@ -21,6 +21,8 @@ import {
   Search,
   Bell,
   LogOut,
+  Menu,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -125,6 +127,7 @@ export default function DesktopShell({
   // submit handler from window.location instead (safe — onSubmit only fires
   // from a real DOM event, so `window` always exists).
   const [searchValue, setSearchValue] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const notificationsHref = role === 'admin' ? '/admin/contacts?status=NEW' : '/trainer/messages';
 
@@ -147,142 +150,221 @@ export default function DesktopShell({
     router.push(qs ? `${targetPath}?${qs}` : targetPath);
   };
 
+  const sidebarContent = (
+    <>
+      <div
+        className="px-4 flex items-center gap-2"
+        style={{ height: 56, borderBottom: '1px solid var(--mf-hairline)' }}
+      >
+        <BrandMark role={role} />
+        <div style={{ flex: 1 }}>
+          <div
+            className="mf-font-display"
+            style={{ fontSize: 14, letterSpacing: '-0.01em', lineHeight: 1 }}
+          >
+            {brandName}
+          </div>
+          <div
+            className="mf-font-mono mf-fg-mute"
+            style={{ fontSize: 9, marginTop: 2 }}
+          >
+            {resolvedMeta}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(false)}
+          className="md:hidden mf-btn mf-btn-ghost"
+          style={{ height: 32, width: 32, padding: 0 }}
+          aria-label="Close menu"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      <nav
+        className="px-2 py-3 flex-1 mf-scroll"
+        style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}
+      >
+        {navItems.map((n) => {
+          const Icon = n.i;
+          const isActive = active === n.k;
+          return (
+            <Link
+              key={n.k}
+              href={n.href}
+              onClick={() => setDrawerOpen(false)}
+              className="flex items-center gap-2.5 px-2.5 py-2 text-sm"
+              style={{
+                position: 'relative',
+                borderRadius: 6,
+                background: isActive ? 'var(--mf-surface-3)' : 'transparent',
+                color: isActive ? 'var(--mf-fg)' : 'var(--mf-fg-dim)',
+              }}
+            >
+              {isActive && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 6,
+                    bottom: 6,
+                    width: 2,
+                    background: 'var(--mf-accent)',
+                  }}
+                />
+              )}
+              <Icon size={15} />
+              <span className="flex-1">{n.l}</span>
+              {n.badge ? (
+                <span
+                  className="mf-font-mono"
+                  style={{
+                    fontSize: 9,
+                    background: 'var(--mf-accent)',
+                    color: 'var(--mf-accent-ink)',
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                  }}
+                >
+                  {n.badge}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
+      </nav>
+      {footer ? (
+        <div className="p-3" style={{ borderTop: '1px solid var(--mf-hairline)' }}>
+          {footer}
+        </div>
+      ) : null}
+      <div style={{ padding: 12, borderTop: '1px solid var(--mf-hairline)' }}>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+          className="flex items-center gap-2.5 px-2.5 py-2 text-sm w-full"
+          style={{
+            borderRadius: 6,
+            color: 'var(--mf-fg-dim)',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          <LogOut size={15} />
+          <span className="flex-1">Sign out</span>
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div
       data-mf
       className={`flex mf-bg mf-fg ${className ?? ''}`}
       style={{ minHeight: '100vh' }}
     >
-      {/* Sidebar */}
+      {/* Persistent sidebar — md+ only */}
       <aside
-        className="mf-s1 flex flex-col"
+        className="mf-s1 hidden md:flex flex-col"
         style={{ width: 220, borderRight: '1px solid var(--mf-hairline)' }}
       >
-        <div
-          className="px-4 flex items-center gap-2"
-          style={{ height: 56, borderBottom: '1px solid var(--mf-hairline)' }}
-        >
-          <BrandMark role={role} />
-          <div>
-            <div
-              className="mf-font-display"
-              style={{ fontSize: 14, letterSpacing: '-0.01em', lineHeight: 1 }}
-            >
-              {brandName}
-            </div>
-            <div
-              className="mf-font-mono mf-fg-mute"
-              style={{ fontSize: 9, marginTop: 2 }}
-            >
-              {resolvedMeta}
-            </div>
-          </div>
-        </div>
-        <nav className="px-2 py-3 flex-1" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {navItems.map((n) => {
-            const Icon = n.i;
-            const isActive = active === n.k;
-            return (
-              <Link
-                key={n.k}
-                href={n.href}
-                className="flex items-center gap-2.5 px-2.5 py-2 text-sm"
-                style={{
-                  position: 'relative',
-                  borderRadius: 6,
-                  background: isActive ? 'var(--mf-surface-3)' : 'transparent',
-                  color: isActive ? 'var(--mf-fg)' : 'var(--mf-fg-dim)',
-                }}
-              >
-                {isActive && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 6,
-                      bottom: 6,
-                      width: 2,
-                      background: 'var(--mf-accent)',
-                    }}
-                  />
-                )}
-                <Icon size={15} />
-                <span className="flex-1">{n.l}</span>
-                {n.badge ? (
-                  <span
-                    className="mf-font-mono"
-                    style={{
-                      fontSize: 9,
-                      background: 'var(--mf-accent)',
-                      color: 'var(--mf-accent-ink)',
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                    }}
-                  >
-                    {n.badge}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </nav>
-        {footer ? (
-          <div className="p-3" style={{ borderTop: '1px solid var(--mf-hairline)' }}>
-            {footer}
-          </div>
-        ) : null}
-        <div
-          style={{ padding: 12, borderTop: '1px solid var(--mf-hairline)' }}
-        >
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-            className="flex items-center gap-2.5 px-2.5 py-2 text-sm w-full"
-            style={{
-              borderRadius: 6,
-              color: 'var(--mf-fg-dim)',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <LogOut size={15} />
-            <span className="flex-1">Sign out</span>
-          </button>
-        </div>
+        {sidebarContent}
       </aside>
 
+      {/* Mobile drawer — same sidebar content, slides in from left on hamburger tap */}
+      {drawerOpen && (
+        <>
+          <div
+            className="md:hidden"
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.6)',
+              zIndex: 90,
+            }}
+            aria-hidden
+          />
+          <aside
+            className="mf-s1 md:hidden flex flex-col"
+            style={{
+              position: 'fixed',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 260,
+              borderRight: '1px solid var(--mf-hairline)',
+              zIndex: 95,
+            }}
+          >
+            {sidebarContent}
+          </aside>
+        </>
+      )}
+
       {/* Main */}
-      <main className="flex-1 flex flex-col" style={{ overflow: 'hidden' }}>
+      <main className="flex-1 flex flex-col" style={{ overflow: 'hidden', minWidth: 0 }}>
         <div
-          className="mf-s1 flex items-center justify-between px-6"
-          style={{ height: 56, borderBottom: '1px solid var(--mf-hairline)' }}
+          className="mf-s1 flex items-center justify-between"
+          style={{
+            height: 56,
+            borderBottom: '1px solid var(--mf-hairline)',
+            paddingLeft: 12,
+            paddingRight: 12,
+          }}
         >
-          <div>
-            {breadcrumbs ? (
-              <div
-                className="mf-font-mono mf-fg-mute"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {breadcrumbs}
-              </div>
-            ) : null}
-            {title ? (
-              <div
-                className="mf-font-display"
-                style={{ fontSize: 18, letterSpacing: '-0.01em', lineHeight: 1, marginTop: 2 }}
-              >
-                {title}
-              </div>
-            ) : null}
+          <div className="flex items-center gap-2" style={{ minWidth: 0, flex: 1 }}>
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="md:hidden mf-btn mf-btn-ghost"
+              style={{ height: 36, width: 36, padding: 0, flexShrink: 0 }}
+              aria-label="Open menu"
+            >
+              <Menu size={16} />
+            </button>
+            <div style={{ minWidth: 0 }}>
+              {breadcrumbs ? (
+                <div
+                  className="mf-font-mono mf-fg-mute hidden sm:block"
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: '0.15em',
+                    textTransform: 'uppercase',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {breadcrumbs}
+                </div>
+              ) : null}
+              {title ? (
+                <div
+                  className="mf-font-display"
+                  style={{
+                    fontSize: 18,
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1,
+                    marginTop: 2,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {title}
+                </div>
+              ) : null}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <form onSubmit={onSearchSubmit} style={{ position: 'relative' }}>
+          <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
+            <form
+              onSubmit={onSearchSubmit}
+              className="hidden lg:block"
+              style={{ position: 'relative' }}
+            >
               <Search
                 size={14}
                 className="mf-fg-mute"
