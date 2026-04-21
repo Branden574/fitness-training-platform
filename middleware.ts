@@ -64,17 +64,16 @@ export function middleware(request: NextRequest) {
     'https://checkout.stripe.com',
     'https://api.resend.com',
     'https://api.nal.usda.gov',
-    'https://exercisedb.p.rapidapi.com',
     'https://www.googleapis.com',
   ].join(' ');
   response.headers.set(
     'Content-Security-Policy',
     [
       `default-src 'self'`,
-      `script-src ${scriptSrc} https://www.youtube.com https://www.youtube-nocookie.com https://js.stripe.com`,
-      `style-src 'self' 'unsafe-inline'`,
+      `script-src ${scriptSrc} https://www.youtube.com https://www.youtube-nocookie.com https://js.stripe.com https://static.cloudflareinsights.com`,
+      `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
       `img-src 'self' data: https:`,
-      `font-src 'self' data:`,
+      `font-src 'self' data: https://fonts.gstatic.com`,
       `connect-src ${connectSrc}`,
       `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://js.stripe.com https://checkout.stripe.com`,
       `media-src 'self' https:`,
