@@ -54,6 +54,7 @@ export interface DesktopShellProps {
 const TRAINER_NAV: DesktopShellNavItem[] = [
   { k: 'roster',       l: 'Roster',           i: Users,         href: '/trainer' },
   { k: 'builder',      l: 'Program Builder',  i: Layers,        href: '/trainer/builder' },
+  { k: 'clientdetail', l: 'Client Detail',    i: User,          href: '/trainer/clients' },
   { k: 'exercises',    l: 'Exercise Library', i: Dumbbell,      href: '/trainer/exercises' },
   { k: 'nutrition',    l: 'Nutrition',        i: Apple,         href: '/trainer/nutrition' },
   { k: 'messages',     l: 'Inbox',            i: MessageSquare, href: '/trainer/messages' },
