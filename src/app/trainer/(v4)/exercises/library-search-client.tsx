@@ -24,7 +24,6 @@ export default function LibrarySearchClient() {
   const [results, setResults] = useState<LibraryResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [configMissing, setConfigMissing] = useState(false);
   const [importStates, setImportStates] = useState<Record<string, ImportState>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -49,18 +48,10 @@ export default function LibrarySearchClient() {
   async function runSearch(q: string) {
     setLoading(true);
     setError(null);
-    setConfigMissing(false);
     try {
       const res = await fetch(
         `/api/exercises/library/search?q=${encodeURIComponent(q)}&limit=12`,
       );
-      if (res.status === 503) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string };
-        setConfigMissing(true);
-        setError(data.message ?? 'Exercise library not configured.');
-        setResults([]);
-        return;
-      }
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
         setError(data.message ?? `Search failed (${res.status})`);
@@ -122,7 +113,7 @@ export default function LibrarySearchClient() {
             className="mf-font-mono mf-fg-mute"
             style={{ fontSize: 11, marginTop: 2 }}
           >
-            Search ExerciseDB · import GIFs and muscle data
+            Search free-exercise-db · import images and muscle data
           </div>
         </div>
       </div>
@@ -152,7 +143,7 @@ export default function LibrarySearchClient() {
               fontSize: 13,
               outline: 'none',
             }}
-            placeholder="Search ExerciseDB (e.g. squat, press, row)"
+            placeholder="Search exercises (e.g. squat, press, row)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -167,36 +158,7 @@ export default function LibrarySearchClient() {
         </div>
       </div>
 
-      {configMissing && (
-        <div
-          className="mf-card"
-          style={{
-            padding: 12,
-            marginBottom: 12,
-            borderColor: '#b08900',
-            background: 'rgba(176, 137, 0, 0.08)',
-          }}
-        >
-          <div
-            className="mf-font-mono"
-            style={{
-              fontSize: 11,
-              color: '#e6c15a',
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              marginBottom: 4,
-            }}
-          >
-            LIBRARY NOT CONFIGURED
-          </div>
-          <div className="mf-fg-dim" style={{ fontSize: 12 }}>
-            {error ??
-              'Set RAPIDAPI_KEY in the environment and subscribe to ExerciseDB on RapidAPI to enable live search.'}
-          </div>
-        </div>
-      )}
-
-      {error && !configMissing && (
+      {error && (
         <div
           className="mf-chip mf-chip-bad"
           style={{ display: 'block', padding: '8px 12px', marginBottom: 12 }}
