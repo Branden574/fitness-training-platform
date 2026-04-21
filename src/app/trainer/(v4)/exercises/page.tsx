@@ -1,15 +1,14 @@
-import { Plus } from 'lucide-react';
 import { requireTrainerSession } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
 import {
   AthletePh,
-  Btn,
   Chip,
   DesktopShell,
 } from '@/components/ui/mf';
 import LibrarySearchClient from './library-search-client';
 import FillGifsClient from './fill-gifs-client';
 import ExerciseCardActionsClient from './exercise-card-actions-client';
+import NewExerciseClient from './new-exercise-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +47,7 @@ export default async function TrainerExercisesPage() {
       active="exercises"
       title="Exercise Library"
       breadcrumbs="TRAINER / EXERCISES"
-      headerRight={<Btn variant="primary" icon={Plus}>New exercise</Btn>}
+      headerRight={<NewExerciseClient />}
     >
       <div style={{ padding: 24, maxWidth: 1400 }}>
         <LibrarySearchClient />
