@@ -244,6 +244,14 @@ export default function ProgramBuilderClient({
 
   return (
     <>
+      {/* Program-level action bar — sits above the tabs so Assign is always
+          visible and never competes with section-level CTAs inside a tab. */}
+      <div className="flex items-center justify-end" style={{ marginBottom: 12 }}>
+        <Btn variant="primary" icon={Users} onClick={() => setAssignOpen(true)}>
+          Assign to client
+        </Btn>
+      </div>
+
       {/* Training / Nutrition tabs */}
       <div
         className="flex items-center gap-2"
@@ -269,10 +277,6 @@ export default function ProgramBuilderClient({
             {mealPlans.length}
           </span>
         </TabBtn>
-        <div style={{ flex: 1 }} />
-        <Btn variant="primary" icon={Users} onClick={() => setAssignOpen(true)}>
-          Assign to client
-        </Btn>
       </div>
 
       {error && (
@@ -686,6 +690,9 @@ function TabBtn({
     <button
       type="button"
       onClick={onClick}
+      // preventDefault on mousedown skips the click-focus so the browser
+      // outline doesn't persist after mouse-switching tabs; keyboard Tab still focuses.
+      onMouseDown={(e) => e.preventDefault()}
       className="mf-font-mono"
       style={{
         padding: '10px 16px',
