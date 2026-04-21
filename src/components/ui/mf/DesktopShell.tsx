@@ -19,12 +19,13 @@ import {
   Camera,
   AlertTriangle,
   Search,
-  Bell,
   LogOut,
   Menu,
   X,
   type LucideIcon,
 } from 'lucide-react';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
 
 export type DesktopShellRole = 'trainer' | 'admin';
 
@@ -128,8 +129,6 @@ export default function DesktopShell({
   // from a real DOM event, so `window` always exists).
   const [searchValue, setSearchValue] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const notificationsHref = role === 'admin' ? '/admin/contacts?status=NEW' : '/trainer/messages';
 
   const onSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -380,27 +379,10 @@ export default function DesktopShell({
               />
             </form>
             {headerRight}
-            <Link
-              href={notificationsHref}
-              className="mf-btn mf-btn-ghost"
-              style={{ height: 36, width: 36, padding: 0, position: 'relative' }}
-              aria-label="Notifications"
-            >
-              <Bell size={14} />
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: 'var(--mf-accent)',
-                }}
-              />
-            </Link>
+            <NotificationBell />
           </div>
         </div>
+        <PushNotificationPrompt />
         <div className="flex-1 mf-scroll" style={{ overflowY: 'auto' }}>
           {children}
         </div>
