@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { publishToUser } from '@/lib/notifications/sse-registry';
 
 // PATCH /api/notifications/[id] - Mark notification as read
 export async function PATCH(
@@ -97,19 +98,31 @@ export async function PATCH(
       }
     }
 
-    // Handle regular database notifications
+    // Handle regular database notifications. Keep legacy `read` boolean in
+    // sync with the new `readAt` timestamp so pre-3A code that filters on
+    // `read: false` keeps working while new code reads `readAt` directly.
     const updatedNotification = await prisma.notification.update({
       where: {
         id: id,
         userId: user.id // Ensure user can only update their own notifications
       },
       data: {
-        read: read
+        read: read,
+        readAt: read ? new Date() : null,
       }
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    try {
+      publishToUser(user.id, {
+        event: 'notification.read',
+        data: { id: updatedNotification.id, read: updatedNotification.read },
+      });
+    } catch (e) {
+      console.warn('[notifications/PATCH] SSE publish failed:', e);
+    }
+
+    return NextResponse.json({
+      success: true,
       read: updatedNotification.read,
       id: updatedNotification.id
     });
@@ -209,7 +222,16 @@ export async function DELETE(
       }
     });
 
-    return NextResponse.json({ 
+    try {
+      publishToUser(user.id, {
+        event: 'notification.deleted',
+        data: { id },
+      });
+    } catch (e) {
+      console.warn('[notifications/DELETE] SSE publish failed:', e);
+    }
+
+    return NextResponse.json({
       success: true,
       message: 'Notification deleted successfully'
     });
