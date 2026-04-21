@@ -26,12 +26,15 @@ export default async function ApplyDirectPage({
       name: true,
       image: true,
       trainerAcceptingClients: true,
-      trainerIsPublic: true,
       trainer: { select: { contactPhone: true } },
     },
   });
 
-  if (!trainer || !trainer.trainerIsPublic) {
+  // Personal apply link (QR + share URL) works regardless of directory
+  // visibility — only the /t/[slug] profile page and /trainers directory gate
+  // on trainerIsPublic. A trainer who keeps their listing private still needs
+  // their own QR to onboard direct leads.
+  if (!trainer) {
     notFound();
   }
 

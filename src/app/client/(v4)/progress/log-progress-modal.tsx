@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
+import { useCelebrate } from '@/components/animations';
+import type { CelebrationKind } from '@/components/animations/celebrations';
 
 type FormState = {
   date: string;
@@ -33,6 +35,7 @@ export default function LogProgressModal({
   triggerLabel?: string;
 }) {
   const router = useRouter();
+  const celebrate = useCelebrate();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
@@ -71,6 +74,46 @@ export default function LogProgressModal({
       setOpen(false);
       setForm(EMPTY);
       setSubmitting(false);
+
+      // Fire a celebration based on which metric the client logged. Priority:
+      // weight > bodyfat > sleep(≥7h) > mood(≥8). Only one per save so the
+      // overlay doesn't stack or feel spammy. A follow-up could compare to
+      // the previous entry and celebrate deltas (new low weight, +1% lean,
+      // first 8h sleep in a week) — for now acknowledging the log itself.
+      const picked: CelebrationKind | null = (() => {
+        const w = num(form.weight);
+        const bf = num(form.bodyFat);
+        const sl = num(form.sleep);
+        const md = num(form.mood);
+        if (w !== undefined) return 'weight';
+        if (bf !== undefined) return 'bodyfat';
+        if (sl !== undefined && sl >= 7) return 'sleep';
+        if (md !== undefined && md >= 8) return 'mood';
+        return null;
+      })();
+
+      if (picked === 'weight') {
+        celebrate('weight', {
+          bigNumber: `${form.weight} LB`,
+          bigLabel: 'LOGGED',
+        });
+      } else if (picked === 'bodyfat') {
+        celebrate('bodyfat', {
+          bigNumber: `${form.bodyFat}%`,
+          bigLabel: 'BODY FAT',
+        });
+      } else if (picked === 'sleep') {
+        celebrate('sleep', {
+          bigNumber: `${form.sleep}H`,
+          bigLabel: 'SLEEP',
+        });
+      } else if (picked === 'mood') {
+        celebrate('mood', {
+          bigNumber: `${form.mood}/10`,
+          bigLabel: 'MOOD',
+        });
+      }
+
       router.refresh();
     } catch {
       setError('Network error. Try again.');
