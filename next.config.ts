@@ -30,17 +30,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Sentry wrapper. Source-map upload is gated on SENTRY_AUTH_TOKEN so
-// local dev + Railway-without-Sentry don't try to call Sentry's
-// release API at build time.
-export default withSentryConfig(nextConfig, {
-  silent: true,
-  // Matches the Sentry dashboard slugs — org was auto-created from Branden's
-  // name, project got the default Next.js slug. Source-map upload (gated on
-  // SENTRY_AUTH_TOKEN) needs these to be exact or it no-ops.
-  org: 'branden-vincent-walker',
-  project: 'javascript-nextjs',
-  sourcemaps: process.env.SENTRY_AUTH_TOKEN
-    ? undefined
-    : { disable: true },
-});
+// withSentryConfig wraps the Next config with Sentry's webpack plugin.
+// The plugin does source-map upload + release tracking, BOTH of which
+// talk to Sentry's API at build time and require SENTRY_AUTH_TOKEN. On
+// Railway without that token, the plugin has failed the whole build
+// (observed with commit 260aa31). Only wrap when the auth token is
+// present — runtime error capture is driven by SENTRY_DSN at app boot,
+// not by the webpack plugin, so Sentry still catches errors without
+// the build-time wrapper.
+const config: NextConfig = process.env.SENTRY_AUTH_TOKEN
+  ? withSentryConfig(nextConfig, {
+      silent: true,
+      org: 'branden-vincent-walker',
+      project: 'javascript-nextjs',
+    })
+  : nextConfig;
+
+export default config;
