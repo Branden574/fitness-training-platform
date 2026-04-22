@@ -6,6 +6,13 @@ import { ChevronLeft, Plus, Minus, Check, X, ChevronRight, MoreHorizontal, Video
 import { Chip } from '@/components/ui/mf';
 import { Btn } from '@/components/ui/mf';
 import { useCelebrate } from '@/components/animations';
+import {
+  clearWorkoutDraft,
+  loadWorkoutDraft,
+  markDraftPendingSubmit,
+  saveWorkoutDraft,
+  type SetLogPersisted,
+} from '@/lib/workoutDraft';
 
 interface ExerciseDef {
   id: string;
@@ -56,12 +63,17 @@ const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9] as const;
 export default function ActiveWorkoutClient({ initial }: { initial: InitialPayload }) {
   const router = useRouter();
   const celebrate = useCelebrate();
-  const [exerciseIdx, setExerciseIdx] = useState(0);
-  const [logsByExercise, setLogsByExercise] = useState<Record<string, SetLog[]>>(() =>
-    Object.fromEntries(
+  // Prefer a locally-saved draft over the server's fresh scaffolding so a
+  // mid-session wifi drop doesn't reset the user's logged sets on reload.
+  // Draft is keyed by sessionId and schema-versioned so a stale one gets
+  // ignored rather than corrupting state.
+  const draft = typeof window !== 'undefined' ? loadWorkoutDraft(initial.id) : null;
+  const [exerciseIdx, setExerciseIdx] = useState(() => draft?.exerciseIdx ?? 0);
+  const [logsByExercise, setLogsByExercise] = useState<Record<string, SetLog[]>>(() => {
+    const fresh = Object.fromEntries(
       initial.workout.exercises.map((e) => [
         e.id,
-        Array.from({ length: e.targetSets }, (_, i) => ({
+        Array.from<unknown, SetLog>({ length: e.targetSets }, (_, i) => ({
           setNum: i + 1,
           reps: e.previous?.reps ?? e.targetReps,
           weight: e.previous?.weight ?? e.targetWeight ?? 0,
@@ -69,9 +81,23 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
           done: false,
         })),
       ]),
-    ),
-  );
-  const [activeSetIdx, setActiveSetIdx] = useState(0);
+    );
+    if (!draft) return fresh;
+    // Only restore set arrays where the exercise still matches (same id + set
+    // count). If the trainer edited the workout mid-session, fall back to
+    // the fresh scaffold for any drifted rows.
+    const out: Record<string, SetLog[]> = {};
+    for (const ex of initial.workout.exercises) {
+      const stored = draft.logsByExercise[ex.id];
+      if (Array.isArray(stored) && stored.length === ex.targetSets) {
+        out[ex.id] = stored.map((s: SetLogPersisted) => ({ ...s }));
+      } else {
+        out[ex.id] = fresh[ex.id]!;
+      }
+    }
+    return out;
+  });
+  const [activeSetIdx, setActiveSetIdx] = useState(() => draft?.activeSetIdx ?? 0);
   const [rest, setRest] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [finishing, setFinishing] = useState(false);
@@ -98,6 +124,18 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
     const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000);
     return () => clearInterval(id);
   }, [rest]);
+
+  // Persist every meaningful state mutation to localStorage so a tab crash,
+  // backgrounded phone, or wifi drop doesn't erase logged sets. Debounced by
+  // React's effect batching — one write per render commit is plenty for
+  // localStorage perf.
+  useEffect(() => {
+    saveWorkoutDraft(initial.id, {
+      exerciseIdx,
+      activeSetIdx,
+      logsByExercise,
+    });
+  }, [initial.id, exerciseIdx, activeSetIdx, logsByExercise]);
 
   const currentExercise = initial.workout.exercises[exerciseIdx]!;
   const currentLogs = logsByExercise[currentExercise.id]!;
@@ -217,6 +255,10 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
       });
       if (!patch.ok) throw new Error('Could not close session');
 
+      // Server confirmed the session is saved — the local draft is now
+      // redundant and would just mis-restore if the user revisits the URL.
+      clearWorkoutDraft(initial.id);
+
       if (detectedPrs.length > 0) {
         setPrs(detectedPrs);
         // Fire PR celebration overlay with the actual PR details.
@@ -237,10 +279,38 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
         setTimeout(() => router.push('/client'), 2200);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong');
+      // Save fell over — almost always a transient network drop. Mark the
+      // draft so the Complete button can show "Retry when online" without
+      // us losing the data. The `online` listener below retries on its own.
+      markDraftPendingSubmit(initial.id);
+      setError(
+        navigator.onLine
+          ? e instanceof Error
+            ? e.message
+            : 'Something went wrong'
+          : 'You\'re offline. Your sets are saved — we\'ll sync when you reconnect.',
+      );
       setFinishing(false);
     }
   }
+
+  // When the browser reports it's back online AND we have a draft flagged
+  // as pendingSubmit, auto-retry handleFinish so the user doesn't have to
+  // remember to re-tap Complete.
+  useEffect(() => {
+    function onOnline() {
+      const d = loadWorkoutDraft(initial.id);
+      if (d?.pendingSubmit && !finishing) {
+        void handleFinish();
+      }
+    }
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+    // handleFinish is defined in the same component body and doesn't need
+    // to be listed as a dep — re-binding the listener every render would
+    // just churn.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial.id, finishing]);
 
   const doneSets = currentLogs.filter((s) => s.done).length;
   const totalVolume = Object.values(logsByExercise)

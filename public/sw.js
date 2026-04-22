@@ -1,15 +1,22 @@
-/* global self, clients */
+/* global self, clients, caches, fetch */
 
 // Martinez Fitness service worker.
 // Registered at /sw.js with scope '/' so it controls the whole app.
-// Handles two browser events only:
-//   - `push`: receive a VAPID web-push payload and show an OS-level notification.
-//   - `notificationclick`: open or focus the app at the notification's actionUrl.
-// Kept intentionally minimal — no runtime caching, no offline shell, no
-// background sync. Offline caching is 3D's responsibility, not 3A's.
+// Three concerns:
+//   1. Web-push receive + notificationclick (Phase 3A).
+//   2. Runtime caching for offline survival of the workout player and other
+//      authenticated surfaces (Phase 3D). Never caches mutating requests or
+//      authenticated API GETs (cross-user leak risk). Navigation is
+//      NetworkFirst w/ 3s timeout; _next/static and images are CacheFirst.
 
 const FALLBACK_TITLE = 'Martinez Fitness';
 const FALLBACK_BODY = 'You have a new update.';
+
+const CACHE_VERSION = 'v1';
+const NAV_CACHE = `mf-nav-${CACHE_VERSION}`;
+const STATIC_CACHE = `mf-static-${CACHE_VERSION}`;
+const IMAGE_CACHE = `mf-img-${CACHE_VERSION}`;
+const KEEP_CACHES = new Set([NAV_CACHE, STATIC_CACHE, IMAGE_CACHE]);
 
 self.addEventListener('install', () => {
   // Activate the new SW immediately on install — avoids stuck-at-old-SW after
@@ -19,7 +26,97 @@ self.addEventListener('install', () => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      // Drop caches that don't match the current CACHE_VERSION so stale
+      // chunks from a previous deploy don't linger forever.
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((n) => n.startsWith('mf-') && !KEEP_CACHES.has(n))
+          .map((n) => caches.delete(n)),
+      );
+      await self.clients.claim();
+    })(),
+  );
+});
+
+function isStaticAsset(url) {
+  return url.pathname.startsWith('/_next/static/') || url.pathname === '/sw.js';
+}
+
+function isImageRequest(request, url) {
+  if (request.destination === 'image') return true;
+  return /\.(?:png|jpg|jpeg|gif|webp|svg|avif|ico)$/i.test(url.pathname);
+}
+
+function isNavigation(request) {
+  if (request.mode === 'navigate') return true;
+  return request.destination === 'document';
+}
+
+async function networkFirstWithTimeout(request, cacheName, timeoutMs) {
+  const cache = await caches.open(cacheName);
+  const fromNetwork = (async () => {
+    const res = await fetch(request);
+    if (res && res.ok && res.type === 'basic') {
+      cache.put(request, res.clone()).catch(() => {});
+    }
+    return res;
+  })();
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(null), timeoutMs));
+  const raced = await Promise.race([fromNetwork, timeout]);
+  if (raced) return raced;
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  // Hold for the real network result as last resort.
+  return fromNetwork;
+}
+
+async function cacheFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const res = await fetch(request);
+  if (res && res.ok && res.type === 'basic') {
+    cache.put(request, res.clone()).catch(() => {});
+  }
+  return res;
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return;
+  }
+
+  // Only handle same-origin GETs. Third-party (YouTube, Stripe, CDN images)
+  // has its own caching and we don't want to impersonate their CORS policy.
+  if (url.origin !== self.location.origin) return;
+
+  // Never cache authenticated API responses — one user's cached /api/
+  // clients answer would otherwise leak to another user on a shared device.
+  if (url.pathname.startsWith('/api/')) return;
+
+  // Skip the SSE stream — can't cache an event stream.
+  if (url.pathname.startsWith('/api/notifications/stream')) return;
+
+  if (isStaticAsset(url)) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
+    return;
+  }
+  if (isImageRequest(request, url)) {
+    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    return;
+  }
+  if (isNavigation(request)) {
+    event.respondWith(networkFirstWithTimeout(request, NAV_CACHE, 3000));
+  }
 });
 
 self.addEventListener('push', (event) => {
