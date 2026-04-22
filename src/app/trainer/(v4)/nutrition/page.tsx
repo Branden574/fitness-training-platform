@@ -55,6 +55,10 @@ export default async function TrainerNutritionPage({
           endDate: { gte: today },
         },
         orderBy: { startDate: 'desc' },
+        // Defense in depth — 20 active+future plans per client is far more
+        // than any legitimate workflow. Keeps payload bounded for trainers
+        // with a lot of historical dupes until dedupe lands.
+        take: 20,
         select: {
           id: true,
           name: true,

@@ -56,7 +56,9 @@ export default async function AdminOverviewPage() {
     }),
     prisma.invitation.count({ where: { status: 'PENDING' } }),
     prisma.contactSubmission.count({ where: { status: 'NEW' } }),
-    // Trainers ranked by assigned client count
+    // Trainers ranked by assigned client count. `_count` avoids loading
+    // the full clients array per trainer — at 100 trainers × 50 clients
+    // that's 5k rows for something we just sort and show 5 of.
     prisma.user.findMany({
       where: { role: 'TRAINER' },
       select: {
@@ -65,7 +67,11 @@ export default async function AdminOverviewPage() {
         email: true,
         image: true,
         trainer: { select: { photoUrl: true } },
-        clients: { where: { isActive: true }, select: { id: true } },
+        _count: {
+          select: {
+            clients: { where: { isActive: true } },
+          },
+        },
         createdAt: true,
       },
       take: 8,
@@ -113,7 +119,7 @@ export default async function AdminOverviewPage() {
       name: t.name,
       email: t.email,
       image: t.trainer?.photoUrl ?? t.image ?? null,
-      count: t.clients.length,
+      count: t._count.clients,
       initials: initialsFor(t.name, t.email),
     }))
     .sort((a, b) => b.count - a.count)

@@ -98,12 +98,21 @@ export async function getRoster(trainerUserId: string): Promise<RosterClient[]> 
       workoutSessions: {
         where: { completed: true },
         orderBy: { startTime: 'desc' },
+        // 60 is enough for 30-day adherence (5/wk × 4 = 20) + headroom
+        // to compute the current streak even after short training gaps.
+        // Anything beyond wastes payload.
         take: 60,
         select: { startTime: true, workout: { select: { title: true } } },
       },
-      sentMessages: {
-        where: { receiverId: trainerUserId, read: false },
-        select: { id: true },
+      // _count avoids loading every unread-message row just to count
+      // them. At 50 clients × 100+ unread each that's 5k+ rows for
+      // one roster render otherwise.
+      _count: {
+        select: {
+          sentMessages: {
+            where: { receiverId: trainerUserId, read: false },
+          },
+        },
       },
     },
     orderBy: { createdAt: 'desc' },
@@ -132,7 +141,7 @@ export async function getRoster(trainerUserId: string): Promise<RosterClient[]> 
       programWeek: null,
       adherence,
       prBadge: last30Count >= 8,
-      unread: c.sentMessages.length,
+      unread: c._count.sentMessages,
     };
   });
 }
