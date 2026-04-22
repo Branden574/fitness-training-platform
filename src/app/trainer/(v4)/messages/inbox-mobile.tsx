@@ -11,6 +11,7 @@ export interface InboxMobileRailItem {
   name: string | null;
   email: string;
   initials: string;
+  image: string | null;
   lastPreview: string | null;
   unreadFromClient: number;
   lastAt: string | null;
@@ -29,6 +30,7 @@ export interface InboxMobileProps {
   activeId: string | null;
   activeName: string | null;
   activeInitials: string;
+  activeImage: string | null;
   initialThread: InboxMobileMessage[];
 }
 
@@ -71,6 +73,7 @@ export default function InboxMobile({
   activeId,
   activeName,
   activeInitials,
+  activeImage,
   initialThread,
 }: InboxMobileProps) {
   const router = useRouter();
@@ -257,7 +260,13 @@ export default function InboxMobile({
             >
               <ChevronLeft size={16} />
             </Link>
-            <Avatar initials={activeInitials} size={32} active />
+            <Avatar
+              initials={activeInitials}
+              image={activeImage}
+              alt={activeName ?? activeInitials}
+              size={32}
+              active
+            />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
@@ -560,7 +569,13 @@ export default function InboxMobile({
                     }}
                   />
                 )}
-                <Avatar initials={r.initials} size={38} active={unread} />
+                <Avatar
+                  initials={r.initials}
+                  image={r.image}
+                  alt={r.name ?? r.email}
+                  size={38}
+                  active={unread}
+                />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="flex items-center justify-between">
                     <span

@@ -24,6 +24,7 @@ export default async function TrainerMessagesPage({
       id: true,
       name: true,
       email: true,
+      image: true,
       sentMessages: {
         where: { receiverId: session.user.id },
         orderBy: { createdAt: 'desc' },
@@ -54,6 +55,7 @@ export default async function TrainerMessagesPage({
       name: c.name,
       email: c.email,
       initials: initialsFor(c.name, c.email),
+      image: c.image ?? null,
       lastPreview: last?.content ?? null,
       unreadFromClient: last && !last.read ? 1 : 0,
       lastAt: lastAt?.toISOString() ?? null,
@@ -81,11 +83,13 @@ export default async function TrainerMessagesPage({
   let thread: Array<{ id: string; content: string; fromMe: boolean; at: string }> = [];
   let activeName: string | null = null;
   let activeInitials = '';
+  let activeImage: string | null = null;
 
   if (threadForId) {
     const activeRail = rail.find((r) => r.id === threadForId);
     activeName = activeRail?.name ?? activeRail?.email ?? null;
     activeInitials = activeRail?.initials ?? '';
+    activeImage = activeRail?.image ?? null;
 
     const msgs = await prisma.message.findMany({
       where: {
@@ -121,6 +125,7 @@ export default async function TrainerMessagesPage({
   const mobileInitialThread = mobileActiveId ? thread : [];
   const mobileActiveName = mobileActiveId ? activeName : null;
   const mobileActiveInitials = mobileActiveId ? activeInitials : '';
+  const mobileActiveImage = mobileActiveId ? activeImage : null;
 
   return (
     <>
@@ -130,6 +135,7 @@ export default async function TrainerMessagesPage({
         activeId={mobileActiveId}
         activeName={mobileActiveName}
         activeInitials={mobileActiveInitials}
+        activeImage={mobileActiveImage}
         initialThread={mobileInitialThread}
       />
       <InboxDesktop
@@ -138,6 +144,7 @@ export default async function TrainerMessagesPage({
         activeId={desktopActiveId}
         activeName={activeName}
         activeInitials={activeInitials}
+        activeImage={activeImage}
         initialThread={thread}
         totalUnread={totalUnread}
       />

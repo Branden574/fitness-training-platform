@@ -24,13 +24,17 @@ export interface ClientContext {
   userId: string;
   name: string | null;
   email: string;
+  image: string | null;
   initials: string;
-  trainer: { id: string; name: string | null } | null;
+  trainer: { id: string; name: string | null; photoUrl: string | null } | null;
 }
 
 /**
  * Load the core identity context for a signed-in client: their profile
- * basics and their assigned trainer (via User.trainerId).
+ * basics and their assigned trainer (via User.trainerId). Surfaces both
+ * the client's own `image` (User.image) and the coach's public photo
+ * (prefers Trainer.photoUrl — the curated headshot — and falls back to
+ * User.image when unset) so every client surface can render real faces.
  */
 export async function getClientContext(userId: string): Promise<ClientContext> {
   const u = await prisma.user.findUnique({
@@ -39,19 +43,36 @@ export async function getClientContext(userId: string): Promise<ClientContext> {
       id: true,
       name: true,
       email: true,
-      assignedTrainer: { select: { id: true, name: true } },
+      image: true,
+      assignedTrainer: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          trainer: { select: { photoUrl: true } },
+        },
+      },
     },
   });
 
   const name = u?.name ?? null;
   const initials = buildInitials(name, u?.email ?? '');
+  const trainer = u?.assignedTrainer
+    ? {
+        id: u.assignedTrainer.id,
+        name: u.assignedTrainer.name,
+        photoUrl:
+          u.assignedTrainer.trainer?.photoUrl ?? u.assignedTrainer.image ?? null,
+      }
+    : null;
 
   return {
     userId,
     name,
     email: u?.email ?? '',
+    image: u?.image ?? null,
     initials,
-    trainer: u?.assignedTrainer ?? null,
+    trainer,
   };
 }
 

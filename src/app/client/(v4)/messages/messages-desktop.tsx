@@ -14,7 +14,7 @@ interface Message {
 export interface MessagesDesktopProps {
   selfId: string;
   selfInitials: string;
-  trainer: { id: string; name: string | null };
+  trainer: { id: string; name: string | null; photoUrl: string | null };
   initialMessages: Message[];
 }
 
@@ -243,7 +243,13 @@ export default function MessagesDesktop({
                   background: 'var(--mf-accent)',
                 }}
               />
-              <Avatar initials={coachInits} size={36} active />
+              <Avatar
+                initials={coachInits}
+                image={trainer.photoUrl}
+                alt={coachName}
+                size={36}
+                active
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="flex items-center justify-between">
                   <span
@@ -321,7 +327,13 @@ export default function MessagesDesktop({
                 padding: '0 20px',
               }}
             >
-              <Avatar initials={coachInits} size={36} active />
+              <Avatar
+                initials={coachInits}
+                image={trainer.photoUrl}
+                alt={coachName}
+                size={36}
+                active
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1 }}>{coachName}</div>
                 <div

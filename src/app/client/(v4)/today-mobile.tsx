@@ -94,7 +94,12 @@ export default function TodayMobile({ ctx, data }: TodayMobileProps) {
             </div>
           </div>
           <Link href="/client/profile">
-            <Avatar initials={ctx.initials} size={36} />
+            <Avatar
+              initials={ctx.initials}
+              image={ctx.image}
+              alt={ctx.name ?? ctx.email}
+              size={36}
+            />
           </Link>
         </div>
 

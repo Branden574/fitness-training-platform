@@ -6,6 +6,7 @@ export interface InboxDesktopRailItem {
   name: string | null;
   email: string;
   initials: string;
+  image: string | null;
   lastPreview: string | null;
   unreadFromClient: number;
   lastAt: string | null;
@@ -24,6 +25,7 @@ export interface InboxDesktopProps {
   activeId: string | null;
   activeName: string | null;
   activeInitials: string;
+  activeImage: string | null;
   initialThread: InboxDesktopMessage[];
   totalUnread: number;
 }
@@ -34,6 +36,7 @@ export default function InboxDesktop({
   activeId,
   activeName,
   activeInitials,
+  activeImage,
   initialThread,
   totalUnread,
 }: InboxDesktopProps) {
@@ -52,6 +55,7 @@ export default function InboxDesktop({
           activeId={activeId}
           activeName={activeName}
           activeInitials={activeInitials}
+          activeImage={activeImage}
           initialThread={initialThread}
           totalUnread={totalUnread}
         />

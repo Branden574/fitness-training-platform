@@ -59,6 +59,7 @@ export default async function AdminUsersPage({
       id: true,
       name: true,
       email: true,
+      image: true,
       role: true,
       isActive: true,
       createdAt: true,
@@ -172,7 +173,12 @@ export default async function AdminUsersPage({
                 }}
               >
                 <div className="flex items-center gap-3" style={{ minWidth: 0 }}>
-                  <Avatar initials={initialsFor(u.name, u.email)} size={30} />
+                  <Avatar
+                    initials={initialsFor(u.name, u.email)}
+                    image={u.image}
+                    alt={u.name ?? u.email}
+                    size={30}
+                  />
                   <div style={{ minWidth: 0 }}>
                     <div
                       style={{

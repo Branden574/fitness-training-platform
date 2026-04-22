@@ -88,13 +88,13 @@ export default async function ClientMessagesPage() {
       <MessagesClient
         selfId={session.user.id}
         selfInitials={ctx.initials}
-        trainer={{ id: ctx.trainer.id, name: ctx.trainer.name }}
+        trainer={{ id: ctx.trainer.id, name: ctx.trainer.name, photoUrl: ctx.trainer.photoUrl }}
         initialMessages={mapped}
       />
       <MessagesDesktop
         selfId={session.user.id}
         selfInitials={ctx.initials}
-        trainer={{ id: ctx.trainer.id, name: ctx.trainer.name }}
+        trainer={{ id: ctx.trainer.id, name: ctx.trainer.name, photoUrl: ctx.trainer.photoUrl }}
         initialMessages={mapped}
       />
     </>

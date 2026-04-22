@@ -44,6 +44,7 @@ interface ClientOption {
   id: string;
   name: string | null;
   email: string;
+  image: string | null;
   initials: string;
 }
 
@@ -642,7 +643,7 @@ export default function ProgramBuilderClient({
                       cursor: pending ? 'default' : 'pointer',
                     }}
                   >
-                    <Avatar initials={c.initials} />
+                    <Avatar initials={c.initials} image={c.image} alt={c.name ?? c.email} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 500 }}>{c.name ?? c.email}</div>
                       <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 10 }}>

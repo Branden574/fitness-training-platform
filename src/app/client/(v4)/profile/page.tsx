@@ -95,7 +95,12 @@ export default async function ClientProfilePage() {
         }}
       >
         <div className="flex items-center gap-3">
-          <Avatar initials={ctx.initials} size={48} />
+          <Avatar
+            initials={ctx.initials}
+            image={ctx.image}
+            alt={ctx.name ?? ctx.email}
+            size={48}
+          />
           <div>
             <div
               className="mf-font-display"

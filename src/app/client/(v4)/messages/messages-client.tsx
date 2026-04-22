@@ -14,7 +14,7 @@ interface Message {
 interface MessagesClientProps {
   selfId: string;
   selfInitials: string;
-  trainer: { id: string; name: string | null };
+  trainer: { id: string; name: string | null; photoUrl: string | null };
   initialMessages: Message[];
 }
 
@@ -184,7 +184,12 @@ export default function MessagesClient({
       >
         <div className="mf-eyebrow">COACH</div>
         <div className="flex items-center gap-3" style={{ marginTop: 4 }}>
-          <Avatar initials={trainerInitials(trainer.name)} active />
+          <Avatar
+            initials={trainerInitials(trainer.name)}
+            image={trainer.photoUrl}
+            alt={trainer.name ?? 'Your coach'}
+            active
+          />
           <div>
             <div
               className="mf-font-display"

@@ -10,13 +10,14 @@ export interface ScheduleAppointment {
   startTime: Date;
   endTime: Date;
   duration: number;
-  client: { id: string; name: string | null; email: string };
+  client: { id: string; name: string | null; email: string; image: string | null };
 }
 
 export interface ScheduleClient {
   id: string;
   name: string | null;
   email: string;
+  image: string | null;
 }
 
 export interface ScheduleDesktopProps {

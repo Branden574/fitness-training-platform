@@ -254,7 +254,12 @@ export default function TodayDesktop({ ctx, data }: TodayDesktopProps) {
             style={{ padding: 20, background: 'var(--mf-surface-2)' }}
           >
             <div className="flex items-center gap-2" style={{ marginBottom: 12 }}>
-              <Avatar initials={coachInitials} size={32} />
+              <Avatar
+                initials={coachInitials}
+                image={ctx.trainer?.photoUrl ?? null}
+                alt={data.coachNote?.sender.name ?? ctx.trainer?.name ?? 'Coach'}
+                size={32}
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1 }}>
                   {data.coachNote?.sender.name ?? ctx.trainer?.name ?? 'Coach'}

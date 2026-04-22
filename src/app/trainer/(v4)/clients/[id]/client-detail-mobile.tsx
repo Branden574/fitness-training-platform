@@ -37,6 +37,7 @@ export interface ClientDetailMobileProps {
   clientId: string;
   clientName: string | null;
   clientEmail: string;
+  clientImage: string | null;
   fullInitials: string;
   fitnessLevel: string | null;
   programWeek: number;
@@ -67,6 +68,7 @@ export default function ClientDetailMobile({
   clientId,
   clientName,
   clientEmail,
+  clientImage,
   fullInitials,
   fitnessLevel,
   programWeek,
@@ -167,7 +169,13 @@ export default function ClientDetailMobile({
             }}
           >
             <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
-              <Avatar initials={fullInitials} size={58} active />
+              <Avatar
+                initials={fullInitials}
+                image={clientImage}
+                alt={clientName ?? clientEmail}
+                size={58}
+                active
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   className="mf-font-display"

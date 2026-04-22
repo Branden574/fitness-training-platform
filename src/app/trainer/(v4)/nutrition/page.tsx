@@ -44,6 +44,7 @@ export default async function TrainerNutritionPage({
       id: true,
       name: true,
       email: true,
+      image: true,
       timezone: true,
       mealPlans: {
         where: {
@@ -110,6 +111,7 @@ export default async function TrainerNutritionPage({
       id: c.id,
       name: c.name,
       email: c.email,
+      image: c.image ?? null,
       timezone: c.timezone,
       initials: initialsFor(c.name, c.email),
       plan,
@@ -283,7 +285,7 @@ export default async function TrainerNutritionPage({
                       }}
                     />
                   )}
-                  <Avatar initials={r.initials} />
+                  <Avatar initials={r.initials} image={r.image} alt={r.name ?? r.email} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
@@ -349,7 +351,13 @@ export default async function TrainerNutritionPage({
                 }}
               >
                 <div className="flex items-center gap-3" style={{ marginBottom: 16 }}>
-                  <Avatar initials={active.initials} size={42} active />
+                  <Avatar
+                    initials={active.initials}
+                    image={active.image}
+                    alt={active.name ?? active.email}
+                    size={42}
+                    active
+                  />
                   <div>
                     <div
                       className="mf-font-display"

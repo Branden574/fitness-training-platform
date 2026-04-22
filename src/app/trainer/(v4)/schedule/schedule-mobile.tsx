@@ -272,6 +272,8 @@ export default function ScheduleMobile({
               <div className="flex items-center gap-3">
                 <Avatar
                   initials={initialsFor(current.client.name, current.client.email)}
+                  image={current.client.image}
+                  alt={current.client.name ?? current.client.email}
                   size={42}
                   active
                 />

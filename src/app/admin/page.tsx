@@ -63,6 +63,8 @@ export default async function AdminOverviewPage() {
         id: true,
         name: true,
         email: true,
+        image: true,
+        trainer: { select: { photoUrl: true } },
         clients: { where: { isActive: true }, select: { id: true } },
         createdAt: true,
       },
@@ -110,6 +112,7 @@ export default async function AdminOverviewPage() {
       id: t.id,
       name: t.name,
       email: t.email,
+      image: t.trainer?.photoUrl ?? t.image ?? null,
       count: t.clients.length,
       initials: initialsFor(t.name, t.email),
     }))
@@ -267,7 +270,12 @@ export default async function AdminOverviewPage() {
                     >
                       0{i + 1}
                     </div>
-                    <Avatar initials={t.initials} size={28} />
+                    <Avatar
+                      initials={t.initials}
+                      image={t.image}
+                      alt={t.name ?? t.email}
+                      size={28}
+                    />
                     <div style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{t.name ?? t.email}</div>
                     <div
                       className="mf-font-mono mf-fg-dim mf-tnum"

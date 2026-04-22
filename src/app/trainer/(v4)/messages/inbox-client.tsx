@@ -11,6 +11,7 @@ interface RailItem {
   name: string | null;
   email: string;
   initials: string;
+  image: string | null;
   lastPreview: string | null;
   unreadFromClient: number;
   lastAt: string | null;
@@ -29,6 +30,7 @@ interface Props {
   activeId: string | null;
   activeName: string | null;
   activeInitials: string;
+  activeImage: string | null;
   initialThread: Message[];
   totalUnread: number;
 }
@@ -55,6 +57,7 @@ export default function TrainerInboxClient({
   activeId,
   activeName,
   activeInitials,
+  activeImage,
   initialThread,
   totalUnread,
 }: Props) {
@@ -244,7 +247,7 @@ export default function TrainerInboxClient({
                   }}
                 />
               )}
-              <Avatar initials={r.initials} />
+              <Avatar initials={r.initials} image={r.image} alt={r.name ?? r.email} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="flex items-center justify-between">
                   <span
@@ -308,7 +311,12 @@ export default function TrainerInboxClient({
               }}
             >
               <div className="flex items-center gap-3">
-                <Avatar initials={activeInitials} active />
+                <Avatar
+                  initials={activeInitials}
+                  image={activeImage}
+                  alt={activeName ?? activeInitials}
+                  active
+                />
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>
                     {activeName}

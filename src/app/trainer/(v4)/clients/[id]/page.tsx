@@ -308,6 +308,7 @@ export default async function ClientDetailPage({
         clientId={id}
         clientName={client.name}
         clientEmail={client.email}
+        clientImage={client.image ?? null}
         createdAt={client.createdAt}
         fitnessLevel={client.clientProfile?.fitnessLevel ?? null}
         age={client.clientProfile?.age ?? null}
@@ -335,6 +336,7 @@ export default async function ClientDetailPage({
         clientId={id}
         clientName={client.name}
         clientEmail={client.email}
+        clientImage={client.image ?? null}
         fullInitials={fullInitials}
         fitnessLevel={client.clientProfile?.fitnessLevel ?? null}
         programWeek={programWeek}

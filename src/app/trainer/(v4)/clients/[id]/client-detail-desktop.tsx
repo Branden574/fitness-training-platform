@@ -13,6 +13,7 @@ export interface ClientDetailDesktopProps {
   clientId: string;
   clientName: string | null;
   clientEmail: string;
+  clientImage: string | null;
   createdAt: Date;
   fitnessLevel: string | null;
   age: number | null;
@@ -47,6 +48,7 @@ export default function ClientDetailDesktop({
   clientId,
   clientName,
   clientEmail,
+  clientImage,
   createdAt,
   fitnessLevel,
   age,
@@ -98,7 +100,13 @@ export default function ClientDetailDesktop({
               alignItems: 'center',
             }}
           >
-            <Avatar initials={fullInitials} size={72} active />
+            <Avatar
+              initials={fullInitials}
+              image={clientImage}
+              alt={clientName ?? clientEmail}
+              size={72}
+              active
+            />
             <div>
               <div className="mf-eyebrow" style={{ marginBottom: 4 }}>
                 COACHED · SINCE {createdAt.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' }).replace(/\//g, '.')}

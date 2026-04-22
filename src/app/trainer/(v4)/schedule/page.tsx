@@ -28,11 +28,11 @@ export default async function TrainerSchedulePage() {
         startTime: { gte: weekStart, lt: weekEnd },
       },
       orderBy: { startTime: 'asc' },
-      include: { client: { select: { id: true, name: true, email: true } } },
+      include: { client: { select: { id: true, name: true, email: true, image: true } } },
     }),
     prisma.user.findMany({
       where: { trainerId: session.user.id, role: 'CLIENT' },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, image: true },
     }),
   ]);
 

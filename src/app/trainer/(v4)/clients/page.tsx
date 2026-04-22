@@ -24,6 +24,7 @@ export default async function TrainerClientsIndexPage() {
       id: true,
       name: true,
       email: true,
+      image: true,
       lastLogin: true,
       createdAt: true,
     },
@@ -107,7 +108,7 @@ export default async function TrainerClientsIndexPage() {
                     color: 'var(--mf-fg)',
                   }}
                 >
-                  <Avatar initials={initials} />
+                  <Avatar initials={initials} image={c.image} alt={c.name ?? c.email} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500 }}>
                       {c.name ?? c.email}

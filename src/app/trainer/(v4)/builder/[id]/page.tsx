@@ -71,7 +71,7 @@ export default async function ProgramDetailPage({
       role: 'CLIENT',
       ...(session.user.role === 'ADMIN' ? {} : { trainerId: session.user.id }),
     },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, image: true },
     orderBy: { name: 'asc' },
   });
 
@@ -189,7 +189,7 @@ export default async function ProgramDetailPage({
             })),
           }))}
           exerciseOptions={exerciseOptions.map((e) => ({ id: e.id, name: e.name }))}
-          clients={clients.map((c) => ({ id: c.id, name: c.name, email: c.email, initials: initialsFor(c.name, c.email) }))}
+          clients={clients.map((c) => ({ id: c.id, name: c.name, email: c.email, image: c.image ?? null, initials: initialsFor(c.name, c.email) }))}
           assignmentCount={activeAssignments.length}
         />
       </div>
