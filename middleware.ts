@@ -39,8 +39,32 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // For all other routes, add security headers and continue
-  const response = NextResponse.next()
+  // Nonce-based CSP. A fresh 16-byte random value per request; Next.js
+  // reads it from `x-nonce` and applies it to its own inline hydration
+  // scripts automatically, so we don't need `'unsafe-inline'` in
+  // script-src. 'strict-dynamic' + a valid nonce means any script
+  // loaded transitively by a nonced script is trusted, which covers
+  // Next's chunk loader without manual threading.
+  //
+  // Injection attacks (e.g. a stored-XSS string in a bio or message)
+  // can't guess the nonce, so they no longer execute even if they
+  // escape HTML escaping somewhere.
+  //
+  // Kept 'unsafe-inline' as a fallback: browsers that support
+  // 'strict-dynamic' ignore it (per spec); legacy browsers fall back
+  // to 'unsafe-inline'. Net effect is stricter on modern browsers,
+  // identical to before on ancient ones.
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+
+  // Pass the nonce through to the RSC render via a request header so
+  // Next.js's internal <Script> components pick it up. This is the
+  // Next 15 App Router pattern.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   // Security headers
   response.headers.set('X-Frame-Options', 'DENY')
@@ -49,14 +73,13 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()')
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+
   const isDev = process.env.NODE_ENV === 'development';
-  // NOTE: script-src still needs 'unsafe-inline' because Next.js injects data scripts
-  // inline. Proper fix is a nonce-based CSP (generate per-request nonce in middleware,
-  // attach to <Script nonce={...}>). Tracked as M-2 follow-up. Other directives are
-  // tightened below to reduce blast radius even while script-src stays permissive.
+  // Dev needs eval for React Refresh / HMR. Prod uses pure
+  // nonce+strict-dynamic.
   const scriptSrc = isDev
-    ? "'self' 'unsafe-inline' 'unsafe-eval'"
-    : "'self' 'unsafe-inline'";
+    ? `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'unsafe-eval'`
+    : `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'`;
   // Narrow connect-src to specific hosts we actually talk to, instead of all of https:
   const connectSrc = [
     "'self'",
