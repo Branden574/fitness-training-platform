@@ -35,21 +35,29 @@ export default function FoodEntryActions({ entry }: { entry: EditableFoodEntry }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
+    // Close on outside click. Listens on `click` (not `mousedown`) because
+    // mousedown fires before React dispatches the menu item's onClick — if
+    // we closed the menu on mousedown the portal would unmount before the
+    // click landed, and Edit/Delete would silently no-op. Also gates on
+    // both triggerRef and menuRef so clicks inside the portal'd menu don't
+    // close it immediately.
     function onClick(e: MouseEvent) {
       const t = e.target as Node;
       if (triggerRef.current && triggerRef.current.contains(t)) return;
+      if (menuRef.current && menuRef.current.contains(t)) return;
       setMenuOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setMenuOpen(false);
     }
-    document.addEventListener('mousedown', onClick);
+    document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('click', onClick);
       document.removeEventListener('keydown', onKey);
     };
   }, [menuOpen]);
@@ -109,6 +117,7 @@ export default function FoodEntryActions({ entry }: { entry: EditableFoodEntry }
       {menuOpen && menuPos && typeof document !== 'undefined'
         ? createPortal(
             <div
+              ref={menuRef}
               className="mf-card-elev"
               role="menu"
               style={{
