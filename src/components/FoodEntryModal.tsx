@@ -73,8 +73,15 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
   const [favorites, setFavorites] = useState<FavoriteFood[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
-  // Recent/frequent state
+  // Recent/frequent state. The backend returns a loose mixture of source
+  // shapes (USDA / OFF / local / community / historical), read by several
+  // downstream accessors that don't share a single TS type. `any` here is
+  // a known debt — tightening cascades through selectFood + rendering. If
+  // you're here to clean this up, start by narrowing selectFood and work
+  // upward.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recentFoods, setRecentFoods] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [frequentFoods, setFrequentFoods] = useState<any[]>([]);
 
   // Manual entry
@@ -173,6 +180,7 @@ export default function FoodEntryModal({ isOpen, onClose, onSubmit, selectedDate
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selectFood = (food: FoodSearchResult | FavoriteFood | any) => {
     const result: FoodSearchResult = {
       id: food.id || food.sourceId || `custom-${Date.now()}`,

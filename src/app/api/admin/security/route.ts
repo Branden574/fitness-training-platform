@@ -85,7 +85,7 @@ export async function GET(request: Request) {
       const limit = parseInt(searchParams.get('limit') || '100');
       const filter = searchParams.get('filter'); // 'failed', 'success', or null for all
 
-      const where: any = {};
+      const where: { success?: boolean } = {};
       if (filter === 'failed') where.success = false;
       if (filter === 'success') where.success = true;
 

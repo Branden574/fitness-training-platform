@@ -9,10 +9,11 @@ if (process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.includes('[your-railway
 
 const nextConfig: NextConfig = {
   eslint: {
-    // ESLint cleanup is deferred — see TODO in docs. TypeScript strictness is
-    // back on (ignoreBuildErrors removed), which is the security-relevant gate.
-    // ESLint here is style/idiom-only.
-    ignoreDuringBuilds: true,
+    // Errors fail the build; warnings (no-unused-vars, no-img-element,
+    // exhaustive-deps, etc) still pass. FoodEntryModal's loose `any`
+    // usage is disabled per-line with comments so cleanup is an explicit
+    // follow-up rather than silent tech debt.
+    ignoreDuringBuilds: false,
   },
   env: {
     // Ensure NEXTAUTH_URL has a valid fallback during build

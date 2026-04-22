@@ -92,7 +92,7 @@ export async function GET(request: Request) {
       if (usdaData.foods && usdaData.foods.length > 0) {
         const food = usdaData.foods[0];
         const nutrients = food.foodNutrients || [];
-        const getVal = (id: number) => nutrients.find((n: any) => n.nutrientId === id)?.value || 0;
+        const getVal = (id: number) => nutrients.find((n: { nutrientId?: number; value?: number }) => n.nutrientId === id)?.value || 0;
         const servingSize = food.servingSize || 100;
         const ratio = servingSize / 100;
 
@@ -126,7 +126,7 @@ export async function GET(request: Request) {
       if (usdaData2.foods && usdaData2.foods.length > 0) {
         const food = usdaData2.foods[0];
         const nutrients = food.foodNutrients || [];
-        const getVal = (id: number) => nutrients.find((n: any) => n.nutrientId === id)?.value || 0;
+        const getVal = (id: number) => nutrients.find((n: { nutrientId?: number; value?: number }) => n.nutrientId === id)?.value || 0;
         const servingSize = food.servingSize || 100;
         const ratio = servingSize / 100;
 

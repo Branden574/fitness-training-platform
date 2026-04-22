@@ -81,7 +81,7 @@ export async function GET(request: Request) {
 
     // 1. Search local database first (instant)
     if (source === 'all' || source === 'local') {
-      const localResults = searchLocalFoods(query, category as any || undefined);
+      const localResults = searchLocalFoods(query, (category as Parameters<typeof searchLocalFoods>[1]) || undefined);
       for (const food of localResults.slice(0, 10)) {
         const ratio = food.servingSize / 100;
         results.push({
@@ -180,9 +180,20 @@ async function searchUSDA(query: string): Promise<FoodSearchResult[]> {
   if (!response.ok) return [];
   const data = await response.json();
 
-  return (data.foods || []).map((food: any) => {
-    const nutrients = food.foodNutrients || [];
-    const getVal = (id: number) => nutrients.find((n: any) => n.nutrientId === id)?.value || 0;
+  interface UsdaNutrient { nutrientId?: number; value?: number }
+  interface UsdaFood {
+    fdcId?: number;
+    description?: string;
+    brandName?: string;
+    brandOwner?: string;
+    foodCategory?: string;
+    foodNutrients?: UsdaNutrient[];
+    servingSize?: number;
+    servingSizeUnit?: string;
+  }
+  return ((data.foods as UsdaFood[] | undefined) || []).map((food) => {
+    const nutrients: UsdaNutrient[] = food.foodNutrients || [];
+    const getVal = (id: number) => nutrients.find((n) => n.nutrientId === id)?.value || 0;
 
     // Nutrient IDs: 1008=Energy(kcal), 1003=Protein, 1005=Carbs, 1004=Fat
     const caloriesPer100g = getVal(1008);
@@ -224,9 +235,26 @@ async function searchOpenFoodFacts(query: string): Promise<FoodSearchResult[]> {
   if (!response.ok) return [];
   const data = await response.json();
 
-  return (data.products || [])
-    .filter((p: any) => p.product_name && p.nutriments)
-    .map((product: any) => {
+  interface OffProduct {
+    code?: string;
+    _id?: string;
+    product_name?: string;
+    brands?: string;
+    serving_quantity?: number;
+    serving_size?: string;
+    categories?: string;
+    categories_tags?: string[];
+    nutriments?: Record<string, number>;
+  }
+  // Type predicate narrows product_name + nutriments to defined inside map.
+  function hasRequired(
+    p: OffProduct,
+  ): p is OffProduct & { product_name: string; nutriments: Record<string, number> } {
+    return Boolean(p.product_name && p.nutriments);
+  }
+  return ((data.products as OffProduct[] | undefined) || [])
+    .filter(hasRequired)
+    .map((product) => {
       const n = product.nutriments;
       const servingSize = product.serving_quantity || 100;
       const ratio = servingSize / 100;

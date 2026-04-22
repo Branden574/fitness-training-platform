@@ -26,7 +26,9 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
   const [manualBarcode, setManualBarcode] = useState('');
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const detectedRef = useRef(false);
-  const quaggaRef = useRef<any>(null);
+  // Quagga's types aren't bundled; treat the ref as an opaque handle whose
+  // only surface we use is `.stop()`. unknown keeps ts-strict happy.
+  const quaggaRef = useRef<{ stop: () => void } | null>(null);
 
   const stopCamera = useCallback(() => {
     // Stop quagga if running
@@ -148,7 +150,7 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
           setScanning(true);
         });
 
-        Quagga.onDetected((result: any) => {
+        Quagga.onDetected((result) => {
           if (result?.codeResult?.code && !detectedRef.current) {
             Quagga.stop();
             lookupBarcode(result.codeResult.code);
@@ -164,7 +166,15 @@ export default function BarcodeScanner({ onResult, onClose }: BarcodeScannerProp
   useEffect(() => {
     if (!scanning || !videoRef.current || !('BarcodeDetector' in window)) return;
 
-    const detector = new (window as any).BarcodeDetector({
+    // BarcodeDetector is a live-standard browser API not in lib.dom yet —
+    // narrow via a local interface so we stay off `any`.
+    interface BarcodeDetectorCtor {
+      new (opts: { formats: string[] }): {
+        detect: (src: HTMLVideoElement) => Promise<Array<{ rawValue: string }>>;
+      };
+    }
+    const Ctor = (window as unknown as { BarcodeDetector: BarcodeDetectorCtor }).BarcodeDetector;
+    const detector = new Ctor({
       formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39']
     });
 

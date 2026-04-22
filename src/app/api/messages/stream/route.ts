@@ -30,7 +30,10 @@ export async function GET(request: Request) {
         if (closed) return;
 
         try {
-          const where: any = {
+          const where: {
+            OR: Array<{ senderId: string; receiverId: string }>;
+            id?: { gt: string };
+          } = {
             OR: [
               { senderId: userId, receiverId: withUserId },
               { senderId: withUserId, receiverId: userId },

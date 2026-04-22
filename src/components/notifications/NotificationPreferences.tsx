@@ -228,7 +228,7 @@ export default function NotificationPreferences() {
           QUIET HOURS
         </div>
         <div className="mf-fg-dim" style={{ fontSize: 12, marginBottom: 12 }}>
-          OS push is suppressed in this window. In-app notifications still land — you'll see them when you open the app.
+          OS push is suppressed in this window. In-app notifications still land — you&apos;ll see them when you open the app.
         </div>
         <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(2, 1fr)' }}>
           <label>
