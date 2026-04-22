@@ -98,28 +98,11 @@ export default function ClientDesktopShell({
         className="mf-s1 flex flex-col shrink-0"
         style={{ width: 220, borderRight: '1px solid var(--mf-hairline)' }}
       >
-        <div
-          className="px-4 flex items-center gap-2"
-          style={{ height: 56, borderBottom: '1px solid var(--mf-hairline)' }}
-        >
-          <div
-            className="grid place-items-center"
-            style={{ width: 24, height: 24, background: 'var(--mf-accent)', borderRadius: 4 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0A0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m7 13-2 2 3 3 2-2" />
-              <path d="m17 11 2-2-3-3-2 2" />
-            </svg>
-          </div>
-          <div>
-            <div className="mf-font-display" style={{ fontSize: 14, letterSpacing: '-0.01em', lineHeight: 1 }}>
-              {brandDisplayName}
-            </div>
-            <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 9, marginTop: 2 }}>
-              {brandSubLabel}
-            </div>
-          </div>
-        </div>
+        <CoachBrandChip
+          brandDisplayName={brandDisplayName}
+          brandSubLabel={brandSubLabel}
+          trainerSlug={trainer?.slug ?? null}
+        />
 
         <div
           className="px-3 flex items-center gap-2"
@@ -254,6 +237,69 @@ export default function ClientDesktopShell({
         </div>
         <NativePushRegistrar />
       </main>
+    </div>
+  );
+}
+
+// Top-of-sidebar brand row showing the client's coach. When the trainer
+// has a public slug, renders as a Link to /t/[slug] so clicking jumps
+// into the coach's public profile. Falls back to a plain div when there's
+// no slug (trainer hasn't set one, or the client isn't assigned to a
+// trainer yet) — saves showing a hover state on a dead chip.
+function CoachBrandChip({
+  brandDisplayName,
+  brandSubLabel,
+  trainerSlug,
+}: {
+  brandDisplayName: string;
+  brandSubLabel: string;
+  trainerSlug: string | null;
+}) {
+  const body = (
+    <>
+      <div
+        className="grid place-items-center"
+        style={{ width: 24, height: 24, background: 'var(--mf-accent)', borderRadius: 4 }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0A0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m7 13-2 2 3 3 2-2" />
+          <path d="m17 11 2-2-3-3-2 2" />
+        </svg>
+      </div>
+      <div>
+        <div className="mf-font-display" style={{ fontSize: 14, letterSpacing: '-0.01em', lineHeight: 1 }}>
+          {brandDisplayName}
+        </div>
+        <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 9, marginTop: 2 }}>
+          {brandSubLabel}
+        </div>
+      </div>
+    </>
+  );
+
+  const sharedStyle = {
+    height: 56,
+    borderBottom: '1px solid var(--mf-hairline)',
+    textDecoration: 'none',
+    color: 'inherit',
+  } as const;
+
+  if (trainerSlug) {
+    return (
+      <Link
+        href={`/t/${trainerSlug}`}
+        className="px-4 flex items-center gap-2"
+        style={sharedStyle}
+        title="View coach profile"
+      >
+        {body}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="px-4 flex items-center gap-2" style={sharedStyle}>
+      {body}
     </div>
   );
 }
