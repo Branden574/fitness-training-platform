@@ -3,14 +3,39 @@
 import { useEffect, useRef, useState } from 'react';
 import { AgreementGate } from '@/components/trainer/AgreementGate';
 
+interface QuickFact {
+  label: string;
+  value: string;
+}
+
+interface Pillar {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+interface Service {
+  title: string;
+  description: string;
+  price: string;
+  per: string;
+  cta: string;
+  featured: boolean;
+}
+
 interface TrainerProfile {
   photoUrl: string | null;
+  coverImageUrl: string | null;
   location: string | null;
   instagramHandle: string | null;
+  tiktokHandle: string | null;
+  youtubeHandle: string | null;
   contactPhone: string | null;
+  headline: string | null;
   bio: string | null;
   specialties: string[];
   experience: number;
+  clientsTrained: number | null;
   certifications: string[];
   priceTier: string | null;
   hourlyRate: number | null;
@@ -19,7 +44,16 @@ interface TrainerProfile {
   trainerIsPublic: boolean;
   replyFromEmail: string | null;
   replyFromName: string | null;
+  quickFacts: QuickFact[];
+  pillars: Pillar[];
+  gallery: string[];
+  services: Service[];
 }
+
+const PILLAR_ICONS = [
+  'TrendingUp', 'Apple', 'Moon', 'MessageSquare',
+  'Heart', 'Award', 'Dumbbell', 'Flame', 'Target',
+];
 
 const TIERS: Array<{ value: string; label: string }> = [
   { value: 'tier-1', label: '$' },
@@ -60,12 +94,17 @@ function ProfileForm() {
           const data = await res.json();
           setProfile({
             photoUrl: data.photoUrl ?? null,
+            coverImageUrl: data.coverImageUrl ?? null,
             location: data.location ?? null,
             instagramHandle: data.instagramHandle ?? null,
+            tiktokHandle: data.tiktokHandle ?? null,
+            youtubeHandle: data.youtubeHandle ?? null,
             contactPhone: data.contactPhone ?? null,
+            headline: data.headline ?? null,
             bio: data.bio ?? null,
             specialties: (data.specialties ?? []) as string[],
             experience: typeof data.experience === 'number' ? data.experience : 0,
+            clientsTrained: data.clientsTrained ?? null,
             certifications: (data.certifications ?? []) as string[],
             priceTier: data.priceTier ?? null,
             hourlyRate: data.hourlyRate ?? null,
@@ -74,6 +113,10 @@ function ProfileForm() {
             trainerIsPublic: !!data.trainerIsPublic,
             replyFromEmail: data.replyFromEmail ?? null,
             replyFromName: data.replyFromName ?? null,
+            quickFacts: Array.isArray(data.quickFacts) ? (data.quickFacts as QuickFact[]) : [],
+            pillars: Array.isArray(data.pillars) ? (data.pillars as Pillar[]) : [],
+            gallery: Array.isArray(data.gallery) ? (data.gallery as string[]) : [],
+            services: Array.isArray(data.services) ? (data.services as Service[]) : [],
           });
           setLoading(false);
           return;
@@ -83,12 +126,17 @@ function ProfileForm() {
       }
       setProfile({
         photoUrl: null,
+        coverImageUrl: null,
         location: null,
         instagramHandle: null,
+        tiktokHandle: null,
+        youtubeHandle: null,
         contactPhone: null,
+        headline: null,
         bio: null,
         specialties: [],
         experience: 0,
+        clientsTrained: null,
         certifications: [],
         priceTier: null,
         hourlyRate: null,
@@ -97,6 +145,10 @@ function ProfileForm() {
         trainerIsPublic: false,
         replyFromEmail: null,
         replyFromName: null,
+        quickFacts: [],
+        pillars: [],
+        gallery: [],
+        services: [],
       });
       setLoading(false);
     })();
@@ -150,6 +202,70 @@ function ProfileForm() {
     update('certifications', [...profile.certifications, v]);
     setCertInput('');
   };
+
+  // List editors for JSON-backed fields. Each mutator clones then edits so
+  // React sees a new reference.
+  const addQuickFact = () => {
+    if (profile.quickFacts.length >= 12) return;
+    update('quickFacts', [...profile.quickFacts, { label: '', value: '' }]);
+  };
+  const updateQuickFact = (i: number, field: 'label' | 'value', v: string) => {
+    update(
+      'quickFacts',
+      profile.quickFacts.map((f, idx) => (idx === i ? { ...f, [field]: v } : f)),
+    );
+  };
+  const removeQuickFact = (i: number) =>
+    update('quickFacts', profile.quickFacts.filter((_, idx) => idx !== i));
+
+  const addPillar = () => {
+    if (profile.pillars.length >= 6) return;
+    update('pillars', [
+      ...profile.pillars,
+      { title: '', description: '', icon: 'Target' },
+    ]);
+  };
+  const updatePillar = (i: number, field: keyof Pillar, v: string) => {
+    update(
+      'pillars',
+      profile.pillars.map((p, idx) => (idx === i ? { ...p, [field]: v } : p)),
+    );
+  };
+  const removePillar = (i: number) =>
+    update('pillars', profile.pillars.filter((_, idx) => idx !== i));
+
+  const addGalleryItem = () => {
+    if (profile.gallery.length >= 30) return;
+    update('gallery', [...profile.gallery, '']);
+  };
+  const updateGalleryItem = (i: number, v: string) => {
+    update(
+      'gallery',
+      profile.gallery.map((g, idx) => (idx === i ? v : g)),
+    );
+  };
+  const removeGalleryItem = (i: number) =>
+    update('gallery', profile.gallery.filter((_, idx) => idx !== i));
+
+  const addService = () => {
+    if (profile.services.length >= 8) return;
+    update('services', [
+      ...profile.services,
+      { title: '', description: '', price: '', per: '', cta: 'Apply', featured: false },
+    ]);
+  };
+  const updateService = (
+    i: number,
+    field: keyof Service,
+    v: string | boolean,
+  ) => {
+    update(
+      'services',
+      profile.services.map((s, idx) => (idx === i ? { ...s, [field]: v } : s)),
+    );
+  };
+  const removeService = (i: number) =>
+    update('services', profile.services.filter((_, idx) => idx !== i));
 
   const removeCert = (i: number) =>
     update(
@@ -298,10 +414,33 @@ function ProfileForm() {
         </div>
       </Section>
 
+      <Section title="COVER IMAGE URL (optional)">
+        <input
+          className="mf-input"
+          placeholder="https://cdn.martinezfitness559.com/…"
+          value={profile.coverImageUrl ?? ''}
+          onChange={(e) => update('coverImageUrl', e.target.value)}
+          maxLength={500}
+        />
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
+          Paste a full https:// URL to an image. Leave blank to use the editorial gradient placeholder with your name on the header.
+        </div>
+      </Section>
+
+      <Section title="HEADLINE (one sentence shown under your name)">
+        <input
+          className="mf-input"
+          placeholder="Strength coach helping busy professionals get lean."
+          value={profile.headline ?? ''}
+          onChange={(e) => update('headline', e.target.value)}
+          maxLength={200}
+        />
+      </Section>
+
       <Section title="LOCATION">
         <input
           className="mf-input"
-          placeholder="Fresno, CA"
+          placeholder="Fresno, CA · The Iron Office"
           value={profile.location ?? ''}
           onChange={(e) => update('location', e.target.value)}
           maxLength={120}
@@ -332,6 +471,74 @@ function ProfileForm() {
               )
             }
             maxLength={40}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              padding: '10px 0',
+              flex: 1,
+            }}
+          />
+        </div>
+      </Section>
+
+      <Section title="TIKTOK">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--mf-surface-2)',
+            border: '1px solid var(--mf-hairline)',
+            borderRadius: 4,
+            padding: '0 10px',
+          }}
+        >
+          <span className="mf-fg-dim" style={{ fontSize: 13 }}>@</span>
+          <input
+            className="mf-input"
+            placeholder="yourhandle"
+            value={profile.tiktokHandle ?? ''}
+            onChange={(e) =>
+              update(
+                'tiktokHandle',
+                e.target.value.replace(/^@/, '').replace(/[^A-Za-z0-9._-]/g, ''),
+              )
+            }
+            maxLength={40}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              padding: '10px 0',
+              flex: 1,
+            }}
+          />
+        </div>
+      </Section>
+
+      <Section title="YOUTUBE">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--mf-surface-2)',
+            border: '1px solid var(--mf-hairline)',
+            borderRadius: 4,
+            padding: '0 10px',
+          }}
+        >
+          <span className="mf-fg-dim" style={{ fontSize: 13 }}>@</span>
+          <input
+            className="mf-input"
+            placeholder="channelname"
+            value={profile.youtubeHandle ?? ''}
+            onChange={(e) =>
+              update(
+                'youtubeHandle',
+                e.target.value.replace(/^@/, '').replace(/[^A-Za-z0-9._-]/g, ''),
+              )
+            }
+            maxLength={60}
             style={{
               border: 'none',
               background: 'transparent',
@@ -482,6 +689,250 @@ function ProfileForm() {
             update('experience', Math.max(0, Math.min(80, Number(e.target.value) || 0)))
           }
         />
+      </Section>
+
+      <Section title="CLIENTS TRAINED (lifetime, optional)">
+        <input
+          type="number"
+          className="mf-input"
+          min={0}
+          max={100000}
+          placeholder="e.g. 212"
+          value={profile.clientsTrained ?? ''}
+          onChange={(e) =>
+            update(
+              'clientsTrained',
+              e.target.value === '' ? null : Math.max(0, Math.min(100000, Number(e.target.value) || 0)),
+            )
+          }
+        />
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
+          Marketing copy number shown on your profile stat strip. Leave blank to hide that tile.
+        </div>
+      </Section>
+
+      <Section title="QUICK FACTS (key/value rows shown in the profile sidebar)">
+        <div style={{ display: 'grid', gap: 6 }}>
+          {profile.quickFacts.map((f, i) => (
+            <div
+              key={i}
+              style={{ display: 'grid', gridTemplateColumns: '140px 1fr auto', gap: 6 }}
+            >
+              <input
+                className="mf-input"
+                placeholder="LABEL"
+                value={f.label}
+                onChange={(e) => updateQuickFact(i, 'label', e.target.value.toUpperCase())}
+                maxLength={40}
+              />
+              <input
+                className="mf-input"
+                placeholder="Value"
+                value={f.value}
+                onChange={(e) => updateQuickFact(i, 'value', e.target.value)}
+                maxLength={200}
+              />
+              <button
+                type="button"
+                className="mf-btn"
+                onClick={() => removeQuickFact(i)}
+                style={{ height: 40, width: 40, padding: 0 }}
+                aria-label="Remove fact"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="mf-btn"
+          onClick={addQuickFact}
+          disabled={profile.quickFacts.length >= 12}
+          style={{ marginTop: 8 }}
+        >
+          + Add fact
+        </button>
+      </Section>
+
+      <Section title="APPROACH PILLARS (up to 6 cards)">
+        <div style={{ display: 'grid', gap: 10 }}>
+          {profile.pillars.map((p, i) => (
+            <div
+              key={i}
+              className="mf-card"
+              style={{ padding: 12, display: 'grid', gap: 6 }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px auto', gap: 6 }}>
+                <input
+                  className="mf-input"
+                  placeholder="Title (e.g. Progressive Overload)"
+                  value={p.title}
+                  onChange={(e) => updatePillar(i, 'title', e.target.value)}
+                  maxLength={60}
+                />
+                <select
+                  className="mf-input"
+                  value={p.icon}
+                  onChange={(e) => updatePillar(i, 'icon', e.target.value)}
+                >
+                  {PILLAR_ICONS.map((ic) => (
+                    <option key={ic} value={ic}>
+                      {ic}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="mf-btn"
+                  onClick={() => removePillar(i)}
+                  style={{ height: 40, width: 40, padding: 0 }}
+                  aria-label="Remove pillar"
+                >
+                  ×
+                </button>
+              </div>
+              <textarea
+                className="mf-input"
+                rows={2}
+                placeholder="Short description (what this means in practice)"
+                value={p.description}
+                onChange={(e) => updatePillar(i, 'description', e.target.value)}
+                maxLength={280}
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="mf-btn"
+          onClick={addPillar}
+          disabled={profile.pillars.length >= 6}
+          style={{ marginTop: 8 }}
+        >
+          + Add pillar
+        </button>
+      </Section>
+
+      <Section title="GALLERY (image URLs or placeholder labels)">
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 8 }}>
+          Paste a full https:// URL for each image, or a short label like
+          “SQUAT RACK · 405” to render a placeholder tile until you upload a
+          real photo.
+        </div>
+        <div style={{ display: 'grid', gap: 6 }}>
+          {profile.gallery.map((g, i) => (
+            <div
+              key={i}
+              style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}
+            >
+              <input
+                className="mf-input"
+                placeholder="https://… or LABEL"
+                value={g}
+                onChange={(e) => updateGalleryItem(i, e.target.value)}
+                maxLength={240}
+              />
+              <button
+                type="button"
+                className="mf-btn"
+                onClick={() => removeGalleryItem(i)}
+                style={{ height: 40, width: 40, padding: 0 }}
+                aria-label="Remove image"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="mf-btn"
+          onClick={addGalleryItem}
+          disabled={profile.gallery.length >= 30}
+          style={{ marginTop: 8 }}
+        >
+          + Add image
+        </button>
+      </Section>
+
+      <Section title="SERVICES / PRICING (up to 8 cards)">
+        <div style={{ display: 'grid', gap: 10 }}>
+          {profile.services.map((s, i) => (
+            <div
+              key={i}
+              className="mf-card"
+              style={{ padding: 12, display: 'grid', gap: 6 }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}>
+                <input
+                  className="mf-input"
+                  placeholder="Title (e.g. 1:1 Online Coaching)"
+                  value={s.title}
+                  onChange={(e) => updateService(i, 'title', e.target.value)}
+                  maxLength={60}
+                />
+                <button
+                  type="button"
+                  className="mf-btn"
+                  onClick={() => removeService(i)}
+                  style={{ height: 40, width: 40, padding: 0 }}
+                  aria-label="Remove service"
+                >
+                  ×
+                </button>
+              </div>
+              <textarea
+                className="mf-input"
+                rows={2}
+                placeholder="Short description"
+                value={s.description}
+                onChange={(e) => updateService(i, 'description', e.target.value)}
+                maxLength={280}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                <input
+                  className="mf-input"
+                  placeholder="Price (e.g. $249)"
+                  value={s.price}
+                  onChange={(e) => updateService(i, 'price', e.target.value)}
+                  maxLength={24}
+                />
+                <input
+                  className="mf-input"
+                  placeholder="Per (e.g. /month)"
+                  value={s.per}
+                  onChange={(e) => updateService(i, 'per', e.target.value)}
+                  maxLength={24}
+                />
+                <input
+                  className="mf-input"
+                  placeholder="CTA (e.g. Apply)"
+                  value={s.cta}
+                  onChange={(e) => updateService(i, 'cta', e.target.value)}
+                  maxLength={24}
+                />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                <input
+                  type="checkbox"
+                  checked={s.featured}
+                  onChange={(e) => updateService(i, 'featured', e.target.checked)}
+                />
+                Mark as &ldquo;MOST POPULAR&rdquo; (accent border)
+              </label>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="mf-btn"
+          onClick={addService}
+          disabled={profile.services.length >= 8}
+          style={{ marginTop: 8 }}
+        >
+          + Add service
+        </button>
       </Section>
 
       <Section title="CERTIFICATIONS">

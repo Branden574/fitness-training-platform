@@ -19,6 +19,17 @@ const nextConfig: NextConfig = {
     // Ensure NEXTAUTH_URL has a valid fallback during build
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
   },
+  images: {
+    // next/image rejects any remote host not listed here. R2 CDN is where
+    // all trainer/client photos live (see project_r2_storage memory); without
+    // this, profile/cover/gallery images fall back to rendering alt text
+    // and the RoundAvatar/TrainerCover components look broken.
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn.martinezfitness559.com' },
+      // Fallback: default R2 public bucket domain on Cloudflare.
+      { protocol: 'https', hostname: '**.r2.dev' },
+    ],
+  },
   async redirects() {
     return [
       {

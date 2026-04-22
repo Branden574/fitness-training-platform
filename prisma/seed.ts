@@ -26,12 +26,18 @@ async function main() {
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
 
   // ── Trainer (Brent — primary demo profile) ────────────────────
+  //
+  // IMPORTANT: trainer@demo.com is a legacy demo login. The real Brent
+  // Martinez uses martinezfitness559@gmail.com and owns the
+  // trainerSlug='brent-martinez' on production. Seeding this row with
+  // that slug would create a duplicate, so we scope this demo trainer
+  // to a dev-only identity (not public, no slug collision).
   const trainer = await prisma.user.upsert({
     where: { email: 'trainer@demo.com' },
     update: {
-      trainerSlug: 'brent-martinez',
-      trainerIsPublic: true,
-      trainerAcceptingClients: true,
+      trainerSlug: null,
+      trainerIsPublic: false,
+      trainerAcceptingClients: false,
     },
     create: {
       name: 'Brent Martinez',
@@ -39,9 +45,9 @@ async function main() {
       role: 'TRAINER',
       password: hash,
       isActive: true,
-      trainerSlug: 'brent-martinez',
-      trainerIsPublic: true,
-      trainerAcceptingClients: true,
+      trainerSlug: null,
+      trainerIsPublic: false,
+      trainerAcceptingClients: false,
     },
   });
   const brentProfileData = {
