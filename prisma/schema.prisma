@@ -196,6 +196,19 @@ model Trainer {
   // raw format the trainer enters; normalized to digits in the sms: href.
   contactPhone    String?
 
+  // Profile redesign v1 — editorial fields rendered by the new /trainers and
+  // /t/[slug] screens. All nullable / defaulted so existing trainers render
+  // with graceful fallbacks (empty sections hide, cover uses gradient tile).
+  headline       String? //  tagline under the name, ~160 char
+  coverImageUrl  String? //  320px header cover (falls back to gradient)
+  clientsTrained Int? //     lifetime career count — marketing copy, not platform history
+  quickFacts     Json? //    [{label, value}] — profile "Quick Facts" card
+  pillars        Json? //    [{title, description, icon}] — "Approach" 4-card grid
+  gallery        String[] @default([]) //  image URLs in display order
+  services       Json? //    [{title, description, price, per, cta, featured}] — pricing cards
+  tiktokHandle   String?
+  youtubeHandle  String?
+
   // Phase 3 — platform subscription billing (Martinez/Fitness charges trainer).
   // Tier is an app-level concept; the corresponding Stripe price is resolved
   // via env at checkout time so prices can change without a migration.

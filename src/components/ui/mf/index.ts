@@ -79,3 +79,21 @@ export type { TrainerMobileTabKey, TrainerMobileTabsProps } from './TrainerMobil
 
 export { default as PublicTopNav } from './PublicTopNav';
 export type { PublicTopNavProps } from './PublicTopNav';
+
+export { default as RoundAvatar } from './RoundAvatar';
+export type { RoundAvatarProps, RoundAvatarStatus } from './RoundAvatar';
+
+export { default as StatusPill } from './StatusPill';
+export type { StatusPillProps, StatusPillKind, StatusPillSize } from './StatusPill';
+
+export { default as SpecialtyChip } from './SpecialtyChip';
+export type { SpecialtyChipProps } from './SpecialtyChip';
+
+export { default as StatTile } from './StatTile';
+export type { StatTileProps } from './StatTile';
+
+export { default as TrainerCover } from './TrainerCover';
+export type { TrainerCoverProps, TrainerCoverTone } from './TrainerCover';
+
+export { default as Lightbox } from './Lightbox';
+export type { LightboxProps, LightboxItem } from './Lightbox';

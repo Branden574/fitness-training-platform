@@ -501,6 +501,46 @@ html:not(.dark) .mf-ph-img {
 }
 .mf-pulse { animation: mf-pulse 1.6s ease-in-out infinite; }
 
+/* ── Loading shimmer (skeleton cards) ────────────────────────────── */
+@keyframes mf-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.mf-shimmer {
+  background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+  background-size: 200% 100%;
+  animation: mf-shimmer 1.4s infinite;
+}
+
+/* ── Editorial placeholder tile (trainer cover, gallery fallbacks) ── */
+.ph-img {
+  background:
+    linear-gradient(135deg, transparent 49.5%, rgba(255,255,255,0.04) 49.5%, rgba(255,255,255,0.04) 50.5%, transparent 50.5%) 0 0 / 14px 14px,
+    var(--mf-surface-3);
+  color: var(--mf-fg-mute);
+  font-family: var(--font-mf-mono), ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.ph-img::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 20% 20%, rgba(255,255,255,0.05), transparent 55%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-pulse,
+  .mf-shimmer { animation: none; }
+}
+
 /* ── Nav active bar ──────────────────────────────────────────────── */
 .mf-nav-active { position: relative; }
 .mf-nav-active::before {

@@ -48,11 +48,14 @@ export async function GET(request: NextRequest) {
       trainer: {
         select: {
           bio: true,
+          headline: true,
           photoUrl: true,
+          coverImageUrl: true,
           location: true,
           experience: true,
           specialties: true,
           priceTier: true,
+          clientsTrained: true,
           profilePublishedAt: true,
         },
       },

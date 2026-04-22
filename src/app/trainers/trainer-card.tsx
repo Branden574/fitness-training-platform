@@ -1,4 +1,9 @@
 import Link from 'next/link';
+import { Clock, MapPin, Star } from 'lucide-react';
+import RoundAvatar from '@/components/ui/mf/RoundAvatar';
+import SpecialtyChip from '@/components/ui/mf/SpecialtyChip';
+import StatusPill from '@/components/ui/mf/StatusPill';
+import TrainerCover, { type TrainerCoverTone } from '@/components/ui/mf/TrainerCover';
 
 export interface TrainerCardData {
   id: string;
@@ -8,185 +13,176 @@ export interface TrainerCardData {
   trainerAcceptingClients: boolean;
   trainer: {
     bio: string | null;
+    headline: string | null;
     photoUrl: string | null;
+    coverImageUrl: string | null;
     location: string | null;
     experience: number;
     specialties: string[];
     priceTier: string | null;
+    clientsTrained?: number | null;
   } | null;
 }
 
-const TIER_DISPLAY: Record<string, string> = {
-  'tier-1': '$',
-  'tier-2': '$$',
-  'tier-3': '$$$',
-  contact: 'Contact',
-};
+const TONES: TrainerCoverTone[] = ['default', 'warm', 'cool', 'olive', 'clay', 'smoke'];
 
-function titleCase(s: string): string {
-  return s
-    .split(' ')
-    .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : ''))
-    .join(' ');
+function initialsFrom(name: string | null): string {
+  if (!name) return '??';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return '??';
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }
 
-export default function TrainerCard({ trainer }: { trainer: TrainerCardData }) {
+function locationCity(location: string | null): string | null {
+  if (!location) return null;
+  return location.split('·')[0]?.trim() ?? null;
+}
+
+export default function TrainerCard({
+  trainer,
+  tone = 'default',
+}: {
+  trainer: TrainerCardData;
+  tone?: TrainerCoverTone;
+}) {
   if (!trainer.trainerSlug) return null;
-  const photo = trainer.trainer?.photoUrl ?? trainer.image;
-  const meta = [
-    trainer.trainer?.location,
-    trainer.trainer?.experience && trainer.trainer.experience > 0
-      ? `${trainer.trainer.experience} YRS`
-      : null,
-    trainer.trainer?.priceTier ? TIER_DISPLAY[trainer.trainer.priceTier] : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const t = trainer.trainer;
+  const initials = initialsFrom(trainer.name);
+  const headline = t?.headline ?? t?.bio ?? '';
+  const specialties = t?.specialties ?? [];
+  const visible = specialties.slice(0, 3);
+  const extra = Math.max(0, specialties.length - visible.length);
+  const coverLabel = trainer.name?.toUpperCase() ?? 'TRAINER';
+  const city = locationCity(t?.location ?? null);
 
   return (
     <Link
       href={`/t/${trainer.trainerSlug}`}
-      className="mf-card"
+      className="mf-card group block"
       style={{
-        display: 'block',
+        padding: 0,
+        overflow: 'hidden',
         textDecoration: 'none',
         color: 'inherit',
-        overflow: 'hidden',
-        transition: 'transform 120ms ease, border-color 120ms ease',
+        transition: 'border-color 150ms ease, transform 120ms ease',
       }}
     >
-      {photo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={photo}
-          alt={trainer.name ?? 'Trainer'}
-          style={{
-            width: '100%',
-            aspectRatio: '4 / 5',
-            objectFit: 'cover',
-            display: 'block',
-            borderBottom: '1px solid var(--mf-hairline)',
-          }}
+      <div style={{ position: 'relative', padding: 10, paddingBottom: 0 }}>
+        <TrainerCover
+          label={coverLabel}
+          imageUrl={t?.coverImageUrl ?? null}
+          alt={`${trainer.name ?? 'Trainer'} cover`}
+          height={170}
+          radius={8}
+          tone={tone}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"
         />
-      ) : (
-        <div
-          style={{
-            width: '100%',
-            aspectRatio: '4 / 5',
-            background: 'var(--mf-surface-2)',
-            display: 'grid',
-            placeItems: 'center',
-            fontFamily: 'var(--font-mf-mono), monospace',
-            fontSize: 28,
-            color: 'var(--mf-fg-dim)',
-            borderBottom: '1px solid var(--mf-hairline)',
-          }}
-        >
-          {trainer.name
-            ? trainer.name
-                .split(/\s+/)
-                .map((p) => p[0])
-                .slice(0, 2)
-                .join('')
-            : '?'}
+        <div style={{ position: 'absolute', top: 18, right: 18 }}>
+          <StatusPill kind={trainer.trainerAcceptingClients ? 'accepting' : 'waitlist'} />
         </div>
-      )}
-      <div style={{ padding: 16 }}>
-        {meta && (
-          <div className="mf-eyebrow" style={{ marginBottom: 6 }}>
-            {meta.toUpperCase()}
-          </div>
-        )}
+        <div style={{ position: 'absolute', left: 20, bottom: -28 }}>
+          <RoundAvatar
+            initials={initials}
+            image={t?.photoUrl ?? trainer.image ?? null}
+            alt={trainer.name ?? 'Trainer'}
+            size={60}
+          />
+        </div>
+      </div>
+
+      <div style={{ padding: '36px 20px 20px' }}>
         <div
           className="mf-font-display"
           style={{
-            fontSize: 22,
-            lineHeight: 1.1,
+            fontSize: 20,
             letterSpacing: '-0.01em',
-            marginBottom: 8,
+            lineHeight: 1.1,
+            textTransform: 'uppercase',
           }}
         >
           {trainer.name}
         </div>
-        {trainer.trainer?.bio && (
-          <p
+        {headline ? (
+          <div
             className="mf-fg-dim"
             style={{
               fontSize: 13,
-              lineHeight: 1.5,
-              margin: 0,
+              lineHeight: 1.4,
+              marginTop: 6,
               display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical' as const,
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
             }}
           >
-            {trainer.trainer.bio}
-          </p>
-        )}
-        {trainer.trainer?.specialties && trainer.trainer.specialties.length > 0 && (
-          <div
-            style={{
-              marginTop: 10,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 4,
-            }}
-          >
-            {trainer.trainer.specialties.slice(0, 3).map((s) => (
-              <span
-                key={s}
-                style={{
-                  padding: '2px 8px',
-                  background: 'transparent',
-                  border: '1px solid var(--mf-hairline)',
-                  color: 'var(--mf-fg-dim)',
-                  fontSize: 10,
-                  borderRadius: 999,
-                  fontFamily: 'var(--font-mf-mono), monospace',
-                }}
-              >
-                {titleCase(s)}
-              </span>
-            ))}
-            {trainer.trainer.specialties.length > 3 && (
-              <span
-                className="mf-fg-mute"
-                style={{ fontSize: 10, alignSelf: 'center' }}
-              >
-                +{trainer.trainer.specialties.length - 3}
-              </span>
-            )}
+            {headline}
           </div>
-        )}
+        ) : null}
+
+        {visible.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
+            {visible.map((s) => (
+              <SpecialtyChip key={s}>{s}</SpecialtyChip>
+            ))}
+            {extra > 0 ? <SpecialtyChip>+{extra} more</SpecialtyChip> : null}
+          </div>
+        ) : null}
+
         <div
+          className="mf-font-mono"
           style={{
-            marginTop: 12,
+            marginTop: 18,
+            paddingTop: 14,
+            borderTop: '1px solid var(--mf-hairline)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            fontSize: 11,
           }}
         >
-          <span
-            className="mf-font-mono"
-            style={{
-              fontSize: 10,
-              color: trainer.trainerAcceptingClients
-                ? 'var(--mf-accent, #FF4D1C)'
-                : 'var(--mf-fg-mute)',
-              letterSpacing: '.15em',
-            }}
-          >
-            {trainer.trainerAcceptingClients ? '● ACCEPTING' : '○ WAITLIST'}
-          </span>
-          <span
-            className="mf-font-mono mf-accent"
-            style={{ fontSize: 11, letterSpacing: '.1em' }}
-          >
-            VIEW →
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {t?.experience && t.experience > 0 ? (
+              <span className="mf-fg-dim" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Clock size={11} />
+                <span className="tnum">{t.experience}y</span>
+                <span className="mf-fg-mute" style={{ fontSize: 10 }}>
+                  EXP
+                </span>
+              </span>
+            ) : null}
+            {typeof t?.clientsTrained === 'number' && t.clientsTrained > 0 ? (
+              <span className="mf-fg-dim" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Star size={11} style={{ color: 'var(--mf-accent)' }} />
+                <span className="tnum">{t.clientsTrained}+</span>
+                <span className="mf-fg-mute" style={{ fontSize: 10 }}>
+                  CLIENTS
+                </span>
+              </span>
+            ) : null}
+          </div>
+          {city ? (
+            <span
+              className="mf-fg-mute"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 10,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              <MapPin size={10} />
+              {city}
+            </span>
+          ) : null}
         </div>
       </div>
     </Link>
   );
+}
+
+export function toneForIndex(idx: number): TrainerCoverTone {
+  return TONES[idx % TONES.length]!;
 }

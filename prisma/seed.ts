@@ -25,28 +25,101 @@ const DEMO_PASSWORD =
 async function main() {
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
 
-  // ── Trainer ───────────────────────────────────────────────────
+  // ── Trainer (Brent — primary demo profile) ────────────────────
   const trainer = await prisma.user.upsert({
     where: { email: 'trainer@demo.com' },
-    update: {},
+    update: {
+      trainerSlug: 'brent-martinez',
+      trainerIsPublic: true,
+      trainerAcceptingClients: true,
+    },
     create: {
       name: 'Brent Martinez',
       email: 'trainer@demo.com',
       role: 'TRAINER',
       password: hash,
       isActive: true,
+      trainerSlug: 'brent-martinez',
+      trainerIsPublic: true,
+      trainerAcceptingClients: true,
     },
   });
-  await prisma.trainer.upsert({
+  const brentProfileData = {
+    bio: "I coach adults who have real jobs, real kids, and three hours a week to train. Not \"fitness enthusiasts.\" Not aspiring bodybuilders. Regular-high-performers who want to be the strongest version of themselves at 45, 55, 65 — without living in a gym.\n\nMy approach is boring and it works: the four big lifts, progressive overload, enough protein, enough sleep, and honest feedback from someone who has watched a thousand sets of squats. Eight years into this I have coached 200+ people from \"can't hold a plank\" to \"training partners.\" The plan doesn't need to be complicated. You need to show up, and you need someone paying attention.\n\nI write every program myself. No templates, no auto-generated blocks. I read every log. If you miss a session, you'll hear from me by Tuesday.",
+    experience: 8,
+    specializations: ['Hypertrophy', 'Fat Loss', 'Strength Foundations', 'Nutrition'] as Prisma.JsonArray,
+    certifications: ['NSCA-CSCS', 'Precision Nutrition L1'] as Prisma.JsonArray,
+    specialties: ['Hypertrophy', 'Fat Loss', 'Strength Foundations', 'Nutrition Coaching', 'Masters Athletes (40+)'],
+    location: 'Fresno, CA · The Iron Office',
+    instagramHandle: 'brentjmartinez',
+    tiktokHandle: 'brent.lifts',
+    youtubeHandle: 'Brent Martinez',
+    priceTier: 'tier-2',
+    hourlyRate: 120,
+    acceptsInPerson: true,
+    acceptsOnline: true,
+    headline: 'Strength coach helping busy professionals get lean without giving up their lives.',
+    clientsTrained: 212,
+    quickFacts: [
+      { label: 'CERTIFICATIONS', value: 'NSCA-CSCS, Precision Nutrition L1' },
+      { label: 'LANGUAGES', value: 'English, Spanish' },
+      { label: 'TRAINING STYLE', value: 'Progressive Overload, Conjugate' },
+      { label: 'HOME GYM', value: 'The Iron Office · Fresno, CA' },
+      { label: 'SESSION LENGTH', value: '45–75 min' },
+      { label: 'COACHED SINCE', value: '2018' },
+    ] as Prisma.JsonArray,
+    pillars: [
+      { title: 'Progressive Overload', description: 'Small, honest weekly jumps on the lifts that matter. Tracked in the app, reviewed every Sunday.', icon: 'TrendingUp' },
+      { title: 'Nutrition Coaching', description: 'Macros first, food quality second. We build the plate around the protein and the lift, not the other way around.', icon: 'Apple' },
+      { title: 'Recovery & Sleep', description: "If you're not sleeping, we're not training hard. Sleep, stress, and step count all show up in your weekly review.", icon: 'Moon' },
+      { title: 'Honest Feedback', description: 'Form checks, weekly check-ins, and a real phone call if something is off. No ghost coaching.', icon: 'MessageSquare' },
+    ] as Prisma.JsonArray,
+    gallery: [
+      'SQUAT RACK · 405',
+      'DEADLIFT SETUP',
+      'CLIENT · BENCH 275',
+      'THE IRON OFFICE',
+      'COMPETITION DAY',
+      'FORM CHECK',
+      'COACHING · 1:1',
+      'PROGRAM WHITEBOARD',
+      'MEAL PREP',
+    ],
+    services: [
+      { title: '1:1 Online Coaching', description: 'Custom programming, unlimited messaging, weekly video review. Remote athletes only.', price: '$249', per: '/month', cta: 'Apply', featured: false },
+      { title: 'In-Person Training', description: '1:1 sessions at The Iron Office, Fresno. Mon–Fri, 5a–11a.', price: '$120', per: '/session', cta: 'Book intro', featured: false },
+      { title: '12-Week Transformation', description: 'Deep-dive program + in-person and remote sessions + nutrition. Limited to 6 athletes per cohort.', price: '$1,800', per: 'one-time', cta: 'Join waitlist', featured: true },
+      { title: 'Form Check · Single', description: 'Send a video. Get a full breakdown with cues, within 48 hours.', price: '$45', per: 'one-time', cta: 'Send video', featured: false },
+    ] as Prisma.JsonArray,
+    profilePublishedAt: new Date('2024-08-15T00:00:00.000Z'),
+  };
+  const brentTrainer = await prisma.trainer.upsert({
     where: { userId: trainer.id },
-    update: {},
+    update: brentProfileData,
     create: {
       userId: trainer.id,
-      bio: 'Head coach at Atlas 559. Specializes in strength-forward programming for intermediate-to-advanced athletes.',
-      experience: 8,
-      specializations: ['Strength', 'Powerbuilding', 'Hypertrophy', 'Nutrition'] as Prisma.JsonArray,
-      certifications: ['NASM-CPT', 'CSCS', 'Precision Nutrition L1'] as Prisma.JsonArray,
+      ...brentProfileData,
     },
+  });
+
+  // Brent testimonials + transformations
+  await prisma.trainerTestimonial.deleteMany({ where: { trainerId: brentTrainer.id } });
+  await prisma.trainerTestimonial.createMany({
+    data: [
+      { trainerId: brentTrainer.id, quote: 'Brent coached me from a 135 lb squat to a 285 lb squat in a year. More importantly, he taught me how to train for the rest of my life.', attribution: 'Jordan Reyes · Client, 18 months', order: 0 },
+      { trainerId: brentTrainer.id, quote: 'I have a desk job, two kids, and a torn rotator cuff from college. Brent programmed around all of it. Actual, measurable progress.', attribution: 'Marcus Thompson · Client, 10 months', order: 1 },
+      { trainerId: brentTrainer.id, quote: 'The first coach who read my logs and actually adjusted the program. I stopped bracing for the Monday "same as last week" message.', attribution: 'Priya Ramachandran · Client, 2 years', order: 2 },
+    ],
+  });
+
+  await prisma.trainerTransformation.deleteMany({ where: { trainerId: brentTrainer.id } });
+  await prisma.trainerTransformation.createMany({
+    data: [
+      { trainerId: brentTrainer.id, beforePhotoUrl: 'JORDAN · WEEK 1', afterPhotoUrl: 'JORDAN · WEEK 16', caption: 'Jordan R. · 34 — Lost 22 lb, added 35 lb to bench. Trained 3×/wk.', durationWeeks: 16, status: 'APPROVED' },
+      { trainerId: brentTrainer.id, beforePhotoUrl: 'PRIYA · WEEK 1', afterPhotoUrl: 'PRIYA · WEEK 24', caption: 'Priya R. · 41 — First-ever pull-up to 6 strict. Squat 95→205 lb.', durationWeeks: 24, status: 'APPROVED' },
+      { trainerId: brentTrainer.id, beforePhotoUrl: 'MARCUS · WEEK 1', afterPhotoUrl: 'MARCUS · WEEK 12', caption: 'Marcus T. · 52 — Down 14 lb. A1c from 6.3 → 5.4. Off blood pressure meds.', durationWeeks: 12, status: 'APPROVED' },
+      { trainerId: brentTrainer.id, beforePhotoUrl: 'SOFIA · WEEK 1', afterPhotoUrl: 'SOFIA · WEEK 20', caption: 'Sofia O. · 29 — First sub-4hr marathon. Added a 315 lb deadlift along the way.', durationWeeks: 20, status: 'APPROVED' },
+    ],
   });
 
   // ── Clients ───────────────────────────────────────────────────
@@ -477,10 +550,148 @@ async function main() {
     // FeatureFlag table may not exist yet
   }
 
+  // ── Directory trainers (8 public Fresno-area coaches) ─────────
+  // Populates the /trainers discovery grid so the redesigned screens
+  // render with realistic content. Uses `@demo.mf` domain to avoid
+  // collision with the client-side demo emails above.
+  const directoryTrainers: Array<{
+    email: string;
+    name: string;
+    slug: string;
+    accepting: boolean;
+    headline: string;
+    bio: string;
+    experience: number;
+    clientsTrained: number;
+    location: string;
+    specialties: string[];
+    instagramHandle?: string;
+  }> = [
+    {
+      email: 'priya-ramachandran@demo.mf', name: 'Priya Ramachandran', slug: 'priya-ramachandran',
+      accepting: false,
+      headline: 'S&C PhD helping lifters build resilient, pain-free power.',
+      bio: 'Stanford-trained strength and conditioning coach. Eleven years working with raw powerlifters and post-injury lifters. My approach: measure everything, load slowly, respect the tissues.',
+      experience: 11, clientsTrained: 340,
+      location: 'Fresno, CA · Stanford-trained',
+      specialties: ['Powerlifting', 'Rehab', 'Mobility'],
+    },
+    {
+      email: 'marcus-thompson@demo.mf', name: 'Marcus Thompson', slug: 'marcus-thompson',
+      accepting: true,
+      headline: 'Former D1 linebacker. Now I make dads feel 25 again.',
+      bio: 'Played linebacker at a D1 program before a shoulder injury ended my career. Took what I learned from the strength staff and turned it into a program for working parents who used to be athletes and want to feel that way again.',
+      experience: 6, clientsTrained: 128,
+      location: 'Clovis, CA · Iron Craft',
+      specialties: ['Athletic Performance', 'Fat Loss', 'Conditioning'],
+    },
+    {
+      email: 'sofia-oyelaran@demo.mf', name: 'Sofia Oyelaran', slug: 'sofia-oyelaran',
+      accepting: true,
+      headline: 'Endurance coach. Marathons, trail, hybrid athletes.',
+      bio: 'Hybrid athlete coach — I love the marathoner who wants to squat 2x bodyweight and the lifter who wants to run a sub-20 5k. We build both without sacrificing either.',
+      experience: 9, clientsTrained: 186,
+      location: 'Fresno, CA · Remote OK',
+      specialties: ['Endurance', 'Marathon', 'Hybrid'],
+    },
+    {
+      email: 'harper-whitfield@demo.mf', name: 'Harper Whitfield', slug: 'harper-whitfield',
+      accepting: false,
+      headline: 'Raw powerlifter. Competitive coach. Zero fluff.',
+      bio: "Twelve years under the bar, four years coaching competitive lifters. If you want a program with emojis and weekly motivational texts, I'm not your guy. If you want to put more weight on the bar, we'll get along fine.",
+      experience: 12, clientsTrained: 94,
+      location: 'Visalia, CA · Atlas 559',
+      specialties: ['Powerlifting', 'Competition Prep'],
+    },
+    {
+      email: 'alejandro-cruz@demo.mf', name: 'Alejandro Cruz', slug: 'alejandro-cruz',
+      accepting: true,
+      headline: 'Hypertrophy specialist. Evidence-based muscle building.',
+      bio: 'I read the papers so you don\'t have to. Hypertrophy and physique coaching rooted in volume management, exercise selection, and the boring stuff that actually moves the needle.',
+      experience: 5, clientsTrained: 142,
+      location: 'Fresno, CA · The Iron Office',
+      specialties: ['Hypertrophy', 'Nutrition', 'Physique'],
+    },
+    {
+      email: 'yuki-tanaka@demo.mf', name: 'Yuki Tanaka', slug: 'yuki-tanaka',
+      accepting: true,
+      headline: 'Olympic lifting coach. USAW Level 2. Technique obsessed.',
+      bio: "USAW Level 2. I coach Olympic lifters — technique-first, patient progression, heavy when it's earned. My athletes include masters competitors and one regional qualifier.",
+      experience: 10, clientsTrained: 76,
+      location: 'Fresno, CA · Barbell Coop',
+      specialties: ['Olympic Lifting', 'Strength Foundations'],
+    },
+    {
+      email: 'rachel-brennan@demo.mf', name: 'Rachel Brennan', slug: 'rachel-brennan',
+      accepting: true,
+      headline: 'Pre-natal & post-partum strength. Rebuild the way you actually live.',
+      bio: 'Mom of two, pre/post-natal certified. I coach women through pregnancy, birth recovery, and the return-to-lifting phase that nobody actually explains.',
+      experience: 7, clientsTrained: 158,
+      location: 'Madera, CA · Remote OK',
+      specialties: ['Pre/Post-Natal', "Women's Strength"],
+    },
+    {
+      email: 'ibrahim-nasser@demo.mf', name: 'Ibrahim Nasser', slug: 'ibrahim-nasser',
+      accepting: false,
+      headline: 'Strongman in training. Odd-object, grip, conditioning.',
+      bio: 'Amateur strongman competitor. I coach athletes who want to lift heavy weird stuff — stones, yokes, logs. Grip work, event practice, smart conditioning.',
+      experience: 6, clientsTrained: 62,
+      location: 'Fresno, CA · Atlas 559',
+      specialties: ['Strongman', 'Conditioning', 'Grip'],
+    },
+  ];
+
+  for (const d of directoryTrainers) {
+    const u = await prisma.user.upsert({
+      where: { email: d.email },
+      update: {
+        name: d.name,
+        trainerSlug: d.slug,
+        trainerIsPublic: true,
+        trainerAcceptingClients: d.accepting,
+      },
+      create: {
+        name: d.name,
+        email: d.email,
+        role: 'TRAINER',
+        password: hash,
+        isActive: true,
+        trainerSlug: d.slug,
+        trainerIsPublic: true,
+        trainerAcceptingClients: d.accepting,
+      },
+    });
+    await prisma.trainer.upsert({
+      where: { userId: u.id },
+      update: {
+        bio: d.bio,
+        headline: d.headline,
+        experience: d.experience,
+        clientsTrained: d.clientsTrained,
+        location: d.location,
+        specialties: d.specialties,
+        instagramHandle: d.instagramHandle ?? null,
+        profilePublishedAt: new Date('2025-01-01T00:00:00.000Z'),
+      },
+      create: {
+        userId: u.id,
+        bio: d.bio,
+        headline: d.headline,
+        experience: d.experience,
+        clientsTrained: d.clientsTrained,
+        location: d.location,
+        specialties: d.specialties,
+        instagramHandle: d.instagramHandle ?? null,
+        profilePublishedAt: new Date('2025-01-01T00:00:00.000Z'),
+      },
+    });
+  }
+
   console.log('\n✓ Seeded');
   console.log(`  Trainer:  trainer@demo.com  /  ${DEMO_PASSWORD}`);
   console.log(`  Client:   jordan@demo.com   /  ${DEMO_PASSWORD}  (has 8 wk history)`);
   console.log(`  Extras:   harper@demo.com · priya@demo.com · marcus@demo.com · client@demo.com`);
+  console.log(`  Public directory: 9 trainers at /trainers (Brent + 8 @demo.mf coaches)`);
 }
 
 main()
