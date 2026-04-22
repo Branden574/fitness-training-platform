@@ -87,11 +87,37 @@ export async function POST(request: Request) {
       }
     }
 
+    // Fuzzy name+brand duplicate guard. Without this the DB fills up with
+    // "Chicken breast" / "chicken breast" / "Chicken Breast " variants that
+    // fragment the useCount sorting. Case-insensitive exact match on
+    // (name, brand) is the cheapest win — stricter semantic matching is a
+    // future refinement.
+    const trimmedName = String(name).trim();
+    const trimmedBrand = brand ? String(brand).trim() : null;
+    const nameDuplicate = await prisma.communityFood.findFirst({
+      where: {
+        name: { equals: trimmedName, mode: 'insensitive' },
+        brand: trimmedBrand
+          ? { equals: trimmedBrand, mode: 'insensitive' }
+          : null,
+      },
+      orderBy: { useCount: 'desc' },
+    });
+    if (nameDuplicate) {
+      await prisma.communityFood
+        .update({
+          where: { id: nameDuplicate.id },
+          data: { useCount: { increment: 1 } },
+        })
+        .catch(() => {});
+      return NextResponse.json({ food: nameDuplicate, existed: true });
+    }
+
     const food = await prisma.communityFood.create({
       data: {
         barcode: barcode || null,
-        name,
-        brand: brand || null,
+        name: trimmedName,
+        brand: trimmedBrand,
         calories: parseFloat(calories) || 0,
         protein: parseFloat(protein) || 0,
         carbs: parseFloat(carbs) || 0,

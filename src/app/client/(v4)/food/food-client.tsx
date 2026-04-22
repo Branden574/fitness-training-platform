@@ -507,6 +507,11 @@ function LogFoodDrawer({
     setError(null);
     try {
       for (const it of picked) {
+        // Extract CommunityFood id when the result came from the community
+        // database so the server can bump its useCount for ranking.
+        const communityFoodId = it.id.startsWith('community-')
+          ? it.id.slice('community-'.length)
+          : null;
         const res = await fetch('/api/food-entries', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -520,6 +525,7 @@ function LogFoodDrawer({
             fat: it.fat,
             mealType: meal,
             date: viewDate,
+            communityFoodId,
           }),
         });
         if (!res.ok) throw new Error('Could not save entry');

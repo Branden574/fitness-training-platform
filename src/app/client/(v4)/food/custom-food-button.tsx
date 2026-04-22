@@ -33,6 +33,7 @@ export default function CustomFoodButton({
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState('');
+  const [brand, setBrand] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('serving');
   const [calories, setCalories] = useState('');
@@ -40,9 +41,14 @@ export default function CustomFoodButton({
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
   const [mealType, setMealType] = useState<MealType>(defaultMeal);
+  // Default ON — community growth comes from every custom log. Client can
+  // untick if they don't want grandma's lasagna searchable to everyone
+  // else under the COMMUNITY filter.
+  const [share, setShare] = useState(true);
 
   function reset() {
     setName('');
+    setBrand('');
     setQuantity('1');
     setUnit('serving');
     setCalories('');
@@ -51,6 +57,7 @@ export default function CustomFoodButton({
     setFat('');
     setError(null);
     setMealType(defaultMeal);
+    setShare(true);
   }
 
   async function submit(e: FormEvent) {
@@ -66,11 +73,44 @@ export default function CustomFoodButton({
     setBusy(true);
     setError(null);
     try {
+      // 1. Optionally contribute to the shared community DB so the next
+      // person typing "grandma's lasagna" finds it. Fire-and-forget from
+      // the log perspective — if sharing fails we still log the entry.
+      let communityFoodId: string | null = null;
+      if (share) {
+        try {
+          const shareRes = await fetch('/api/food-community', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: name.trim(),
+              brand: brand.trim() || undefined,
+              calories: Number(calories),
+              protein: Number(protein) || 0,
+              carbs: Number(carbs) || 0,
+              fat: Number(fat) || 0,
+              servingSize: Number(quantity) || 1,
+              servingUnit: unit,
+            }),
+          });
+          if (shareRes.ok) {
+            const data = (await shareRes.json().catch(() => ({}))) as {
+              food?: { id: string };
+            };
+            communityFoodId = data.food?.id ?? null;
+          }
+        } catch {
+          // Non-fatal — entry still gets logged below.
+        }
+      }
+
       const res = await fetch('/api/food-entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          foodName: name.trim(),
+          foodName: brand.trim()
+            ? `${name.trim()} (${brand.trim()})`
+            : name.trim(),
           quantity,
           unit,
           calories,
@@ -79,6 +119,7 @@ export default function CustomFoodButton({
           fat: fat || '0',
           mealType,
           date: viewDate,
+          communityFoodId,
         }),
       });
       if (!res.ok) {
@@ -165,15 +206,25 @@ export default function CustomFoodButton({
               </button>
             </div>
 
-            <Field label="NAME">
-              <input
-                className="mf-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                placeholder="Grandma's lasagna"
-              />
-            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8 }}>
+              <Field label="NAME">
+                <input
+                  className="mf-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="Grandma's lasagna"
+                />
+              </Field>
+              <Field label="BRAND (OPT)">
+                <input
+                  className="mf-input"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="optional"
+                />
+              </Field>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               <Field label="QUANTITY">
@@ -252,6 +303,33 @@ export default function CustomFoodButton({
                 />
               </Field>
             </div>
+
+            <label
+              className="flex items-start gap-2"
+              style={{
+                padding: '10px 12px',
+                borderRadius: 6,
+                background: 'var(--mf-surface-2)',
+                border: '1px solid var(--mf-hairline)',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={share}
+                onChange={(e) => setShare(e.target.checked)}
+                style={{ marginTop: 3, accentColor: 'var(--mf-accent)' }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>
+                  Share with the community
+                </div>
+                <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 2, lineHeight: 1.4 }}>
+                  Other clients will find this food under the COMMUNITY filter.
+                  Popular entries move to the top automatically. Uncheck to keep it private.
+                </div>
+              </div>
+            </label>
 
             {error && (
               <div

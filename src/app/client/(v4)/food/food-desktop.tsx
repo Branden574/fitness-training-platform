@@ -156,6 +156,12 @@ export default function FoodDesktop({
     setPending(it.id);
     setError(null);
     try {
+      // Extract the CommunityFood id when the result came from community —
+      // the unified search prefixes it with `community-`. Passing it back
+      // lets the server bump useCount so popular items rank higher.
+      const communityFoodId = it.id.startsWith('community-')
+        ? it.id.slice('community-'.length)
+        : null;
       const res = await fetch('/api/food-entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,6 +175,7 @@ export default function FoodDesktop({
           fat: it.fat,
           mealType: meal,
           date: viewDate,
+          communityFoodId,
         }),
       });
       if (!res.ok) throw new Error('Could not save entry');

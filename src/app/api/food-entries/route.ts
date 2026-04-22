@@ -111,7 +111,8 @@ export async function POST(request: Request) {
       fat,
       mealType,
       date,
-      notes
+      notes,
+      communityFoodId,
     } = body;
 
     if (!foodName || !quantity || !calories) {
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
     } else {
       entryDate = new Date();
     }
-    
+
     const foodEntry = await prisma.foodEntry.create({
       data: {
         userId: session.user.id,
@@ -145,6 +146,20 @@ export async function POST(request: Request) {
         notes: notes || null
       }
     });
+
+    // Optional: bump the community entry's useCount so popular foods
+    // bubble to the top of search. Fire-and-forget — failure to bump
+    // can't invalidate the entry that just committed.
+    if (communityFoodId && typeof communityFoodId === 'string') {
+      prisma.communityFood
+        .update({
+          where: { id: communityFoodId },
+          data: { useCount: { increment: 1 } },
+        })
+        .catch(() => {
+          // Possibly a deleted community food — ignore.
+        });
+    }
 
     return NextResponse.json(foodEntry);
 

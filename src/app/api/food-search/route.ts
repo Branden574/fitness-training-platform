@@ -33,8 +33,11 @@ export async function GET(request: Request) {
 
     const results: FoodSearchResult[] = [];
 
-    // 0. Search community database first (user-contributed foods with barcodes)
-    if (source === 'all' && query.length >= 2) {
+    // 0. Search community database (user-contributed foods). The COMMUNITY
+    // pill previously did nothing because this block only ran on 'all'; and
+    // community hits were mis-tagged as 'local' so the UI pill rendered the
+    // wrong source chip. Fixed both.
+    if ((source === 'all' || source === 'community') && query.length >= 2) {
       try {
         const communityFoods = await prisma.communityFood.findMany({
           where: {
@@ -43,8 +46,14 @@ export async function GET(request: Request) {
               { brand: { contains: query, mode: 'insensitive' } },
             ],
           },
-          orderBy: { useCount: 'desc' },
-          take: 10,
+          orderBy: [
+            // Verified first, then by popularity — most-logged foods bubble
+            // to the top so a new user sees "Chicken breast (100 uses)" before
+            // a one-off "Chicken breast grandma's" entry.
+            { verified: 'desc' },
+            { useCount: 'desc' },
+          ],
+          take: source === 'community' ? 25 : 10,
         });
         for (const food of communityFoods) {
           results.push({
@@ -58,14 +67,16 @@ export async function GET(request: Request) {
             fat: food.fat,
             servingSize: food.servingSize,
             servingUnit: food.servingUnit,
-            source: 'local' as const,
+            source: 'community' as const,
             caloriesPer100g: food.calories,
             proteinPer100g: food.protein,
             carbsPer100g: food.carbs,
             fatPer100g: food.fat,
           });
         }
-      } catch {}
+      } catch (e) {
+        console.error('Community food search error:', e);
+      }
     }
 
     // 1. Search local database first (instant)
@@ -293,7 +304,7 @@ interface FoodSearchResult {
   fat: number;
   servingSize: number;
   servingUnit: string;
-  source: 'local' | 'usda' | 'openfoodfacts';
+  source: 'local' | 'usda' | 'openfoodfacts' | 'community';
   caloriesPer100g: number;
   proteinPer100g: number;
   carbsPer100g: number;
