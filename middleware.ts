@@ -39,32 +39,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Nonce-based CSP. A fresh 16-byte random value per request; Next.js
-  // reads it from `x-nonce` and applies it to its own inline hydration
-  // scripts automatically, so we don't need `'unsafe-inline'` in
-  // script-src. 'strict-dynamic' + a valid nonce means any script
-  // loaded transitively by a nonced script is trusted, which covers
-  // Next's chunk loader without manual threading.
-  //
-  // Injection attacks (e.g. a stored-XSS string in a bio or message)
-  // can't guess the nonce, so they no longer execute even if they
-  // escape HTML escaping somewhere.
-  //
-  // Kept 'unsafe-inline' as a fallback: browsers that support
-  // 'strict-dynamic' ignore it (per spec); legacy browsers fall back
-  // to 'unsafe-inline'. Net effect is stricter on modern browsers,
-  // identical to before on ancient ones.
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-
-  // Pass the nonce through to the RSC render via a request header so
-  // Next.js's internal <Script> components pick it up. This is the
-  // Next 15 App Router pattern.
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
-
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  // For all other routes, add security headers and continue
+  const response = NextResponse.next()
 
   // Security headers
   response.headers.set('X-Frame-Options', 'DENY')
@@ -75,11 +51,15 @@ export function middleware(request: NextRequest) {
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
 
   const isDev = process.env.NODE_ENV === 'development';
-  // Dev needs eval for React Refresh / HMR. Prod uses pure
-  // nonce+strict-dynamic.
+  // Nonce-based CSP is the correct long-term answer but requires
+  // threading `headers().get('x-nonce')` through every `<Script>` call
+  // site + the root layout. Attempted in commit cb2e297 — broke the
+  // site because Next.js's internal hydration scripts don't pick up
+  // the nonce automatically. Reverting to 'unsafe-inline' until the
+  // nonce propagation is properly implemented as a standalone project.
   const scriptSrc = isDev
-    ? `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'unsafe-eval'`
-    : `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'`;
+    ? "'self' 'unsafe-inline' 'unsafe-eval'"
+    : "'self' 'unsafe-inline'";
   // Narrow connect-src to specific hosts we actually talk to, instead of all of https:
   const connectSrc = [
     "'self'",
