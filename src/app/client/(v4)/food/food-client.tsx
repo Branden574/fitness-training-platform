@@ -8,6 +8,8 @@ import { CalRing, MacroRing, SrcPill, type FoodSource } from '@/components/ui/mf
 import BarcodeScanner from '@/components/BarcodeScanner';
 import CopyYesterdayClient from './copy-yesterday-client';
 import MealPlansDrawerClient from './meal-plans-drawer-client';
+import FoodEntryActions from './food-entry-actions';
+import CustomFoodButton from './custom-food-button';
 
 const MEALS = ['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER'] as const;
 type MealType = (typeof MEALS)[number];
@@ -30,6 +32,13 @@ interface Entry {
   id: string;
   name: string;
   qty: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  rawProtein: number;
+  rawCarbs: number;
+  rawFat: number;
+  mealType: MealType;
   kcal: number;
   protein: number;
   carbs: number;
@@ -411,6 +420,19 @@ export default function FoodClient({
                           P{e.protein} · C{e.carbs} · F{e.fat}
                         </div>
                       </div>
+                      <FoodEntryActions
+                        entry={{
+                          id: e.id,
+                          name: e.name,
+                          quantity: e.quantity,
+                          unit: e.unit,
+                          calories: e.calories,
+                          protein: e.rawProtein,
+                          carbs: e.rawCarbs,
+                          fat: e.rawFat,
+                          mealType: e.mealType,
+                        }}
+                      />
                     </div>
                   ))
                 )}
@@ -649,6 +671,9 @@ function LogFoodDrawer({
               </button>
             );
           })}
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <CustomFoodButton viewDate={viewDate} defaultMeal={meal} fullWidth />
         </div>
       </div>
 

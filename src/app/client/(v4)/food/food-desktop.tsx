@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Loader2, MoreHorizontal, Camera, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, Search, Loader2, Camera, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import FoodEntryActions from './food-entry-actions';
+import CustomFoodButton from './custom-food-button';
 import CopyYesterdayClient from './copy-yesterday-client';
 import MealPlansDrawerClient from './meal-plans-drawer-client';
 import { Btn, Chip, ClientDesktopShell, SrcPill, type FoodSource } from '@/components/ui/mf';
@@ -31,6 +33,13 @@ interface Entry {
   id: string;
   name: string;
   qty: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  rawProtein: number;
+  rawCarbs: number;
+  rawFat: number;
+  mealType: MealType;
   kcal: number;
   protein: number;
   carbs: number;
@@ -579,18 +588,19 @@ export default function FoodDesktop({
                         >
                           {it.kcal}
                         </div>
-                        <button
-                          type="button"
-                          className="mf-fg-mute"
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
+                        <FoodEntryActions
+                          entry={{
+                            id: it.id,
+                            name: it.name,
+                            quantity: it.quantity,
+                            unit: it.unit,
+                            calories: it.calories,
+                            protein: it.rawProtein,
+                            carbs: it.rawCarbs,
+                            fat: it.rawFat,
+                            mealType: it.mealType,
                           }}
-                          aria-label="More"
-                        >
-                          <MoreHorizontal size={14} />
-                        </button>
+                        />
                       </div>
                     ))
                   )}
@@ -823,6 +833,9 @@ export default function FoodDesktop({
               style={{
                 padding: 12,
                 borderTop: '1px solid var(--mf-hairline)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
               }}
             >
               <Btn
@@ -833,6 +846,11 @@ export default function FoodDesktop({
               >
                 Scan barcode
               </Btn>
+              <CustomFoodButton
+                viewDate={viewDate}
+                defaultMeal={logTarget}
+                fullWidth
+              />
             </div>
           </aside>
         </div>

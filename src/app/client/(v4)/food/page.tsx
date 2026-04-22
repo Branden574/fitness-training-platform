@@ -81,6 +81,15 @@ async function getFoodData(userId: string, viewDate: Date) {
           id: e.id,
           name: e.foodName,
           qty: `${e.quantity} ${e.unit}`,
+          // Raw values so the edit modal can populate numeric inputs and
+          // POST the exact shape /api/food-entries expects on save.
+          quantity: e.quantity,
+          unit: e.unit,
+          calories: e.calories,
+          rawProtein: e.protein,
+          rawCarbs: e.carbs,
+          rawFat: e.fat,
+          mealType: e.mealType,
           kcal: Math.round(e.calories),
           protein: Math.round(e.protein),
           carbs: Math.round(e.carbs),
