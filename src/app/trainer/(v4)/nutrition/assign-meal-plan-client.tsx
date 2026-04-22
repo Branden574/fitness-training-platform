@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
 
 interface ClientOption {
@@ -43,6 +43,16 @@ export default function AssignMealPlanClient({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [overlapPrompt, setOverlapPrompt] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null);
+
+  // Auto-dismiss the toast after 4s. Short enough to feel responsive, long
+  // enough for Brent to read "assigned to <client>" without squinting.
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   const [userId, setUserId] = useState<string>(
     defaultClientId ?? clients[0]?.id ?? '',
@@ -64,6 +74,7 @@ export default function AssignMealPlanClient({
     setCarbs(260);
     setFat(70);
     setError(null);
+    setOverlapPrompt(null);
   };
 
   const close = () => {
@@ -71,9 +82,42 @@ export default function AssignMealPlanClient({
     reset();
   };
 
+  async function postPlan(allowOverlap: boolean) {
+    const selectedClient = clients.find((c) => c.id === userId);
+    const res = await fetch('/api/meal-plans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        name: name.trim(),
+        startDate,
+        endDate,
+        dailyCalorieTarget: Number(kcal),
+        dailyProteinTarget: Number(protein),
+        dailyCarbTarget: Number(carbs),
+        dailyFatTarget: Number(fat),
+        allowOverlap,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && data?.error === 'overlap') {
+      setOverlapPrompt(data.message ?? 'This client already has an overlapping plan.');
+      return;
+    }
+    if (!res.ok) {
+      setError(data.message ?? data.error ?? 'Create failed');
+      return;
+    }
+    const who = selectedClient?.name ?? selectedClient?.email ?? 'client';
+    setToast({ kind: 'ok', msg: `Assigned "${name.trim()}" to ${who}.` });
+    close();
+    router.refresh();
+  }
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setOverlapPrompt(null);
     if (!userId) {
       setError('Pick a client first.');
       return;
@@ -84,33 +128,25 @@ export default function AssignMealPlanClient({
     }
     setBusy(true);
     try {
-      const res = await fetch('/api/meal-plans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          name: name.trim(),
-          startDate,
-          endDate,
-          dailyCalorieTarget: Number(kcal),
-          dailyProteinTarget: Number(protein),
-          dailyCarbTarget: Number(carbs),
-          dailyFatTarget: Number(fat),
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error ?? 'Create failed');
-        return;
-      }
-      close();
-      router.refresh();
+      await postPlan(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
     } finally {
       setBusy(false);
     }
   };
+
+  async function confirmOverlap() {
+    setBusy(true);
+    setError(null);
+    try {
+      await postPlan(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <>
@@ -127,6 +163,34 @@ export default function AssignMealPlanClient({
       >
         Assign meal plan
       </Btn>
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '12px 16px',
+            background: toast.kind === 'ok' ? '#10291a' : '#2a1212',
+            border: `1px solid ${toast.kind === 'ok' ? '#1f6b3a' : '#6b1f1f'}`,
+            color: toast.kind === 'ok' ? '#a7f3c2' : '#fca5a5',
+            borderRadius: 8,
+            fontSize: 13,
+            maxWidth: 'calc(100vw - 48px)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+          }}
+        >
+          {toast.kind === 'ok' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+          <span>{toast.msg}</span>
+        </div>
+      )}
 
       {open && (
         <div
@@ -307,13 +371,54 @@ export default function AssignMealPlanClient({
               </div>
             )}
 
+            {overlapPrompt && (
+              <div
+                role="alert"
+                style={{
+                  padding: '12px 14px',
+                  background: '#2a230d',
+                  border: '1px solid #6b5a1f',
+                  color: '#fde68a',
+                  borderRadius: 4,
+                  fontSize: 12,
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'flex-start',
+                }}
+              >
+                <AlertTriangle size={14} style={{ marginTop: 2, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ marginBottom: 6 }}>{overlapPrompt}</div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setOverlapPrompt(null)}
+                      className="mf-btn"
+                      style={{ height: 28, fontSize: 11 }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmOverlap}
+                      disabled={busy}
+                      className="mf-btn mf-btn-primary"
+                      style={{ height: 28, fontSize: 11 }}
+                    >
+                      {busy ? 'Assigning…' : 'Assign anyway'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end gap-2">
               <button type="button" onClick={close} className="mf-btn">
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={busy}
+                disabled={busy || overlapPrompt !== null}
                 className="mf-btn mf-btn-primary"
               >
                 {busy ? 'Assigning…' : 'Assign plan'}

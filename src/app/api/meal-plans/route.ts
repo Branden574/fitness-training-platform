@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 const createSchema = z.object({
   userId: z.string().cuid(),
@@ -14,6 +15,9 @@ const createSchema = z.object({
   dailyProteinTarget: z.number().min(0).max(1000),
   dailyCarbTarget: z.number().min(0).max(2000),
   dailyFatTarget: z.number().min(0).max(500),
+  /** True when the trainer has seen the "you already have an active plan for this
+   * client" warning and chose to create a second plan anyway. */
+  allowOverlap: z.boolean().optional(),
 });
 
 function parseLocal(yyyyMmDd: string): Date {
@@ -79,6 +83,35 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Overlap guard: if the client already has a plan covering any part of the
+  // new range, flag the duplicate back to the UI with a 409 so the trainer
+  // sees the "already has an active plan" prompt. Front-end can retry with
+  // `allowOverlap: true` when the user confirms. This is the cheapest
+  // defense against the accidental-duplicate bug we saw in prod testing.
+  if (!parsed.data.allowOverlap) {
+    const overlap = await prisma.mealPlan.findFirst({
+      where: {
+        userId: parsed.data.userId,
+        startDate: { lte: end },
+        endDate: { gte: start },
+      },
+      select: { id: true, name: true, startDate: true, endDate: true },
+      orderBy: { startDate: 'desc' },
+    });
+    if (overlap) {
+      return NextResponse.json(
+        {
+          error: 'overlap',
+          message: `This client already has "${overlap.name}" covering ${overlap.startDate
+            .toISOString()
+            .slice(0, 10)} → ${overlap.endDate.toISOString().slice(0, 10)}. Remove or end that plan first, or resubmit to keep both.`,
+          existing: overlap,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   const plan = await prisma.mealPlan.create({
     data: {
       userId: parsed.data.userId,
@@ -98,6 +131,17 @@ export async function POST(request: NextRequest) {
       startDate: true,
       endDate: true,
     },
+  });
+
+  // Notify the client that a plan was assigned. Fire-and-forget — the plan
+  // was already committed above; a notification hiccup must not rollback.
+  void dispatchNotification({
+    userId: parsed.data.userId,
+    type: 'GENERAL',
+    title: 'New meal plan assigned',
+    body: `Your coach assigned "${plan.name}" — ${parsed.data.dailyCalorieTarget} kcal / day. Open the Food tab to see it.`,
+    actionUrl: '/client/food',
+    metadata: { mealPlanId: plan.id },
   });
 
   return NextResponse.json(

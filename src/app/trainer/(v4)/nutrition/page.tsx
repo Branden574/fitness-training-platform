@@ -13,6 +13,7 @@ import {
   SrcPill,
 } from '@/components/ui/mf';
 import AssignMealPlanClient from './assign-meal-plan-client';
+import ActivePlansList, { type ActivePlanRow } from './active-plans-list';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,14 +47,18 @@ export default async function TrainerNutritionPage({
       timezone: true,
       mealPlans: {
         where: {
-          startDate: { lte: today },
+          // All plans that either cover today or start within the next year —
+          // so duplicates, upcoming plans, and the currently-active plan
+          // are all visible. Previously this was `take: 1` which hid dupes
+          // from the trainer entirely.
           endDate: { gte: today },
         },
         orderBy: { startDate: 'desc' },
-        take: 1,
         select: {
           id: true,
           name: true,
+          startDate: true,
+          endDate: true,
           dailyCalorieTarget: true,
           dailyProteinTarget: true,
           dailyCarbTarget: true,
@@ -69,7 +74,20 @@ export default async function TrainerNutritionPage({
   });
 
   const rail = clients.map((c) => {
-    const plan = c.mealPlans[0];
+    // Primary plan for the adherence + big meal-template view is the most
+    // recent active one (list is already sorted desc by startDate). Every
+    // plan surfaces below in ActivePlansList regardless.
+    const activeToday = c.mealPlans.filter(
+      (p) => p.startDate <= today && p.endDate >= today,
+    );
+    const plan = activeToday[0] ?? c.mealPlans[0];
+    const allPlans: ActivePlanRow[] = c.mealPlans.map((p) => ({
+      id: p.id,
+      name: p.name,
+      startDate: p.startDate.toISOString().slice(0, 10),
+      endDate: p.endDate.toISOString().slice(0, 10),
+      dailyCalorieTarget: p.dailyCalorieTarget,
+    }));
     const totals = c.foodEntries.reduce(
       (acc, e) => ({
         calories: acc.calories + e.calories,
@@ -95,6 +113,7 @@ export default async function TrainerNutritionPage({
       timezone: c.timezone,
       initials: initialsFor(c.name, c.email),
       plan,
+      allPlans,
       adherence,
       totals,
       lastLog,
@@ -401,6 +420,7 @@ export default async function TrainerNutritionPage({
               </div>
 
               <div style={{ padding: 24 }}>
+                <ActivePlansList plans={active.allPlans} />
                 {active.plan ? (
                   <>
                     {/* Targets row */}
