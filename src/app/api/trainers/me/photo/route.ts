@@ -27,7 +27,10 @@ export async function POST(request: Request) {
 
   const form = await request.formData();
   const file = form.get('photo');
-  if (!(file instanceof File)) {
+  // Avoid `instanceof File` — File is not a runtime global on Node 18
+  // (Railway's default). `FormDataEntryValue` is `File | string`, so
+  // ruling out string narrows to File without a runtime reference.
+  if (!file || typeof file === 'string') {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {

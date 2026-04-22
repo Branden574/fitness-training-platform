@@ -73,7 +73,8 @@ export async function POST(request: Request) {
       ? Math.max(0, Math.min(520, Number.parseInt(durationRaw, 10)))
       : null;
 
-  if (!(before instanceof File) || !(after instanceof File)) {
+  // Avoid `instanceof File` — File is not a runtime global on Node 18.
+  if (!before || typeof before === 'string' || !after || typeof after === 'string') {
     return NextResponse.json(
       { error: 'Both before and after photos required' },
       { status: 400 },
