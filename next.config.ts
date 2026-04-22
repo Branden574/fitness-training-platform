@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from '@sentry/nextjs';
 
 // Validate and fix environment variables during build
 if (process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.includes('[your-railway-url]')) {
@@ -28,4 +29,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry wrapper. Source-map upload is gated on SENTRY_AUTH_TOKEN so
+// local dev + Railway-without-Sentry don't try to call Sentry's
+// release API at build time.
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  org: 'martinez-fitness',
+  project: 'fitness-training-platform',
+  disableLogger: true,
+  sourcemaps: process.env.SENTRY_AUTH_TOKEN
+    ? undefined
+    : { disable: true },
+});
