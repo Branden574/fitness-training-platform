@@ -4,6 +4,7 @@ import { requireTrainerSession } from '@/lib/trainer-data';
 import { DesktopShell } from '@/components/ui/mf';
 import SharingPanelClient from './sharing-panel-client';
 import NotificationPreferences from '@/components/notifications/NotificationPreferences';
+import BiometricToggle from '@/components/auth/BiometricToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,8 @@ export default async function TrainerSettingsPage() {
         </div>
 
         <SharingPanelClient />
+
+        <BiometricToggle />
 
         <div style={{ marginTop: 32 }}>
           <NotificationPreferences />

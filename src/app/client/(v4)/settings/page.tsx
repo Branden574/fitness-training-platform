@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ClientDesktopShell } from '@/components/ui/mf';
 import SettingsClient from './settings-client';
 import NotificationPreferences from '@/components/notifications/NotificationPreferences';
+import BiometricToggle from '@/components/auth/BiometricToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +56,7 @@ export default async function ClientSettingsPage() {
           email={user.email}
           trainerName={ctx.trainer?.name ?? null}
         />
+        <BiometricToggle />
         <div style={{ marginTop: 24 }}>
           <NotificationPreferences />
         </div>
@@ -78,6 +80,7 @@ export default async function ClientSettingsPage() {
               email={user.email}
               trainerName={ctx.trainer?.name ?? null}
             />
+            <BiometricToggle />
             <div style={{ marginTop: 32 }}>
               <NotificationPreferences />
             </div>
