@@ -90,6 +90,14 @@ export default function FoodClient({
   const router = useRouter();
   const [drawerMeal, setDrawerMeal] = useState<MealType | null>(null);
   const isViewingToday = viewDate === todayDate;
+  // Optimistic-delete set — hide rows the instant DELETE resolves so the
+  // UI doesn't wait on router.refresh()'s server round-trip. Reset
+  // whenever initial changes so historical-day navigation doesn't leak
+  // stale hidden rows.
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    setDeletedIds(new Set());
+  }, [initial]);
 
   const proteinPct = (initial.totals.protein / initial.target.protein) * 100;
   const carbsPct = (initial.totals.carbs / initial.target.carbs) * 100;
@@ -306,7 +314,9 @@ export default function FoodClient({
       {/* Meal sections */}
       <div style={{ paddingBottom: 24 }}>
         {MEALS.map((m) => {
-          const entries = initial.grouped[m] ?? [];
+          const entries = (initial.grouped[m] ?? []).filter(
+            (e) => !deletedIds.has(e.id),
+          );
           const kcal = entries.reduce((s, e) => s + e.kcal, 0);
           const target = Math.round(initial.target.calories * MEAL_TARGET_SPLIT[m]);
           return (
@@ -432,6 +442,13 @@ export default function FoodClient({
                           fat: e.rawFat,
                           mealType: e.mealType,
                         }}
+                        onDeleted={(id) =>
+                          setDeletedIds((prev) => {
+                            const next = new Set(prev);
+                            next.add(id);
+                            return next;
+                          })
+                        }
                       />
                     </div>
                   ))

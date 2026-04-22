@@ -125,6 +125,15 @@ export default function FoodDesktop({
   const [logTarget, setLogTarget] = useState<MealType>('LUNCH');
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Optimistic-delete set. Entries added here are hidden from render the
+  // instant DELETE resolves; router.refresh() re-hydrates the server data
+  // shortly after and the set becomes a no-op (the ids aren't in `initial`
+  // anymore). Reset on every new `initial` reference so a back-and-forward
+  // navigation doesn't leak stale hidden rows.
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    setDeletedIds(new Set());
+  }, [initial]);
 
   const runSearch = useCallback(async (query: string, source: string) => {
     if (!query.trim()) {
@@ -209,7 +218,7 @@ export default function FoodDesktop({
   ];
 
   const meals = MEALS.map((m) => {
-    const items = initial.grouped[m] ?? [];
+    const items = (initial.grouped[m] ?? []).filter((e) => !deletedIds.has(e.id));
     const kcal = items.reduce((s, e) => s + e.kcal, 0);
     const target = Math.round(initial.target.calories * MEAL_TARGET_SPLIT[m]);
     return { m, t: MEAL_TIMES[m], target, kcal, items };
@@ -607,6 +616,13 @@ export default function FoodDesktop({
                             fat: it.rawFat,
                             mealType: it.mealType,
                           }}
+                          onDeleted={(id) =>
+                            setDeletedIds((prev) => {
+                              const next = new Set(prev);
+                              next.add(id);
+                              return next;
+                            })
+                          }
                         />
                       </div>
                     ))

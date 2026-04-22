@@ -23,10 +23,21 @@ export interface EditableFoodEntry {
 // the MoreHorizontal button was inert; the API already accepts PUT/DELETE
 // on /api/food-entries?id=<id>, this wires them up. Portals the dropdown
 // to document.body so row overflow doesn't clip it.
+//
+// Optimistic delete: the parent passes `onDeleted(id)` and the row
+// vanishes the instant the DELETE resolves, before router.refresh()
+// re-hydrates the server data. Without this the user sees a stale row
+// for ~300–800ms until the server round-trips.
 
 const MEAL_OPTIONS: MealType[] = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'];
 
-export default function FoodEntryActions({ entry }: { entry: EditableFoodEntry }) {
+export default function FoodEntryActions({
+  entry,
+  onDeleted,
+}: {
+  entry: EditableFoodEntry;
+  onDeleted?: (id: string) => void;
+}) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
@@ -86,6 +97,9 @@ export default function FoodEntryActions({ entry }: { entry: EditableFoodEntry }
         setBusy(false);
         return;
       }
+      // Vanish the row locally first so the UI reacts immediately, then
+      // let server state catch up in the background.
+      onDeleted?.(entry.id);
       setConfirmDelete(false);
       router.refresh();
     } catch (e) {
