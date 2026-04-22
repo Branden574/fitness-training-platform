@@ -103,6 +103,7 @@ export default function ClientDesktopShell({
           brandSubLabel={brandSubLabel}
           trainerSlug={trainer?.slug ?? null}
           trainerIsPublic={trainer?.isPublic ?? false}
+          trainerPhotoUrl={trainer?.photoUrl ?? null}
         />
 
         <div
@@ -253,23 +254,40 @@ function CoachBrandChip({
   brandSubLabel,
   trainerSlug,
   trainerIsPublic,
+  trainerPhotoUrl,
 }: {
   brandDisplayName: string;
   brandSubLabel: string;
   trainerSlug: string | null;
   trainerIsPublic: boolean;
+  trainerPhotoUrl: string | null;
 }) {
   const body = (
     <>
-      <div
-        className="grid place-items-center"
-        style={{ width: 24, height: 24, background: 'var(--mf-accent)', borderRadius: 4 }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0A0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m7 13-2 2 3 3 2-2" />
-          <path d="m17 11 2-2-3-3-2 2" />
-        </svg>
-      </div>
+      {trainerPhotoUrl ? (
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            backgroundImage: `url(${JSON.stringify(trainerPhotoUrl)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            border: '1px solid var(--mf-hairline)',
+          }}
+          aria-label={brandDisplayName}
+        />
+      ) : (
+        <div
+          className="grid place-items-center"
+          style={{ width: 24, height: 24, background: 'var(--mf-accent)', borderRadius: 4 }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0A0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m7 13-2 2 3 3 2-2" />
+            <path d="m17 11 2-2-3-3-2 2" />
+          </svg>
+        </div>
+      )}
       <div>
         <div className="mf-font-display" style={{ fontSize: 14, letterSpacing: '-0.01em', lineHeight: 1 }}>
           {brandDisplayName}

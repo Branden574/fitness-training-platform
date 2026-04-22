@@ -3,10 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ensureTrainerRow } from '@/lib/trainerRow';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { nanoid } from 'nanoid';
 import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
+import { putImage } from '@/lib/storage';
 
 async function savePhoto(
   file: File,
@@ -19,19 +18,9 @@ async function savePhoto(
   const bytes = await file.arrayBuffer();
   const kind = sniffImage(bytes);
   if (!kind) throw new Error('invalid_type');
-  const { ext } = IMAGE_EXT[kind];
-  const dir = path.join(
-    process.cwd(),
-    'public',
-    'uploads',
-    'transformations',
-    trainerId,
-  );
-  await mkdir(dir, { recursive: true });
-  const filename = `${id}-${phase}.${ext}`;
-  const filepath = path.join(dir, filename);
-  await writeFile(filepath, Buffer.from(bytes));
-  return `/uploads/transformations/${trainerId}/${filename}`;
+  const { ext, mime } = IMAGE_EXT[kind];
+  const key = `transformations/${trainerId}/${id}-${phase}.${ext}`;
+  return putImage({ key, body: bytes, contentType: mime });
 }
 
 export async function GET() {

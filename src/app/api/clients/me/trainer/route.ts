@@ -26,6 +26,11 @@ export async function GET() {
           image: true,
           trainerSlug: true,
           trainerIsPublic: true,
+          // Trainer.photoUrl is the "public profile photo" the trainer
+          // uploaded via /trainer/settings/profile — richer than User.image
+          // (which is the NextAuth-style default) and what they curate for
+          // their public /t/[slug] page. Prefer it when set.
+          trainer: { select: { photoUrl: true } },
         },
       },
     },
@@ -44,12 +49,13 @@ export async function GET() {
   // area. `isPublic` lets the client shell decide whether to render the
   // sidebar chip as a Link (public profile exists) or a plain div (private —
   // /t/[slug] would 404 and clicking into a 404 is worse than a non-link).
+  const photoUrl = t.trainer?.photoUrl ?? t.image ?? null;
   return NextResponse.json(
     {
       trainer: {
         name: t.name,
         initials: initials(t.name),
-        photoUrl: t.image,
+        photoUrl,
         slug: t.trainerSlug,
         isPublic: t.trainerIsPublic === true,
       },

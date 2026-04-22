@@ -3,9 +3,9 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { nanoid } from 'nanoid';
 import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
+import { putImage } from '@/lib/storage';
 
 // Upload progress photos for a specific date
 export async function POST(request: Request) {
@@ -34,13 +34,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create uploads directory
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'progress', session.user.id);
-    await mkdir(uploadsDir, { recursive: true });
-
-    // Save files — sniff magic bytes first, reject anything that isn't a
-    // real image, derive extension from the sniffed kind (never from the
-    // user-controlled file.name or file.type).
+    // Save files to R2 — sniff magic bytes first, reject anything that isn't
+    // a real image, derive extension/MIME from the sniffed kind (never from
+    // the user-controlled file.name or file.type).
     const photoUrls: string[] = [];
     for (const file of files) {
       const bytes = await file.arrayBuffer();
@@ -51,11 +47,11 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      const { ext } = IMAGE_EXT[kind];
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const filepath = path.join(uploadsDir, filename);
-      await writeFile(filepath, Buffer.from(bytes));
-      photoUrls.push(`/uploads/progress/${session.user.id}/${filename}`);
+      const { ext, mime } = IMAGE_EXT[kind];
+      const filename = `${Date.now()}-${nanoid(8)}.${ext}`;
+      const key = `progress/${session.user.id}/${filename}`;
+      const url = await putImage({ key, body: bytes, contentType: mime });
+      photoUrls.push(url);
     }
 
     // Update the progress entry's photos field

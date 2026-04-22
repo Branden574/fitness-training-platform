@@ -126,6 +126,8 @@ export default function RosterDesktop({ roster, stats }: RosterDesktopProps) {
                     <div className="flex items-center gap-3" style={{ minWidth: 0 }}>
                       <Avatar
                         initials={c.initials}
+                        image={c.image}
+                        alt={c.name ?? c.email}
                         size={32}
                         active={c.status === 'active' && c.lastLogLabel === 'Today'}
                       />

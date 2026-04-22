@@ -1,11 +1,23 @@
 export interface AvatarProps {
   initials: string;
+  /** Optional profile image URL. Falls back to initials tile on error/missing. */
+  image?: string | null;
+  /** Accessible name override. Defaults to initials. */
+  alt?: string;
   size?: number;
   active?: boolean;
   className?: string;
 }
 
-export default function Avatar({ initials, size = 32, active, className }: AvatarProps) {
+export default function Avatar({
+  initials,
+  image,
+  alt,
+  size = 32,
+  active,
+  className,
+}: AvatarProps) {
+  const hasImage = !!image;
   return (
     <div
       className={`mf-font-mono ${className ?? ''}`}
@@ -14,7 +26,9 @@ export default function Avatar({ initials, size = 32, active, className }: Avata
         height: size,
         minWidth: size,
         borderRadius: 6,
-        background: 'var(--mf-surface-3)',
+        background: hasImage
+          ? `var(--mf-surface-3) center/cover no-repeat url(${JSON.stringify(image)})`
+          : 'var(--mf-surface-3)',
         color: 'var(--mf-fg)',
         display: 'flex',
         alignItems: 'center',
@@ -23,10 +37,11 @@ export default function Avatar({ initials, size = 32, active, className }: Avata
         fontSize: size * 0.4,
         border: '1px solid var(--mf-hairline)',
         position: 'relative',
+        overflow: 'hidden',
       }}
-      aria-label={initials}
+      aria-label={alt ?? initials}
     >
-      {initials}
+      {!hasImage && initials}
       {active && (
         <span
           style={{

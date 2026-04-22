@@ -4,6 +4,7 @@ import { ClientDesktopShell } from '@/components/ui/mf';
 import SettingsClient from './settings-client';
 import NotificationPreferences from '@/components/notifications/NotificationPreferences';
 import BiometricToggle from '@/components/auth/BiometricToggle';
+import ProfilePhotoUploader from '@/components/profile/ProfilePhotoUploader';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,7 @@ export default async function ClientSettingsPage() {
       select: {
         name: true,
         email: true,
+        image: true,
         timezone: true,
         createdAt: true,
       },
@@ -51,6 +53,17 @@ export default async function ClientSettingsPage() {
         >
           {(user.name ?? 'Athlete').toUpperCase()}
         </h1>
+        <div style={{ marginBottom: 20 }}>
+          <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
+            PROFILE PHOTO
+          </div>
+          <div className="mf-card" style={{ padding: 12 }}>
+            <ProfilePhotoUploader
+              initialImage={user.image ?? null}
+              initials={ctx.initials}
+            />
+          </div>
+        </div>
         <SettingsClient
           initialTimezone={user.timezone}
           email={user.email}
@@ -75,6 +88,17 @@ export default async function ClientSettingsPage() {
           }
         >
           <div style={{ padding: 24, maxWidth: 720 }}>
+            <div style={{ marginBottom: 24 }}>
+              <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
+                PROFILE PHOTO
+              </div>
+              <div className="mf-card" style={{ padding: 16 }}>
+                <ProfilePhotoUploader
+                  initialImage={user.image ?? null}
+                  initials={ctx.initials}
+                />
+              </div>
+            </div>
             <SettingsClient
               initialTimezone={user.timezone}
               email={user.email}

@@ -173,6 +173,8 @@ export default function RosterMobile({ roster, stats }: RosterMobileProps) {
               >
                 <Avatar
                   initials={c.initials}
+                  image={c.image}
+                  alt={c.name ?? c.email}
                   size={38}
                   active={c.status === 'active' && c.lastLogLabel === 'Today'}
                 />

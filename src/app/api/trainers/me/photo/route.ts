@@ -3,9 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ensureTrainerRow } from '@/lib/trainerRow';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
+import { putImage, deleteImage, keyFromPublicUrl } from '@/lib/storage';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -26,8 +25,7 @@ export async function POST(request: Request) {
   }
 
   // Sniff magic bytes — client-supplied Content-Type is untrusted. Blocks
-  // SVG + arbitrary bytes being written to public/uploads with an image
-  // content-type.
+  // SVG + arbitrary bytes being written to R2 with an image content-type.
   const bytes = await file.arrayBuffer();
   const kind = sniffImage(bytes);
   if (!kind) {
@@ -37,17 +35,21 @@ export async function POST(request: Request) {
     );
   }
 
-  await ensureTrainerRow(session.user.id, prisma);
+  const trainerRow = await ensureTrainerRow(session.user.id, prisma);
 
-  const dir = path.join(process.cwd(), 'public', 'uploads', 'trainers', session.user.id);
-  await mkdir(dir, { recursive: true });
-
-  const { ext } = IMAGE_EXT[kind];
+  const { ext, mime } = IMAGE_EXT[kind];
   const filename = `profile-${Date.now()}.${ext}`;
-  const filepath = path.join(dir, filename);
-  await writeFile(filepath, Buffer.from(bytes));
+  const key = `trainers/${session.user.id}/${filename}`;
+  const photoUrl = await putImage({ key, body: bytes, contentType: mime });
 
-  const photoUrl = `/uploads/trainers/${session.user.id}/${filename}`;
+  // Remove the old R2 object if there was one. Old /uploads/... URLs from
+  // pre-R2 uploads aren't on R2 — keyFromPublicUrl returns null for them
+  // and we skip the delete. Any failure here is swallowed so a stale
+  // object can't block a successful new upload.
+  const oldKey = keyFromPublicUrl(trainerRow.photoUrl);
+  if (oldKey) {
+    deleteImage(oldKey).catch(() => {});
+  }
 
   const trainer = await prisma.trainer.update({
     where: { userId: session.user.id },

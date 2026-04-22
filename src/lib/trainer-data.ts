@@ -29,6 +29,7 @@ export interface RosterClient {
   name: string | null;
   email: string;
   initials: string;
+  image: string | null;
   status: 'active' | 'behind' | 'paused' | 'new';
   lastLogLabel: string;
   streak: number;
@@ -91,6 +92,7 @@ export async function getRoster(trainerUserId: string): Promise<RosterClient[]> 
       id: true,
       name: true,
       email: true,
+      image: true,
       isActive: true,
       createdAt: true,
       workoutSessions: {
@@ -122,6 +124,7 @@ export async function getRoster(trainerUserId: string): Promise<RosterClient[]> 
       name: c.name,
       email: c.email,
       initials: initialsFor(c.name, c.email),
+      image: c.image ?? null,
       status: statusFor(lastActivity, c.isActive, c.createdAt),
       lastLogLabel: relativeShort(lastActivity),
       streak: computeStreak(dates),
