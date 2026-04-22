@@ -7,6 +7,12 @@ export interface AssignedTrainer {
   initials: string;
   photoUrl: string | null;
   slug: string | null;
+  /**
+   * Whether the trainer has opted into the public directory. Gates whether
+   * the sidebar chip should link to /t/[slug] — private trainer pages 404
+   * and we don't want to send clients into a dead-end.
+   */
+  isPublic: boolean;
 }
 
 export function useAssignedTrainer() {

@@ -25,6 +25,7 @@ export async function GET() {
           name: true,
           image: true,
           trainerSlug: true,
+          trainerIsPublic: true,
         },
       },
     },
@@ -39,7 +40,10 @@ export async function GET() {
 
   const t = me.assignedTrainer;
   // Only display-safe fields in the response — no internal `id` exposed since
-  // clients don't need it for rendering; dropping to reduce ambient surface area.
+  // clients don't need it for rendering; dropping to reduce ambient surface
+  // area. `isPublic` lets the client shell decide whether to render the
+  // sidebar chip as a Link (public profile exists) or a plain div (private —
+  // /t/[slug] would 404 and clicking into a 404 is worse than a non-link).
   return NextResponse.json(
     {
       trainer: {
@@ -47,6 +51,7 @@ export async function GET() {
         initials: initials(t.name),
         photoUrl: t.image,
         slug: t.trainerSlug,
+        isPublic: t.trainerIsPublic === true,
       },
     },
     { headers: { 'Cache-Control': 'private, no-store' } },

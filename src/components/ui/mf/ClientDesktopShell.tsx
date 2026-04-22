@@ -102,6 +102,7 @@ export default function ClientDesktopShell({
           brandDisplayName={brandDisplayName}
           brandSubLabel={brandSubLabel}
           trainerSlug={trainer?.slug ?? null}
+          trainerIsPublic={trainer?.isPublic ?? false}
         />
 
         <div
@@ -242,18 +243,21 @@ export default function ClientDesktopShell({
 }
 
 // Top-of-sidebar brand row showing the client's coach. When the trainer
-// has a public slug, renders as a Link to /t/[slug] so clicking jumps
-// into the coach's public profile. Falls back to a plain div when there's
-// no slug (trainer hasn't set one, or the client isn't assigned to a
-// trainer yet) — saves showing a hover state on a dead chip.
+// has a public slug AND has opted into the directory, renders as a Link
+// to /t/[slug] so clicking jumps into the coach's public profile. Falls
+// back to a plain div when there's no slug or the trainer is private —
+// sending clients into a guaranteed 404 is worse than a non-interactive
+// chip. Re-published trainers get the link back on next mount.
 function CoachBrandChip({
   brandDisplayName,
   brandSubLabel,
   trainerSlug,
+  trainerIsPublic,
 }: {
   brandDisplayName: string;
   brandSubLabel: string;
   trainerSlug: string | null;
+  trainerIsPublic: boolean;
 }) {
   const body = (
     <>
@@ -284,7 +288,7 @@ function CoachBrandChip({
     color: 'inherit',
   } as const;
 
-  if (trainerSlug) {
+  if (trainerSlug && trainerIsPublic) {
     return (
       <Link
         href={`/t/${trainerSlug}`}
