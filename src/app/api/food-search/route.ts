@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { searchFoods as searchLocalFoods } from '@/lib/foodDatabase';
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, rateLimitResponse } from '@/lib/rate-limit';
 
 // Unified food search endpoint — searches local DB, USDA, and Open Food Facts
 export async function GET(request: Request) {
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     // 60 searches per minute per user — plenty for normal typeahead, caps
     // abuse of our paid USDA / Open Food Facts quotas. Keyed on userId (not
     // IP) since the endpoint is auth-gated.
-    const rl = checkRateLimit(`food-search:${session.user.id}`, {
+    const rl = await checkRateLimitAsync(`food-search:${session.user.id}`, {
       maxRequests: 60,
       windowSeconds: 60,
     });

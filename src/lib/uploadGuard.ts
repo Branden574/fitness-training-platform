@@ -1,6 +1,6 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
-import { checkRateLimit } from './rate-limit';
+import { checkRateLimitAsync } from './rate-limit';
 
 // Shared guard for every upload endpoint (trainer photo, client photo,
 // progress photos, transformations, exercise images). Centralizes the
@@ -39,13 +39,16 @@ export interface UploadGuardOptions {
  * Call at the top of every upload handler, immediately after the session
  * check. Returns null if the request passes all guards; otherwise returns
  * a Response ready to `return` from the handler.
+ *
+ * Async because the Upstash-backed rate limit is a network call. At the
+ * call site: `const blocked = await guardUpload(...); if (blocked) return blocked;`
  */
-export function guardUpload(
+export async function guardUpload(
   request: Request,
   opts: UploadGuardOptions,
-): Response | null {
-  // Rate limit
-  const rl = checkRateLimit(`upload:${opts.scope}:${opts.userId}`, {
+): Promise<Response | null> {
+  // Rate limit (Upstash in prod, in-memory otherwise)
+  const rl = await checkRateLimitAsync(`upload:${opts.scope}:${opts.userId}`, {
     maxRequests: opts.maxRequests ?? 20,
     windowSeconds: opts.windowSeconds ?? 60,
   });

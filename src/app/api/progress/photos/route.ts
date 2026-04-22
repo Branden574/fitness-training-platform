@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const blocked = guardUpload(request, {
+    const blocked = await guardUpload(request, {
       scope: 'progress-photos',
       userId: session.user.id,
       maxBodyBytes: MAX_BODY,

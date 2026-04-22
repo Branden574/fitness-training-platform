@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 function initialsOf(name: string | null): string {
   if (!name) return '?';
@@ -10,7 +10,7 @@ function initialsOf(name: string | null): string {
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
-  const rl = checkRateLimit(`trainer-search:${ip}`, {
+  const rl = await checkRateLimitAsync(`trainer-search:${ip}`, {
     maxRequests: 30,
     windowSeconds: 60,
   });

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { ContactStatus } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 // Primary public applicant schema. All NEW fields (trainerId, goal) are
 // optional so existing callers sending only name/email/phone/message keep
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
   try {
     // Rate limit: 3 contact form submissions per 15 minutes per IP
     const ip = getClientIp(request);
-    const rl = checkRateLimit(`contact:${ip}`, { maxRequests: 3, windowSeconds: 900 });
+    const rl = await checkRateLimitAsync(`contact:${ip}`, { maxRequests: 3, windowSeconds: 900 });
     if (!rl.allowed) return rateLimitResponse(rl.resetIn);
 
     const body = await request.json();

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const schema = z.object({
   contentType: z.enum(['transformation', 'testimonial', 'profile']),
@@ -13,7 +13,7 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const rl = checkRateLimit(`takedown:${ip}`, {
+  const rl = await checkRateLimitAsync(`takedown:${ip}`, {
     maxRequests: 3,
     windowSeconds: 60 * 60,
   });

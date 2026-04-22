@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const schema = z.object({
   code: z
@@ -12,7 +12,7 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const rl = checkRateLimit(`trainer-resolve-code:${ip}`, {
+  const rl = await checkRateLimitAsync(`trainer-resolve-code:${ip}`, {
     maxRequests: 30,
     windowSeconds: 60,
   });

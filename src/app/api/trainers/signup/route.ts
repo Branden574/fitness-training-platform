@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 import { ensureTrainerIdentity } from '@/lib/trainerIdentity';
 
 const schema = z.object({
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   // 5 signups per hour per IP — enough for a team to test, slow enough to
   // make mass-signup abuse unappealing.
   const ip = getClientIp(request);
-  const rl = checkRateLimit(`trainer-signup:${ip}`, {
+  const rl = await checkRateLimitAsync(`trainer-signup:${ip}`, {
     maxRequests: 5,
     windowSeconds: 3600,
   });

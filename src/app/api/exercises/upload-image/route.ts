@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
-  const blocked = guardUpload(request, {
+  const blocked = await guardUpload(request, {
     scope: 'exercise-image',
     userId: session.user.id,
     maxBodyBytes: MAX_BODY,
