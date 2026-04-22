@@ -6,6 +6,164 @@ import { prisma } from '@/lib/prisma';
 import { Btn, ClientDesktopShell } from '@/components/ui/mf';
 import StartSampleButton from './start-sample-button';
 import WorkoutPickerClient, { type WorkoutPickerItem } from './workout-picker-client';
+import StartProgramDayButton from './start-program-day-button';
+
+const DAY_OF_WEEK_FROM_JS: Record<number, 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN'> = {
+  0: 'SUN',
+  1: 'MON',
+  2: 'TUE',
+  3: 'WED',
+  4: 'THU',
+  5: 'FRI',
+  6: 'SAT',
+};
+
+async function findTodayProgramDay(userId: string) {
+  const assignment = await prisma.programAssignment.findFirst({
+    where: { clientId: userId, status: 'ACTIVE' },
+    orderBy: { startDate: 'desc' },
+    select: {
+      startDate: true,
+      program: {
+        select: {
+          id: true,
+          name: true,
+          durationWks: true,
+        },
+      },
+    },
+  });
+  if (!assignment) return null;
+
+  const daysElapsed = Math.floor(
+    (Date.now() - new Date(assignment.startDate).getTime()) / 86_400_000,
+  );
+  const weekIdx = Math.floor(daysElapsed / 7);
+  if (weekIdx < 0 || weekIdx >= assignment.program.durationWks) return null;
+
+  const todayDow = DAY_OF_WEEK_FROM_JS[new Date().getDay()]!;
+
+  const day = await prisma.programDay.findFirst({
+    where: {
+      dayOfWeek: todayDow,
+      programWeek: {
+        programId: assignment.program.id,
+        weekNumber: weekIdx + 1,
+      },
+    },
+    include: {
+      exercises: {
+        orderBy: { order: 'asc' },
+        include: {
+          exercise: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+  if (!day || day.exercises.length === 0) return null;
+
+  return {
+    id: day.id,
+    sessionType: day.sessionType,
+    notes: day.notes,
+    programName: assignment.program.name,
+    weekNumber: weekIdx + 1,
+    exercises: day.exercises.map((e) => ({
+      name: e.exercise.name,
+      sets: e.sets,
+      repsScheme: e.repsScheme,
+      targetWeight: e.targetWeight,
+    })),
+  };
+}
+
+type TodayDay = NonNullable<Awaited<ReturnType<typeof findTodayProgramDay>>>;
+
+function TodayProgramCard({ day }: { day: TodayDay }) {
+  return (
+    <div
+      className="mf-card-elev"
+      style={{
+        marginBottom: 20,
+        padding: 20,
+        borderColor: 'var(--mf-accent)',
+        background: 'linear-gradient(180deg, rgba(255,77,28,0.06), transparent 60%)',
+      }}
+    >
+      <div
+        className="flex items-center justify-between"
+        style={{ marginBottom: 12 }}
+      >
+        <div>
+          <div className="mf-eyebrow" style={{ color: 'var(--mf-accent)' }}>
+            TODAY · {day.programName.toUpperCase()} · W{day.weekNumber}
+          </div>
+          <div
+            className="mf-font-display"
+            style={{
+              fontSize: 22,
+              letterSpacing: '-0.01em',
+              marginTop: 4,
+              textTransform: 'uppercase',
+            }}
+          >
+            {day.sessionType}
+          </div>
+        </div>
+        <StartProgramDayButton programDayId={day.id} />
+      </div>
+      {day.notes && (
+        <div
+          className="mf-fg-dim"
+          style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}
+        >
+          {day.notes}
+        </div>
+      )}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid var(--mf-hairline)',
+          borderRadius: 4,
+          overflow: 'hidden',
+        }}
+      >
+        {day.exercises.map((ex, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 14px',
+              borderBottom:
+                i < day.exercises.length - 1
+                  ? '1px solid var(--mf-hairline)'
+                  : 'none',
+              fontSize: 13,
+            }}
+          >
+            <span
+              className="mf-font-mono mf-fg-mute mf-tnum"
+              style={{ fontSize: 10, width: 20 }}
+            >
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <span style={{ flex: 1, fontWeight: 500 }}>{ex.name}</span>
+            <span
+              className="mf-font-mono mf-fg-dim"
+              style={{ fontSize: 11, letterSpacing: '0.05em' }}
+            >
+              {ex.sets}×{ex.repsScheme}
+              {ex.targetWeight ? ` @ ${ex.targetWeight}` : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +178,10 @@ export default async function WorkoutLandingPage() {
   });
   if (inProgress) redirect(`/client/workout/${inProgress.id}`);
 
-  const ctx = await getClientContext(userId);
+  const [ctx, todayProgramDay] = await Promise.all([
+    getClientContext(userId),
+    findTodayProgramDay(userId),
+  ]);
 
   // Prefer templates from the client's trainer; fall back to all templates.
   const trainerId = ctx.trainer?.id ?? null;
@@ -66,8 +227,9 @@ export default async function WorkoutLandingPage() {
     exerciseCount: w._count.exercises,
   }));
 
-  // If no templates exist at all, show the old empty state that bootstraps a sample.
-  if (items.length === 0) {
+  // If no library templates exist but the client has a programmed day today,
+  // skip the "No sessions yet" empty state and show the program day instead.
+  if (items.length === 0 && !todayProgramDay) {
     return (
       <>
         <main
@@ -144,7 +306,8 @@ export default async function WorkoutLandingPage() {
     );
   }
 
-  // Templates exist — show the picker.
+  // Templates exist — show the picker, with today's programmed day pinned
+  // at the top if the client has one.
   return (
     <>
       <main
@@ -164,9 +327,12 @@ export default async function WorkoutLandingPage() {
           Choose a workout
         </h1>
         <p className="mf-fg-dim" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
-          Pick a template to start a session. Your progress and PRs will be logged automatically.
+          {todayProgramDay
+            ? 'Your programmed session is ready below. You can also pick a template to freestyle.'
+            : 'Pick a template to start a session. Your progress and PRs will be logged automatically.'}
         </p>
-        <WorkoutPickerClient items={items} />
+        {todayProgramDay && <TodayProgramCard day={todayProgramDay} />}
+        {items.length > 0 && <WorkoutPickerClient items={items} />}
       </main>
 
       <div className="hidden md:block">
@@ -179,7 +345,8 @@ export default async function WorkoutLandingPage() {
           athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
         >
           <div className="p-6">
-            <WorkoutPickerClient items={items} />
+            {todayProgramDay && <TodayProgramCard day={todayProgramDay} />}
+            {items.length > 0 && <WorkoutPickerClient items={items} />}
           </div>
         </ClientDesktopShell>
       </div>

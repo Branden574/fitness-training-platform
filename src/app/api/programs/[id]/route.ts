@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
 
 async function canEdit(sessionUserId: string, role: string, programId: string): Promise<boolean> {
   if (role === 'ADMIN') return true;
@@ -104,7 +105,43 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Soft-delete via archive rather than cascade to preserve assigned-client history
-  await prisma.program.update({ where: { id }, data: { archived: true } });
-  return NextResponse.json({ ok: true });
+  // Soft-archive the program AND cancel every active assignment in one tx —
+  // otherwise clients keep seeing the archived program on /client/program.
+  // Previous version only archived, which is why trainers thought delete
+  // "didn't work" during the 2026-04-21 test.
+  const affected = await prisma.$transaction(async (tx) => {
+    const program = await tx.program.update({
+      where: { id },
+      data: { archived: true },
+      select: { id: true, name: true },
+    });
+    const activeAssignments = await tx.programAssignment.findMany({
+      where: { programId: id, status: 'ACTIVE' },
+      select: { id: true, clientId: true },
+    });
+    if (activeAssignments.length > 0) {
+      await tx.programAssignment.updateMany({
+        where: { id: { in: activeAssignments.map((a) => a.id) } },
+        data: { status: 'CANCELLED' },
+      });
+    }
+    return { program, cancelled: activeAssignments };
+  });
+
+  // Tell each affected client their program was ended so they don't open
+  // the app tomorrow wondering where their Mon/Tue sessions went.
+  for (const a of affected.cancelled) {
+    void dispatchNotification({
+      userId: a.clientId,
+      type: 'GENERAL',
+      title: 'Program ended',
+      body: `Your coach ended "${affected.program.name}". Check in with them about what's next.`,
+      actionUrl: '/client/program',
+    });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    cancelledAssignments: affected.cancelled.length,
+  });
 }

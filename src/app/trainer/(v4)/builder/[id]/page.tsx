@@ -5,6 +5,7 @@ import { requireTrainerSession, initialsFor } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
 import { Btn, Chip, DesktopShell } from '@/components/ui/mf';
 import ProgramBuilderClient from './program-builder-client';
+import DeleteProgramButton from './delete-program-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +95,11 @@ export default async function ProgramDetailPage({
           <Link href="/trainer/builder">
             <Btn variant="ghost" icon={ChevronLeft}>Back</Btn>
           </Link>
+          <DeleteProgramButton
+            programId={program.id}
+            programName={program.name}
+            activeAssignments={activeAssignments.length}
+          />
         </>
       }
     >
