@@ -35,9 +35,11 @@ const nextConfig: NextConfig = {
 // release API at build time.
 export default withSentryConfig(nextConfig, {
   silent: true,
-  org: 'martinez-fitness',
-  project: 'fitness-training-platform',
-  disableLogger: true,
+  // Matches the Sentry dashboard slugs — org was auto-created from Branden's
+  // name, project got the default Next.js slug. Source-map upload (gated on
+  // SENTRY_AUTH_TOKEN) needs these to be exact or it no-ops.
+  org: 'branden-vincent-walker',
+  project: 'javascript-nextjs',
   sourcemaps: process.env.SENTRY_AUTH_TOKEN
     ? undefined
     : { disable: true },
