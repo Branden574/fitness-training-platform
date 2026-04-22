@@ -2,15 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
-import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 
 // Get current user's profile information
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { message: 'Unauthorized' },
@@ -54,7 +51,7 @@ export async function GET() {
     };
 
     return NextResponse.json(profileData);
-    
+
   } catch (error) {
     console.error('Get profile error:', error);
     return NextResponse.json(
@@ -64,7 +61,11 @@ export async function GET() {
   }
 }
 
-// Update profile (including profile picture upload)
+// Update user profile. Photo upload used to live here writing to local
+// disk (`public/uploads/profiles/...`) — that path was wiped on every
+// Railway redeploy and has been retired in favor of the R2-backed
+// `/api/profile/photo` endpoint. This route now only handles JSON profile
+// field updates (currently just `name`).
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -78,60 +79,18 @@ export async function PUT(request: Request) {
 
     const contentType = request.headers.get('content-type') || '';
 
-    // Handle multipart form data (file upload)
+    // Reject multipart uploads here — they used to be accepted and written
+    // to ephemeral Railway disk. Route the caller to the new endpoint.
     if (contentType.includes('multipart/form-data')) {
-      const formData = await request.formData();
-      const file = formData.get('file') as File | null;
-      const type = formData.get('type') as string | null;
-
-      if (!file) {
-        return NextResponse.json(
-          { message: 'No file provided' },
-          { status: 400 }
-        );
-      }
-
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        return NextResponse.json(
-          { message: 'File too large. Maximum 5MB allowed.' },
-          { status: 400 }
-        );
-      }
-
-      // Sniff magic bytes — client-supplied Content-Type is untrusted.
-      // Refuses SVG and anything that's not a real image. Extension is
-      // derived from the sniffed kind, never from file.name/type.
-      const bytes = await file.arrayBuffer();
-      const kind = sniffImage(bytes);
-      if (!kind) {
-        return NextResponse.json(
-          { message: 'File must be a real JPEG, PNG, GIF, or WebP image.' },
-          { status: 400 }
-        );
-      }
-
-      // Create uploads directory
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profiles');
-      await mkdir(uploadsDir, { recursive: true });
-
-      const { ext } = IMAGE_EXT[kind];
-      const filename = `${session.user.id}-${Date.now()}.${ext}`;
-      const filepath = path.join(uploadsDir, filename);
-
-      await writeFile(filepath, Buffer.from(bytes));
-
-      // Update user image in database
-      const imageUrl = `/uploads/profiles/${filename}`;
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { image: imageUrl },
-      });
-
-      return NextResponse.json({ image: imageUrl, message: 'Profile picture updated' });
+      return NextResponse.json(
+        {
+          message:
+            'Photo uploads have moved. POST the file to /api/profile/photo instead.',
+        },
+        { status: 410 },
+      );
     }
 
-    // Handle JSON body (profile field updates)
     const body = await request.json();
     const { name } = body;
 

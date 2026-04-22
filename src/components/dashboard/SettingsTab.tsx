@@ -78,12 +78,14 @@ export default function SettingsTab({
                       toast('Image must be under 5MB', 'warning');
                       return;
                     }
+                    // /api/profile's multipart branch is retired — photos
+                    // now land on R2 via /api/profile/photo (param name
+                    // `photo`, not `file`).
                     const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('type', 'profile');
+                    formData.append('photo', file);
                     try {
-                      const response = await fetch('/api/profile', {
-                        method: 'PUT',
+                      const response = await fetch('/api/profile/photo', {
+                        method: 'POST',
                         body: formData,
                       });
                       if (response.ok) {

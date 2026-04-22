@@ -7,10 +7,20 @@ import { prisma } from '@/lib/prisma';
 // Exercise table is a shared global library — any TRAINER or ADMIN can edit
 // or delete entries. Clients can only read via workout programs.
 
-// Image + video URLs accept either an absolute URL (pasted external link) OR
-// a relative path like /uploads/exercises/xxx.jpg returned by the custom
-// upload endpoint. .url() would reject the relative form, so we validate
-// loosely with a length cap + empty→null coercion at the handler.
+// Image + video URLs: restrict to https:// absolute URLs or site-relative
+// paths. Rejects `javascript:`, `data:`, `file:`, and `http:` (non-secure),
+// which would otherwise let a malicious trainer poison shared exercise
+// rows with tracking pixels, internal SSRF targets, or (theoretical)
+// CSS-background injection payloads. free-exercise-db images are HTTPS,
+// R2 uploads are HTTPS, so legitimate uses all pass.
+const safeRefUrl = z
+  .string()
+  .max(500)
+  .refine(
+    (v) => v.length === 0 || v.startsWith('https://') || v.startsWith('/'),
+    { message: 'URL must be https:// or a site-relative /path' },
+  );
+
 const patchSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   description: z.string().max(500).optional().nullable(),
@@ -18,8 +28,8 @@ const patchSchema = z.object({
   muscleGroups: z.array(z.string().max(60)).max(20).optional(),
   equipment: z.array(z.string().max(60)).max(20).optional(),
   difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
-  imageUrl: z.string().max(500).nullable().optional(),
-  videoUrl: z.string().max(500).nullable().optional(),
+  imageUrl: safeRefUrl.nullable().optional(),
+  videoUrl: safeRefUrl.nullable().optional(),
 });
 
 async function requireTrainerOrAdmin() {

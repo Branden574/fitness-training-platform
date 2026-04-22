@@ -1,3 +1,5 @@
+import { safeImageUrl } from '@/lib/safeUrl';
+
 export interface AvatarProps {
   initials: string;
   /** Optional profile image URL. Falls back to initials tile on error/missing. */
@@ -17,7 +19,10 @@ export default function Avatar({
   active,
   className,
 }: AvatarProps) {
-  const hasImage = !!image;
+  // safeImageUrl gates out javascript:/data:/file: so a malicious DB row
+  // can't inject a CSS payload into the inline style below.
+  const safeImg = safeImageUrl(image);
+  const hasImage = !!safeImg;
   return (
     <div
       className={`mf-font-mono ${className ?? ''}`}
@@ -27,7 +32,7 @@ export default function Avatar({
         minWidth: size,
         borderRadius: 6,
         background: hasImage
-          ? `var(--mf-surface-3) center/cover no-repeat url(${JSON.stringify(image)})`
+          ? `var(--mf-surface-3) center/cover no-repeat url(${JSON.stringify(safeImg)})`
           : 'var(--mf-surface-3)',
         color: 'var(--mf-fg)',
         display: 'flex',

@@ -6,6 +6,11 @@ import { ensureTrainerRow } from '@/lib/trainerRow';
 import { nanoid } from 'nanoid';
 import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 import { putImage } from '@/lib/storage';
+import { guardUpload } from '@/lib/uploadGuard';
+
+const MAX_BYTES_PER_PHOTO = 5 * 1024 * 1024;
+// Before + after pair in one multipart → allow 2× + headroom
+const MAX_BODY = 2 * MAX_BYTES_PER_PHOTO + 128 * 1024;
 
 async function savePhoto(
   file: File,
@@ -13,7 +18,7 @@ async function savePhoto(
   id: string,
   phase: 'before' | 'after',
 ): Promise<string> {
-  if (file.size > 5 * 1024 * 1024) throw new Error('too_large');
+  if (file.size > MAX_BYTES_PER_PHOTO) throw new Error('too_large');
   // Sniff magic bytes — client-supplied Content-Type is untrusted.
   const bytes = await file.arrayBuffer();
   const kind = sniffImage(bytes);
@@ -50,6 +55,12 @@ export async function POST(request: Request) {
   if (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+  const blocked = guardUpload(request, {
+    scope: 'transformation',
+    userId: session.user.id,
+    maxBodyBytes: MAX_BODY,
+  });
+  if (blocked) return blocked;
   const trainer = await ensureTrainerRow(session.user.id, prisma);
 
   const form = await request.formData();

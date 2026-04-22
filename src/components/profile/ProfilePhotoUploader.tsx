@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { pickProgressPhoto } from '@/lib/nativeCameraClient';
+import { safeImageUrl } from '@/lib/safeUrl';
 
 interface Props {
   initialImage: string | null;
@@ -84,6 +85,7 @@ export default function ProfilePhotoUploader({
     inputRef.current?.click();
   };
 
+  const safeImg = safeImageUrl(image);
   return (
     <div>
       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
@@ -92,8 +94,8 @@ export default function ProfilePhotoUploader({
             width: 72,
             height: 72,
             borderRadius: 8,
-            background: image
-              ? `center/cover no-repeat url(${JSON.stringify(image)})`
+            background: safeImg
+              ? `center/cover no-repeat url(${JSON.stringify(safeImg)})`
               : 'var(--mf-surface-3)',
             border: '1px solid var(--mf-hairline)',
             display: 'grid',
@@ -102,9 +104,9 @@ export default function ProfilePhotoUploader({
             fontWeight: 600,
           }}
           className="mf-font-mono"
-          aria-label={image ? 'Profile photo' : `Initials ${initials}`}
+          aria-label={safeImg ? 'Profile photo' : `Initials ${initials}`}
         >
-          {!image && initials}
+          {!safeImg && initials}
         </div>
         <div style={{ display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -115,9 +117,9 @@ export default function ProfilePhotoUploader({
               disabled={busy}
               style={{ height: 36, fontSize: 12 }}
             >
-              {busy ? 'Uploading…' : image ? 'Replace' : 'Upload photo'}
+              {busy ? 'Uploading…' : safeImg ? 'Replace' : 'Upload photo'}
             </button>
-            {image && (
+            {safeImg && (
               <button
                 type="button"
                 className="mf-btn mf-btn-ghost"

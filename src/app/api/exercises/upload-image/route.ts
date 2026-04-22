@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 import { putImage } from '@/lib/storage';
+import { guardUpload } from '@/lib/uploadGuard';
+
+const MAX_BYTES = 10 * 1024 * 1024; // 10 MB — exercise GIFs are chunky
+const MAX_BODY = MAX_BYTES + 64 * 1024;
 
 // Lets trainers upload a custom exercise image instead of relying on
 // free-exercise-db matches. Returns a public URL the New Exercise modal
@@ -20,14 +24,19 @@ export async function POST(request: Request) {
   if (session.user.role !== 'TRAINER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+  const blocked = guardUpload(request, {
+    scope: 'exercise-image',
+    userId: session.user.id,
+    maxBodyBytes: MAX_BODY,
+  });
+  if (blocked) return blocked;
 
   const form = await request.formData();
   const file = form.get('image');
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
-  // 10MB ceiling — exercise GIFs can be chunky (2-4MB for a full rep loop).
-  if (file.size > 10 * 1024 * 1024) {
+  if (file.size > MAX_BYTES) {
     return NextResponse.json(
       { error: 'File too large (max 10 MB)' },
       { status: 400 },

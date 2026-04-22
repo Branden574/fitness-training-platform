@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 import { putImage, deleteImage, keyFromPublicUrl } from '@/lib/storage';
+import { guardUpload } from '@/lib/uploadGuard';
+
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_BODY = MAX_BYTES + 64 * 1024;
 
 // Lets any authenticated user (client, trainer, admin) upload a profile
 // picture stored on User.image. Trainers already have a richer
@@ -16,13 +20,19 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const blocked = guardUpload(request, {
+    scope: 'profile-photo',
+    userId: session.user.id,
+    maxBodyBytes: MAX_BODY,
+  });
+  if (blocked) return blocked;
 
   const form = await request.formData();
   const file = form.get('photo');
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > MAX_BYTES) {
     return NextResponse.json(
       { error: 'File too large (max 5 MB)' },
       { status: 400 },

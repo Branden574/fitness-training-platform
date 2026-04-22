@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useAssignedTrainer } from '@/lib/hooks/useAssignedTrainer';
+import { safeImageUrl } from '@/lib/safeUrl';
 import NativePushRegistrar from '@/components/notifications/NativePushRegistrar';
 
 export type ClientDesktopKey =
@@ -262,15 +263,16 @@ function CoachBrandChip({
   trainerIsPublic: boolean;
   trainerPhotoUrl: string | null;
 }) {
+  const safePhoto = safeImageUrl(trainerPhotoUrl);
   const body = (
     <>
-      {trainerPhotoUrl ? (
+      {safePhoto ? (
         <div
           style={{
             width: 28,
             height: 28,
             borderRadius: 6,
-            backgroundImage: `url(${JSON.stringify(trainerPhotoUrl)})`,
+            backgroundImage: `url(${JSON.stringify(safePhoto)})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             border: '1px solid var(--mf-hairline)',

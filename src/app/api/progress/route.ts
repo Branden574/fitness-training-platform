@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
+import { deleteImage, keyFromPublicUrl } from '@/lib/storage';
 
 const progressSchema = z.object({
   date: z.string().optional(), // Allow custom date selection
@@ -528,6 +529,7 @@ export async function DELETE(request: Request) {
 
     const entry = await prisma.progressEntry.findFirst({
       where: { id: entryId, userId: session.user.id },
+      select: { id: true, photos: true },
     });
 
     if (!entry) {
@@ -535,6 +537,15 @@ export async function DELETE(request: Request) {
     }
 
     await prisma.progressEntry.delete({ where: { id: entryId } });
+
+    // Fire-and-forget R2 cleanup so deleted progress photos don't linger
+    // on the CDN forever. Failures are logged but never block the response
+    // — the DB row is already gone, an orphaned object is cheap.
+    const photoUrls = (entry.photos as string[] | null) ?? [];
+    for (const url of photoUrls) {
+      const key = keyFromPublicUrl(url);
+      if (key) deleteImage(key).catch(() => {});
+    }
 
     return NextResponse.json({ message: 'Entry deleted' });
   } catch (error) {

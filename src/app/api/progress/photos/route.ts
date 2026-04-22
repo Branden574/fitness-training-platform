@@ -6,6 +6,12 @@ import { authOptions } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 import { sniffImage, IMAGE_EXT } from '@/lib/imageSniff';
 import { putImage } from '@/lib/storage';
+import { guardUpload } from '@/lib/uploadGuard';
+
+const MAX_PHOTOS_PER_REQUEST = 10;
+const MAX_BYTES_PER_PHOTO = 10 * 1024 * 1024;
+// Enough headroom for 10 × 10 MB plus multipart boundaries + other fields.
+const MAX_BODY = MAX_PHOTOS_PER_REQUEST * MAX_BYTES_PER_PHOTO + 256 * 1024;
 
 // Upload progress photos for a specific date
 export async function POST(request: Request) {
@@ -14,6 +20,12 @@ export async function POST(request: Request) {
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const blocked = guardUpload(request, {
+      scope: 'progress-photos',
+      userId: session.user.id,
+      maxBodyBytes: MAX_BODY,
+    });
+    if (blocked) return blocked;
 
     const formData = await request.formData();
     const date = formData.get('date') as string;
@@ -23,13 +35,21 @@ export async function POST(request: Request) {
     if (!files.length) {
       return NextResponse.json({ error: 'No photos provided' }, { status: 400 });
     }
+    // File-count cap — one request used to allow unlimited photos, which
+    // multiplies the per-file size limit by whatever count the attacker
+    // picks. Bounded at MAX_PHOTOS_PER_REQUEST.
+    if (files.length > MAX_PHOTOS_PER_REQUEST) {
+      return NextResponse.json(
+        { error: `Max ${MAX_PHOTOS_PER_REQUEST} photos per request.` },
+        { status: 400 },
+      );
+    }
 
     // Size gate only — real validation is magic-byte sniffing below. Client
     // Content-Type is spoofable in multipart uploads, so checking file.type
     // alone would let an attacker store arbitrary bytes as image/jpeg.
-    const maxSize = 10 * 1024 * 1024; // 10MB
     for (const file of files) {
-      if (file.size > maxSize) {
+      if (file.size > MAX_BYTES_PER_PHOTO) {
         return NextResponse.json({ error: 'File too large. Max 10MB per photo.' }, { status: 400 });
       }
     }
