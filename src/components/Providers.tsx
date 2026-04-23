@@ -9,6 +9,7 @@ import {
   CelebrationHost,
   CelebrationProvider,
 } from './animations';
+import { DeviceProfileProvider } from './providers/DeviceProfileProvider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -21,15 +22,17 @@ export default function Providers({ children }: ProvidersProps) {
       refetchInterval={5 * 60}
       refetchOnWindowFocus={true}
     >
-      <ThemeProvider>
-        <ToastProvider>
-          <CelebrationProvider>
-            <BootGate />
-            {children}
-            <CelebrationHost />
-          </CelebrationProvider>
-        </ToastProvider>
-      </ThemeProvider>
+      <DeviceProfileProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <CelebrationProvider>
+              <BootGate />
+              {children}
+              <CelebrationHost />
+            </CelebrationProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </DeviceProfileProvider>
     </SessionProvider>
   );
 }
