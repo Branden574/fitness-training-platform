@@ -5,6 +5,10 @@ import { ContactStatus } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import {
+  sendApplicationAcknowledgedEmail,
+  sendApplicationReceivedEmail,
+} from '@/lib/email';
 
 // Primary public applicant schema. All NEW fields (trainerId, goal) are
 // optional so existing callers sending only name/email/phone/message keep
@@ -71,21 +75,43 @@ export async function POST(request: Request) {
 
     // Resolve optional trainerId → validate public trainer → flag waitlist if
     // trainer has paused intake. Invalid trainerIds are silently coerced to null
-    // so bad links never error the applicant.
+    // so bad links never error the applicant. Also capture the trainer's email
+    // + reply-to preferences so we can fire both notification emails after
+    // the submission saves.
     let assignedTrainerId: string | null = null;
     let waitlist = false;
+    let trainerForEmail: {
+      email: string;
+      name: string | null;
+      slug: string | null;
+      replyFromEmail: string | null;
+      replyFromName: string | null;
+    } | null = null;
     if (validatedData.trainerId) {
       const trainer = await prisma.user.findUnique({
         where: { id: validatedData.trainerId },
         select: {
+          email: true,
+          name: true,
           role: true,
           trainerIsPublic: true,
           trainerAcceptingClients: true,
+          trainerSlug: true,
+          trainer: {
+            select: { replyFromEmail: true, replyFromName: true },
+          },
         },
       });
       if (trainer && trainer.role === 'TRAINER' && trainer.trainerIsPublic) {
         assignedTrainerId = validatedData.trainerId;
         if (!trainer.trainerAcceptingClients) waitlist = true;
+        trainerForEmail = {
+          email: trainer.email,
+          name: trainer.name,
+          slug: trainer.trainerSlug,
+          replyFromEmail: trainer.trainer?.replyFromEmail ?? null,
+          replyFromName: trainer.trainer?.replyFromName ?? null,
+        };
       }
     }
 
@@ -112,6 +138,52 @@ export async function POST(request: Request) {
         waitlist,
       },
     });
+
+    // Fire-and-forget notification emails. safeSend swallows errors + no-ops
+    // when RESEND_API_KEY is missing, so these never fail the request.
+    if (trainerForEmail) {
+      const applicantName = validatedData.name.trim();
+      const messageText = validatedData.message?.trim() || null;
+      const goalText =
+        validatedData.goal === 'get-stronger'
+          ? 'Get stronger'
+          : validatedData.goal === 'lose-weight-recomp'
+            ? 'Lose weight / recomp'
+            : validatedData.goal === 'other'
+              ? validatedData.goalOther?.trim() || 'Other'
+              : validatedData.goal?.trim() || validatedData.goalOther?.trim() || null;
+
+      // 1. Trainer gets an email with applicant details. Reply-To is the
+      //    applicant so hitting Reply writes back to them.
+      void sendApplicationReceivedEmail({
+        trainerEmail: trainerForEmail.email,
+        trainerName: trainerForEmail.name,
+        applicantName,
+        applicantEmail: normalizedEmail,
+        applicantPhone: validatedData.phone || null,
+        message: messageText,
+        goal: goalText,
+        waitlist,
+        submissionId: contactSubmission.id,
+      });
+
+      // 2. Applicant gets a confirmation. Reply-To is the trainer's
+      //    preferred email (replyFromEmail) or their account email so the
+      //    applicant's reply reaches the trainer directly.
+      const trainerReplyEmail =
+        trainerForEmail.replyFromEmail?.trim() || trainerForEmail.email;
+      const trainerReplyName =
+        trainerForEmail.replyFromName?.trim() || trainerForEmail.name;
+      void sendApplicationAcknowledgedEmail({
+        applicantEmail: normalizedEmail,
+        applicantName,
+        trainerName: trainerForEmail.name,
+        trainerReplyEmail,
+        trainerReplyName,
+        waitlist,
+        trainerSlug: trainerForEmail.slug,
+      });
+    }
 
     const response = NextResponse.json(
       {

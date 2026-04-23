@@ -69,12 +69,32 @@ function renderShell({ eyebrow, title, bodyHtml, ctaLabel, ctaHref }: EmailShell
 </html>`;
 }
 
+// Format a Resend reply-to value. Accepts either a raw email string or a
+// `{ email, name }` pair. Returns a RFC-5322 "Name <email>" address when a
+// display name is present, otherwise the bare email. Null-safe.
+function formatReplyTo(
+  replyTo: string | { email: string; name?: string | null } | null | undefined,
+): string | undefined {
+  if (!replyTo) return undefined;
+  if (typeof replyTo === 'string') {
+    return replyTo.trim() || undefined;
+  }
+  const email = replyTo.email.trim();
+  if (!email) return undefined;
+  const name = replyTo.name?.trim();
+  if (!name) return email;
+  // Strip quotes from the display name to keep the header well-formed.
+  const safeName = name.replace(/["<>]/g, '').slice(0, 80);
+  return `${safeName} <${email}>`;
+}
+
 /** Best-effort send — logs + swallows errors so callers are always fire-and-forget. */
 async function safeSend(args: {
   to: string;
   subject: string;
   html: string;
   tag: string;
+  replyTo?: string | { email: string; name?: string | null } | null;
 }): Promise<void> {
   const resend = resendClient();
   if (!resend) {
@@ -82,12 +102,14 @@ async function safeSend(args: {
     return;
   }
   try {
+    const replyTo = formatReplyTo(args.replyTo);
     const { error } = await resend.emails.send({
       from: FROM,
       to: args.to,
       subject: args.subject,
       html: args.html,
       tags: [{ name: 'type', value: args.tag }],
+      ...(replyTo ? { replyTo } : {}),
     });
     if (error) {
       console.warn(`[email:${args.tag}] send failed:`, error);
@@ -343,6 +365,134 @@ export async function sendAppointmentStatusEmail(args: {
         }</p>
       `,
       ctaLabel: 'Open dashboard',
+      ctaHref,
+    }),
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────
+// /apply flow — trainer notification when a new applicant submits
+// ──────────────────────────────────────────────────────────────────
+export async function sendApplicationReceivedEmail(args: {
+  trainerEmail: string;
+  trainerName: string | null;
+  applicantName: string;
+  applicantEmail: string;
+  applicantPhone?: string | null;
+  message?: string | null;
+  goal?: string | null;
+  waitlist?: boolean;
+  submissionId?: string | null;
+}): Promise<void> {
+  const firstName = (args.trainerName ?? 'Coach').split(' ')[0]!;
+  const ctaHref = `${baseUrl()}/trainer/clients`;
+  const status = args.waitlist ? 'WAITLIST APPLICANT' : 'NEW APPLICANT';
+
+  const details: Array<[string, string]> = [
+    ['NAME', args.applicantName],
+    ['EMAIL', args.applicantEmail],
+  ];
+  if (args.applicantPhone?.trim()) details.push(['PHONE', args.applicantPhone.trim()]);
+  if (args.goal?.trim()) details.push(['GOAL', args.goal.trim()]);
+  const detailsHtml = details
+    .map(
+      ([label, value]) => `
+        <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #232327;">
+          <div style="min-width:80px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.1em;color:#6E6E76;text-transform:uppercase;">${escapeHtml(label)}</div>
+          <div style="flex:1;font-size:14px;color:#F4F4F5;word-break:break-word;">${escapeHtml(value)}</div>
+        </div>`,
+    )
+    .join('');
+
+  const messageBlock = args.message?.trim()
+    ? `
+        <div style="margin:20px 0 4px 0;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.15em;color:#6E6E76;text-transform:uppercase;">
+          Message
+        </div>
+        <div style="padding:16px;background:#141416;border:1px solid #232327;border-radius:6px;margin-top:8px;font-size:14px;line-height:1.6;white-space:pre-wrap;">
+          ${escapeHtml(args.message.trim())}
+        </div>`
+    : '';
+
+  await safeSend({
+    to: args.trainerEmail,
+    subject: `${args.waitlist ? 'Waitlist applicant' : 'New applicant'} — ${args.applicantName}`,
+    tag: 'application_received',
+    // Reply-To = applicant's email so when the trainer hits Reply in their
+    // inbox, the response goes directly to the applicant instead of
+    // bouncing back to the no-reply address.
+    replyTo: { email: args.applicantEmail, name: args.applicantName },
+    html: renderShell({
+      eyebrow: status,
+      title:
+        args.waitlist
+          ? `${args.applicantName.split(' ')[0] ?? 'Someone'} joined your waitlist.`
+          : `${args.applicantName.split(' ')[0] ?? 'Someone'} applied to train with you.`,
+      bodyHtml: `
+        <p style="margin:0 0 16px 0;">Hey ${escapeHtml(firstName)},</p>
+        <p style="margin:0 0 16px 0;">${
+          args.waitlist
+            ? 'Someone just joined your waitlist. Reach out when you have room for a new athlete.'
+            : 'A new athlete just applied. Hit Reply to respond directly — this email is already set up to go back to them.'
+        }</p>
+        <div style="padding:4px 16px;background:#141416;border:1px solid #232327;border-radius:6px;margin:16px 0;">
+          ${detailsHtml}
+        </div>
+        ${messageBlock}
+      `,
+      ctaLabel: 'Open applicants',
+      ctaHref,
+    }),
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────
+// /apply flow — applicant acknowledgement with the trainer's
+// reply-to set so hitting reply routes to the trainer's preferred
+// inbox (profile.replyFromEmail > account email).
+// ──────────────────────────────────────────────────────────────────
+export async function sendApplicationAcknowledgedEmail(args: {
+  applicantEmail: string;
+  applicantName: string;
+  trainerName: string | null;
+  trainerReplyEmail: string;
+  trainerReplyName?: string | null;
+  waitlist?: boolean;
+  trainerSlug?: string | null;
+}): Promise<void> {
+  const firstName = args.applicantName.split(' ')[0] ?? 'there';
+  const coach = args.trainerName ?? 'your coach';
+  const ctaHref = args.trainerSlug
+    ? `${baseUrl()}/t/${args.trainerSlug}`
+    : baseUrl();
+
+  await safeSend({
+    to: args.applicantEmail,
+    subject: args.waitlist
+      ? `You're on ${coach}'s waitlist`
+      : `We got your application to ${coach}`,
+    tag: 'application_acknowledged',
+    // Reply-To = trainer's preferred email. If they hit Reply, it goes
+    // straight to the trainer's inbox (bypassing the no-reply sender).
+    replyTo: {
+      email: args.trainerReplyEmail,
+      name: args.trainerReplyName ?? args.trainerName ?? null,
+    },
+    html: renderShell({
+      eyebrow: args.waitlist ? 'WAITLIST CONFIRMED' : 'APPLICATION RECEIVED',
+      title: args.waitlist
+        ? `You're on ${coach}'s list.`
+        : `${coach} got your note.`,
+      bodyHtml: `
+        <p style="margin:0 0 16px 0;">Hey ${escapeHtml(firstName)},</p>
+        <p style="margin:0 0 16px 0;">${
+          args.waitlist
+            ? `${escapeHtml(coach)} is at capacity right now, but your application is in the queue. They'll reach out as soon as a spot opens.`
+            : `${escapeHtml(coach)} just got your application and will be in touch within 48 hours.`
+        }</p>
+        <p style="margin:0 0 16px 0;">If you have questions in the meantime, just hit Reply — this email goes straight to ${escapeHtml(coach)}.</p>
+      `,
+      ctaLabel: 'View coach profile',
       ctaHref,
     }),
   });
