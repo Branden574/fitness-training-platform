@@ -1563,7 +1563,12 @@ function ProfilePreviewCard({ profile }: { profile: TrainerProfile }) {
   };
 
   return (
-    <div className="mf-card" style={{ padding: 14 }}>
+    // maxHeight + overflow act as a belt-and-braces cap — data is already
+    // sliced (3 specialties / 3 quick facts / 3 pillars / 2 services) so
+    // the card tops out in normal use, but an unusually long headline or
+    // quick-fact value could still overshoot; hide rather than let the
+    // rail grow past the viewport.
+    <div className="mf-card" style={{ padding: 14, maxHeight: 520, overflow: 'hidden' }}>
       <div className="mf-eyebrow" style={{ marginBottom: 10 }}>
         Live preview
       </div>
