@@ -15,7 +15,7 @@ export default async function TrainerProfileEditorPage() {
       title="Public Profile"
       breadcrumbs="TRAINER / SETTINGS / PROFILE"
     >
-      <div style={{ padding: 24, maxWidth: 720 }}>
+      <div style={{ padding: 24, maxWidth: 1140 }}>
         <SubNav current="profile" />
         <div style={{ marginTop: 16 }}>
           <ProfileEditorClient />
