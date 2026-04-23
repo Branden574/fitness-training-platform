@@ -1498,6 +1498,7 @@ function ChecklistRow({
     <button
       type="button"
       onClick={() => onJump(item.sectionId)}
+      className="focus-ring"
       style={{
         display: 'flex',
         alignItems: 'center',
