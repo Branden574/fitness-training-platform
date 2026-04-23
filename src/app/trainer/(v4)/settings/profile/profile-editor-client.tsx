@@ -1405,3 +1405,127 @@ function Section({
     </div>
   );
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// Right-rail cards
+// ──────────────────────────────────────────────────────────────────────────
+
+interface ChecklistItem {
+  key: string;
+  label: string;
+  done: boolean;
+  /** id of the <Section> to smooth-scroll to when the row is clicked. */
+  sectionId: string;
+}
+
+function CompletionChecklistCard({ profile }: { profile: TrainerProfile }) {
+  const required: ChecklistItem[] = [
+    { key: 'photo', label: 'Public photo', done: !!profile.photoUrl, sectionId: 'section-photo' },
+    { key: 'bio', label: 'Bio', done: !!profile.bio && profile.bio.trim().length > 0, sectionId: 'section-bio' },
+    { key: 'specialties', label: 'Specialties', done: profile.specialties.length > 0, sectionId: 'section-specialties' },
+    { key: 'location', label: 'Location', done: !!profile.location && profile.location.trim().length > 0, sectionId: 'section-location' },
+  ];
+
+  const recommended: ChecklistItem[] = [
+    { key: 'cover', label: 'Cover image', done: !!profile.coverImageUrl, sectionId: 'section-cover' },
+    { key: 'headline', label: 'Headline', done: !!profile.headline && profile.headline.trim().length > 0, sectionId: 'section-headline' },
+    { key: 'quickFacts', label: 'At least one quick fact', done: profile.quickFacts.length > 0, sectionId: 'section-quick-facts' },
+    { key: 'pillars', label: 'At least one approach pillar', done: profile.pillars.length > 0, sectionId: 'section-pillars' },
+    { key: 'services', label: 'At least one service', done: profile.services.length > 0, sectionId: 'section-services' },
+    { key: 'certifications', label: 'At least one certification', done: profile.certifications.length > 0, sectionId: 'section-certifications' },
+    { key: 'gallery', label: 'At least one gallery image', done: profile.gallery.length > 0, sectionId: 'section-gallery' },
+  ];
+
+  const requiredDone = required.filter((r) => r.done).length;
+
+  function jumpTo(sectionId: string) {
+    const el = document.getElementById(sectionId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  return (
+    <div className="mf-card" style={{ padding: 14 }}>
+      <div
+        className="mf-eyebrow"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 10,
+        }}
+      >
+        <span>Checklist</span>
+        <span className="mf-fg-dim mf-font-mono" style={{ fontSize: 10 }}>
+          {requiredDone} / {required.length} required
+        </span>
+      </div>
+
+      <div
+        className="mf-fg-dim mf-font-mono"
+        style={{ fontSize: 9, letterSpacing: '0.08em', marginBottom: 6 }}
+      >
+        REQUIRED TO PUBLISH
+      </div>
+      <div style={{ display: 'grid', gap: 2, marginBottom: 12 }}>
+        {required.map((item) => (
+          <ChecklistRow key={item.key} item={item} onJump={jumpTo} />
+        ))}
+      </div>
+
+      <div
+        className="mf-fg-dim mf-font-mono"
+        style={{ fontSize: 9, letterSpacing: '0.08em', marginBottom: 6 }}
+      >
+        RECOMMENDED
+      </div>
+      <div style={{ display: 'grid', gap: 2 }}>
+        {recommended.map((item) => (
+          <ChecklistRow key={item.key} item={item} onJump={jumpTo} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ChecklistRow({
+  item,
+  onJump,
+}: {
+  item: ChecklistItem;
+  onJump: (sectionId: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onJump(item.sectionId)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        width: '100%',
+        padding: '6px 8px',
+        background: 'transparent',
+        border: 'none',
+        borderRadius: 4,
+        cursor: 'pointer',
+        textAlign: 'left',
+        fontSize: 12,
+        color: item.done ? 'var(--mf-fg)' : 'var(--mf-fg-dim)',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          width: 14,
+          display: 'inline-flex',
+          justifyContent: 'center',
+          color: item.done ? '#86efac' : 'var(--mf-fg-mute)',
+          fontSize: 12,
+        }}
+      >
+        {item.done ? '✓' : '–'}
+      </span>
+      <span style={{ flex: 1 }}>{item.label}</span>
+    </button>
+  );
+}
