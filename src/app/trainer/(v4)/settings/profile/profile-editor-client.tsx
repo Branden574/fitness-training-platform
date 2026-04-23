@@ -1804,3 +1804,87 @@ function ShareCard({ profile }: { profile: TrainerProfile }) {
     </div>
   );
 }
+
+function ActivityCard() {
+  const [applicationsThisWeek, setApplicationsThisWeek] = useState<number | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/trainers/me/activity', { cache: 'no-store' });
+        if (!res.ok) {
+          if (!cancelled) setFailed(true);
+          return;
+        }
+        const data = (await res.json()) as { applicationsThisWeek?: number };
+        if (!cancelled && typeof data.applicationsThisWeek === 'number') {
+          setApplicationsThisWeek(data.applicationsThisWeek);
+        }
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const countDisplay =
+    failed || applicationsThisWeek === null
+      ? applicationsThisWeek === null && !failed
+        ? '…'
+        : '—'
+      : String(applicationsThisWeek);
+
+  return (
+    <div className="mf-card" style={{ padding: 14 }}>
+      <div className="mf-eyebrow" style={{ marginBottom: 10 }}>
+        Recent activity
+      </div>
+
+      <div
+        className="mf-font-display mf-tnum"
+        style={{ fontSize: 32, lineHeight: 1, marginBottom: 4 }}
+      >
+        {countDisplay}
+      </div>
+      <div
+        className="mf-font-mono mf-fg-dim"
+        style={{ fontSize: 10, letterSpacing: '0.08em', marginBottom: 12 }}
+      >
+        APPLICATIONS THIS WEEK
+      </div>
+
+      <a
+        href="/trainer/messages"
+        className="mf-btn focus-ring"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: 32,
+          fontSize: 11,
+          textDecoration: 'none',
+          marginBottom: 10,
+        }}
+      >
+        View inbox
+      </a>
+
+      <div
+        className="mf-fg-mute"
+        style={{
+          fontSize: 10,
+          fontStyle: 'italic',
+          borderTop: '1px solid var(--mf-hairline)',
+          paddingTop: 8,
+        }}
+      >
+        Profile views · Coming soon
+      </div>
+    </div>
+  );
+}
