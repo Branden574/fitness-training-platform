@@ -135,7 +135,7 @@ export async function GET() {
     }),
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { trainerIsPublic: true },
+      select: { trainerIsPublic: true, trainerSlug: true },
     }),
   ]);
   return NextResponse.json(
@@ -147,6 +147,7 @@ export async function GET() {
       gallery: trainer?.gallery ?? [],
       services: Array.isArray(trainer?.services) ? trainer.services : [],
       trainerIsPublic: user?.trainerIsPublic ?? false,
+      trainerSlug: user?.trainerSlug ?? null,
     },
     { headers: { 'Cache-Control': 'private, no-store' } },
   );

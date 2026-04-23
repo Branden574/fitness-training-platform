@@ -44,6 +44,7 @@ interface TrainerProfile {
   acceptsInPerson: boolean;
   acceptsOnline: boolean;
   trainerIsPublic: boolean;
+  trainerSlug: string | null;
   replyFromEmail: string | null;
   replyFromName: string | null;
   quickFacts: QuickFact[];
@@ -136,6 +137,7 @@ function ProfileForm() {
             acceptsInPerson: !!data.acceptsInPerson,
             acceptsOnline: !!data.acceptsOnline,
             trainerIsPublic: !!data.trainerIsPublic,
+            trainerSlug: data.trainerSlug ?? null,
             replyFromEmail: data.replyFromEmail ?? null,
             replyFromName: data.replyFromName ?? null,
             quickFacts: Array.isArray(data.quickFacts) ? (data.quickFacts as QuickFact[]) : [],
@@ -168,6 +170,7 @@ function ProfileForm() {
         acceptsInPerson: false,
         acceptsOnline: false,
         trainerIsPublic: false,
+        trainerSlug: null,
         replyFromEmail: null,
         replyFromName: null,
         quickFacts: [],
