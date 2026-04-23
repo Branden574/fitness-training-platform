@@ -1371,6 +1371,8 @@ function ProfileForm() {
           <div style={{ display: 'grid', gap: 16 }}>
             <ProfilePreviewCard profile={profile} />
             <CompletionChecklistCard profile={profile} />
+            <ShareCard profile={profile} />
+            <ActivityCard />
           </div>
         </aside>
       </div>
