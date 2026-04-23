@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AgreementGate } from '@/components/trainer/AgreementGate';
+import { SpecialtyChip } from '@/components/ui/mf';
 import ImageCropperModal from '@/components/ui/mf/ImageCropperModal';
 
 interface QuickFact {
@@ -1528,5 +1529,156 @@ function ChecklistRow({
       </span>
       <span style={{ flex: 1 }}>{item.label}</span>
     </button>
+  );
+}
+
+function ProfilePreviewCard({ profile }: { profile: TrainerProfile }) {
+  const headline = profile.headline?.trim() || null;
+  const location = profile.location?.trim() || null;
+  const specialties = profile.specialties.slice(0, 3);
+  const quickFacts = profile.quickFacts.filter((f) => f.label.trim() && f.value.trim()).slice(0, 3);
+  const pillarTitles = profile.pillars.map((p) => p.title.trim()).filter(Boolean).slice(0, 3);
+  const services = profile.services.slice(0, 2);
+
+  const placeholderStyle: React.CSSProperties = {
+    fontStyle: 'italic',
+    color: 'var(--mf-fg-mute)',
+  };
+
+  return (
+    <div className="mf-card" style={{ padding: 14 }}>
+      <div className="mf-eyebrow" style={{ marginBottom: 10 }}>
+        Live preview
+      </div>
+
+      {/* Header row — photo + headline + location */}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
+        <div
+          style={{
+            width: 60,
+            height: 75,
+            flexShrink: 0,
+            borderRadius: 4,
+            background: 'var(--mf-surface-2)',
+            border: '1px solid var(--mf-hairline)',
+            backgroundImage: profile.photoUrl ? `url(${profile.photoUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+          aria-label={profile.photoUrl ? 'Profile photo' : 'No profile photo yet'}
+        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            className="mf-font-display"
+            style={{
+              fontSize: 13,
+              lineHeight: 1.25,
+              ...(headline ? null : placeholderStyle),
+            }}
+          >
+            {headline ?? 'Add a headline'}
+          </div>
+          <div
+            className="mf-fg-dim"
+            style={{ fontSize: 11, marginTop: 4, ...(location ? null : placeholderStyle) }}
+          >
+            {location ?? 'Add a location'}
+          </div>
+        </div>
+      </div>
+
+      {/* Specialty chips */}
+      <div style={{ marginBottom: 10 }}>
+        {specialties.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {specialties.map((s) => (
+              <SpecialtyChip key={s}>{s}</SpecialtyChip>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 11, ...placeholderStyle }}>Add a specialty</div>
+        )}
+      </div>
+
+      {/* Quick facts */}
+      <PreviewBlock label="Quick facts">
+        {quickFacts.length > 0 ? (
+          <div style={{ display: 'grid', gap: 3 }}>
+            {quickFacts.map((f, i) => (
+              <div key={i} className="mf-font-mono" style={{ fontSize: 10, lineHeight: 1.4 }}>
+                <span className="mf-fg-dim">{f.label}</span>
+                <span className="mf-fg-mute"> · </span>
+                <span>{f.value}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 11, ...placeholderStyle }}>Add a quick fact</div>
+        )}
+      </PreviewBlock>
+
+      {/* Pillars */}
+      <PreviewBlock label="Pillars">
+        {pillarTitles.length > 0 ? (
+          <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, lineHeight: 1.5 }}>
+            {pillarTitles.map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ul>
+        ) : (
+          <div style={{ fontSize: 11, ...placeholderStyle }}>Add an approach pillar</div>
+        )}
+      </PreviewBlock>
+
+      {/* Services */}
+      <PreviewBlock label="Services" last>
+        {services.length > 0 ? (
+          <div style={{ display: 'grid', gap: 4 }}>
+            {services.map((s, i) => (
+              <div key={i} style={{ fontSize: 11, lineHeight: 1.4 }}>
+                <span>{s.title.trim() || 'Untitled'}</span>
+                {s.price.trim() ? (
+                  <span className="mf-fg-dim">
+                    {' — '}
+                    {s.price}
+                    {s.per.trim() ? ` ${s.per}` : ''}
+                  </span>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 11, ...placeholderStyle }}>Add a service</div>
+        )}
+      </PreviewBlock>
+    </div>
+  );
+}
+
+function PreviewBlock({
+  label,
+  children,
+  last,
+}: {
+  label: string;
+  children: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        paddingTop: 8,
+        paddingBottom: last ? 0 : 8,
+        borderTop: '1px solid var(--mf-hairline)',
+      }}
+    >
+      <div
+        className="mf-fg-dim mf-font-mono"
+        style={{ fontSize: 9, letterSpacing: '0.08em', marginBottom: 4 }}
+      >
+        {label.toUpperCase()}
+      </div>
+      {children}
+    </div>
   );
 }
