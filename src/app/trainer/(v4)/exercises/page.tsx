@@ -1,5 +1,6 @@
 import { requireTrainerSession } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
+import { visibleExercisesFilter } from '@/lib/exerciseScope';
 import { DesktopShell } from '@/components/ui/mf';
 import LibrarySearchClient from './library-search-client';
 import FillGifsClient from './fill-gifs-client';
@@ -11,9 +12,17 @@ import ExerciseCategoryFilterClient, {
 export const dynamic = 'force-dynamic';
 
 export default async function TrainerExercisesPage() {
-  await requireTrainerSession();
+  const session = await requireTrainerSession();
+
+  // Trainers see the shared stock library (createdByUserId = null) merged
+  // with their own custom exercises. Other trainers' customs stay private.
+  const scope = visibleExercisesFilter({
+    id: session.user.id,
+    role: session.user.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
+  });
 
   const exercises = await prisma.exercise.findMany({
+    where: scope,
     orderBy: { name: 'asc' },
     take: 120,
     select: {
@@ -28,9 +37,11 @@ export default async function TrainerExercisesPage() {
     },
   });
 
-  const total = await prisma.exercise.count();
+  const total = await prisma.exercise.count({ where: scope });
   const missingGifs = await prisma.exercise.count({
-    where: { OR: [{ imageUrl: null }, { imageUrl: '' }] },
+    where: {
+      AND: [scope, { OR: [{ imageUrl: null }, { imageUrl: '' }] }],
+    },
   });
 
   const items: ExerciseItem[] = exercises.map((e) => ({

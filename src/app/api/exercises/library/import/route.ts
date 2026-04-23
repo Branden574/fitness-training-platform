@@ -68,8 +68,9 @@ async function lookupFreeImage(name: string): Promise<string | null> {
 }
 
 export async function POST(request: Request) {
+  let session: Awaited<ReturnType<typeof requireTrainerSession>>;
   try {
-    await requireTrainerSession();
+    session = await requireTrainerSession();
   } catch {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
@@ -107,24 +108,46 @@ export async function POST(request: Request) {
     resolvedImage = await lookupFreeImage(name);
   }
 
+  const trainerUserId = session.user.id;
+  const isAdmin = session.user.role === 'ADMIN';
+
+  // Only dedupe against exercises THIS trainer can see (their own customs
+  // + the shared library). Another trainer's private exercise with the same
+  // name should NOT block this trainer from importing their own copy.
   const existing = await prisma.exercise.findFirst({
-    where: { name: { equals: name, mode: 'insensitive' } },
+    where: {
+      name: { equals: name, mode: 'insensitive' },
+      OR: [
+        { createdByUserId: null },
+        { createdByUserId: trainerUserId },
+      ],
+    },
   });
 
   try {
     if (existing) {
-      const data: Prisma.ExerciseUpdateInput = {
-        imageUrl: resolvedImage || existing.imageUrl,
-      };
-      if (muscleGroups.length > 0) data.muscleGroups = muscleGroups;
-      if (equipmentList.length > 0) data.equipment = equipmentList;
-      if (instructionList.length > 0) data.instructions = instructionList;
+      // If the match is a shared stock entry and the caller isn't an admin,
+      // create a private copy for this trainer instead of mutating the
+      // shared row. Otherwise update in place (their own custom, or admin
+      // editing shared).
+      const isMutableByCaller =
+        isAdmin || existing.createdByUserId === trainerUserId;
 
-      const updated = await prisma.exercise.update({
-        where: { id: existing.id },
-        data,
-      });
-      return NextResponse.json({ exercise: updated, created: false });
+      if (isMutableByCaller) {
+        const data: Prisma.ExerciseUpdateInput = {
+          imageUrl: resolvedImage || existing.imageUrl,
+        };
+        if (muscleGroups.length > 0) data.muscleGroups = muscleGroups;
+        if (equipmentList.length > 0) data.equipment = equipmentList;
+        if (instructionList.length > 0) data.instructions = instructionList;
+
+        const updated = await prisma.exercise.update({
+          where: { id: existing.id },
+          data,
+        });
+        return NextResponse.json({ exercise: updated, created: false });
+      }
+      // Fall through to create a trainer-owned duplicate below.
     }
 
     const created = await prisma.exercise.create({
@@ -135,6 +158,7 @@ export async function POST(request: Request) {
         equipment: equipmentList,
         instructions: instructionList,
         difficulty: 'INTERMEDIATE',
+        createdByUserId: trainerUserId,
       },
     });
     return NextResponse.json({ exercise: created, created: true });

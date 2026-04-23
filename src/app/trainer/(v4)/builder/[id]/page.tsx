@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ChevronLeft, Plus, Users, Archive } from 'lucide-react';
 import { requireTrainerSession, initialsFor } from '@/lib/trainer-data';
 import { prisma } from '@/lib/prisma';
+import { visibleExercisesFilter } from '@/lib/exerciseScope';
 import { Btn, Chip, DesktopShell } from '@/components/ui/mf';
 import ProgramBuilderClient from './program-builder-client';
 import DeleteProgramButton from './delete-program-button';
@@ -75,8 +76,14 @@ export default async function ProgramDetailPage({
     orderBy: { name: 'asc' },
   });
 
-  // Exercise library for the add-exercise picker
+  // Exercise library for the add-exercise picker — scoped so trainers only
+  // see the shared stock library plus their own custom exercises, never
+  // other trainers' customs.
   const exerciseOptions = await prisma.exercise.findMany({
+    where: visibleExercisesFilter({
+      id: session.user.id,
+      role: session.user.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
+    }),
     select: { id: true, name: true, muscleGroups: true, difficulty: true },
     orderBy: { name: 'asc' },
     take: 300,

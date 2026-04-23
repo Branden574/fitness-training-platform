@@ -3,9 +3,11 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { canMutateExercise } from '@/lib/exerciseScope';
 
-// Exercise table is a shared global library — any TRAINER or ADMIN can edit
-// or delete entries. Clients can only read via workout programs.
+// Exercise rows are scoped per-trainer: stock entries (createdByUserId = null)
+// are shared and admin-only to mutate; custom entries belong to the trainer
+// who created them and only that trainer (or an admin) can edit / delete.
 
 // Image + video URLs: restrict to https:// absolute URLs or site-relative
 // paths. Rejects `javascript:`, `data:`, `file:`, and `http:` (non-secure),
@@ -70,9 +72,21 @@ export async function PATCH(
 
   const existing = await prisma.exercise.findUnique({
     where: { id },
-    select: { id: true, name: true },
+    select: { id: true, name: true, createdByUserId: true },
   });
   if (!existing) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+  if (
+    !canMutateExercise(
+      {
+        id: session.user.id,
+        role: session.user.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
+      },
+      existing,
+    )
+  ) {
+    // 404 so trainers can't enumerate other trainers' ids
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
@@ -106,6 +120,25 @@ export async function DELETE(
   }
 
   const { id } = await params;
+
+  const existing = await prisma.exercise.findUnique({
+    where: { id },
+    select: { id: true, createdByUserId: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+  if (
+    !canMutateExercise(
+      {
+        id: session.user.id,
+        role: session.user.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
+      },
+      existing,
+    )
+  ) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
 
   // Refuse to delete if the exercise is referenced by any workout, program,
   // or historical progress log — deleting would cascade-null or orphan real

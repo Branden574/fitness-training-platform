@@ -268,6 +268,12 @@ model Exercise {
   difficulty          Difficulty           @default(BEGINNER)
   imageUrl            String?
   videoUrl            String?
+  // Ownership scope. `null` = shared stock library (seeded from
+  // free-exercise-db), visible to every trainer and read-only except for
+  // admins. Non-null = private to that user's exercise library —
+  // only the creator (or an admin) sees / edits / deletes them. Existing
+  // rows default to null on the migration, preserving the shared library.
+  createdByUserId     String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   workoutExercises    WorkoutExercise[]
@@ -279,6 +285,7 @@ model Exercise {
   // Dedupe will happen via a dedicated admin task, then this can be restored.
   @@index([name])
   @@index([difficulty])
+  @@index([createdByUserId])
   @@map("exercises")
 }
 
