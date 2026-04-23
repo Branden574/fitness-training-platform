@@ -1402,18 +1402,23 @@ function ProfileForm() {
 function Section({
   id,
   title,
+  span = 'full',
   children,
 }: {
   id?: string;
   title: string;
+  span?: 'half' | 'full';
   children: React.ReactNode;
 }) {
+  // At md:+ the form column is a 2-col grid. Half-width sections pair up;
+  // full-width sections (default) span both columns like today. Below md:
+  // no col-span classes apply and the grid falls back to single-column,
+  // preserving the pre-restructure stacking behavior.
+  const colClass = span === 'half' ? 'md:col-span-1' : 'md:col-span-2';
   return (
     <div
       id={id}
-      className="mf-card"
-      // scrollMarginTop keeps the section's title visible below the sticky
-      // save row when the checklist smooth-scrolls us to this anchor.
+      className={`mf-card ${colClass}`}
       style={{ padding: 16, scrollMarginTop: 96 }}
     >
       <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
