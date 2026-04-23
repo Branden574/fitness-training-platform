@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Cropper, { type Area } from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 import { X } from 'lucide-react';
 
 export interface ImageCropperModalProps {
