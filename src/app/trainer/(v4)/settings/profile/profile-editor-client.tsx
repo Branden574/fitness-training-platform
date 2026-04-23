@@ -547,7 +547,12 @@ function ProfileForm() {
         </div>
       )}
 
-      <Section id="section-photo" title="PUBLIC PHOTO">
+      <div
+        className="xl:grid-cols-[minmax(0,720px)_320px]"
+        style={{ display: 'grid', gap: 24, alignItems: 'start' }}
+      >
+        <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
+          <Section id="section-photo" title="PUBLIC PHOTO">
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <div
             style={{
@@ -1351,6 +1356,18 @@ function ProfileForm() {
           </label>
         </div>
       </Section>
+        </div>
+
+        <aside
+          className="hidden xl:block"
+          style={{ position: 'sticky', top: 80, alignSelf: 'start' }}
+        >
+          <div style={{ display: 'grid', gap: 16 }}>
+            <ProfilePreviewCard profile={profile} />
+            <CompletionChecklistCard profile={profile} />
+          </div>
+        </aside>
+      </div>
 
       <ImageCropperModal
         file={cropper?.file ?? null}
