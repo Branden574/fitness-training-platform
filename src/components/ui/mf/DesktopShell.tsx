@@ -268,7 +268,17 @@ export default function DesktopShell({
       {/* Persistent sidebar — md+ only */}
       <aside
         className="mf-s1 hidden md:flex flex-col"
-        style={{ width: 220, borderRight: '1px solid var(--mf-hairline)' }}
+        style={{
+          width: 220,
+          borderRight: '1px solid var(--mf-hairline)',
+          // Pin the sidebar to the viewport so Sign out at the bottom
+          // stays visible even when the main content is taller than
+          // the screen.
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          overflowY: 'auto',
+        }}
       >
         {sidebarContent}
       </aside>

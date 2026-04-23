@@ -53,7 +53,6 @@ export default function TrainerCard({
   const specialties = t?.specialties ?? [];
   const visible = specialties.slice(0, 3);
   const extra = Math.max(0, specialties.length - visible.length);
-  const coverLabel = trainer.name?.toUpperCase() ?? 'TRAINER';
   const city = locationCity(t?.location ?? null);
 
   return (
@@ -70,7 +69,6 @@ export default function TrainerCard({
     >
       <div style={{ position: 'relative', padding: 10, paddingBottom: 0 }}>
         <TrainerCover
-          label={coverLabel}
           imageUrl={t?.coverImageUrl ?? null}
           alt={`${trainer.name ?? 'Trainer'} cover`}
           height={170}

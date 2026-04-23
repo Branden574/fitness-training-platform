@@ -97,3 +97,6 @@ export type { TrainerCoverProps, TrainerCoverTone } from './TrainerCover';
 
 export { default as Lightbox } from './Lightbox';
 export type { LightboxProps, LightboxItem } from './Lightbox';
+
+export { default as ImageCropperModal } from './ImageCropperModal';
+export type { ImageCropperModalProps } from './ImageCropperModal';

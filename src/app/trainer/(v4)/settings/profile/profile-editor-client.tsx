@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AgreementGate } from '@/components/trainer/AgreementGate';
+import ImageCropperModal from '@/components/ui/mf/ImageCropperModal';
 
 interface QuickFact {
   label: string;
@@ -81,6 +82,15 @@ function ProfileForm() {
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
+  // Crop flow: picking a file opens the modal, confirming the crop fires the
+  // upload. We keep both in one reducer-ish piece of state so only one modal
+  // is ever open at a time.
+  const [cropper, setCropper] = useState<
+    | { kind: 'photo'; file: File }
+    | { kind: 'cover'; file: File }
+    | { kind: 'gallery'; file: File }
+    | null
+  >(null);
   const [specialtyInput, setSpecialtyInput] = useState('');
   const [specialtyHints, setSpecialtyHints] = useState<string[]>([]);
   const [certInput, setCertInput] = useState('');
@@ -488,7 +498,8 @@ function ProfileForm() {
               style={{ display: 'none' }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) uploadPhoto(f);
+                if (f) setCropper({ kind: 'photo', file: f });
+                e.target.value = '';
               }}
             />
             <button
@@ -533,7 +544,7 @@ function ProfileForm() {
               style={{ display: 'none' }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) uploadCover(f);
+                if (f) setCropper({ kind: 'cover', file: f });
                 e.target.value = '';
               }}
             />
@@ -969,7 +980,7 @@ function ProfileForm() {
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) uploadGalleryImage(f);
+            if (f) setCropper({ kind: 'gallery', file: f });
             e.target.value = '';
           }}
         />
@@ -1253,6 +1264,30 @@ function ProfileForm() {
           </label>
         </div>
       </Section>
+
+      <ImageCropperModal
+        file={cropper?.file ?? null}
+        aspect={
+          cropper?.kind === 'cover' ? 3 : cropper?.kind === 'gallery' ? 1 : 4 / 5
+        }
+        shape={cropper?.kind === 'photo' ? 'round' : 'rect'}
+        title={
+          cropper?.kind === 'cover'
+            ? 'Crop cover image'
+            : cropper?.kind === 'gallery'
+              ? 'Crop gallery image'
+              : 'Crop profile photo'
+        }
+        outputMaxDim={cropper?.kind === 'cover' ? 2000 : 1200}
+        onClose={() => setCropper(null)}
+        onConfirm={(cropped) => {
+          const kind = cropper?.kind;
+          setCropper(null);
+          if (kind === 'photo') uploadPhoto(cropped);
+          else if (kind === 'cover') uploadCover(cropped);
+          else if (kind === 'gallery') uploadGalleryImage(cropped);
+        }}
+      />
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
         <button

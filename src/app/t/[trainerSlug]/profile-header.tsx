@@ -25,13 +25,10 @@ function TikTokIcon({ size = 16 }: { size?: number }) {
 }
 
 export default function ProfileHeader({ p }: { p: ProfileData }) {
-  const coverLabel = `${p.name.toUpperCase()} · ${p.location ?? 'TRAINER'}`;
-
   return (
     <>
       <div style={{ position: 'relative' }}>
         <TrainerCover
-          label={coverLabel}
           imageUrl={p.coverImageUrl}
           alt={`${p.name} cover`}
           height={320}
@@ -43,102 +40,98 @@ export default function ProfileHeader({ p }: { p: ProfileData }) {
       </div>
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ paddingTop: 24, paddingBottom: 32 }}>
+        {/* Avatar sits above everything else and overlaps the cover. Name +
+            CTAs live below it so the heading is never clipped by the
+            circle, regardless of viewport width. */}
+        <div style={{ marginTop: -84, marginBottom: 16 }}>
+          <RoundAvatar
+            initials={p.initials}
+            image={p.photoUrl}
+            alt={p.name}
+            size={140}
+          />
+        </div>
+
+        <div style={{ paddingBottom: 32 }}>
           <div
             style={{
               display: 'flex',
-              alignItems: 'flex-end',
+              alignItems: 'flex-start',
               justifyContent: 'space-between',
               gap: 24,
               flexWrap: 'wrap',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-end',
-                gap: 24,
-                marginTop: -84,
-                minWidth: 0,
-                flex: '1 1 auto',
-              }}
-            >
-              <RoundAvatar
-                initials={p.initials}
-                image={p.photoUrl}
-                alt={p.name}
-                size={140}
-              />
-              <div style={{ paddingBottom: 8, minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: '1 1 320px' }}>
+              <div
+                className="mf-eyebrow"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                  marginBottom: 10,
+                }}
+              >
+                <span>TRAINER · L1 VERIFIED</span>
+                <span className="mf-fg-mute">·</span>
+                <StatusPill kind={p.accepting ? 'accepting' : 'waitlist'} />
+              </div>
+              <h1
+                className="mf-font-display"
+                style={{
+                  fontSize: 'clamp(36px, 6vw, 64px)',
+                  lineHeight: 0.95,
+                  letterSpacing: '-0.015em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                  margin: 0,
+                  wordBreak: 'break-word',
+                }}
+              >
+                {p.name}
+              </h1>
+              {p.headline ? (
                 <div
-                  className="mf-eyebrow"
+                  className="mf-fg-dim"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    flexWrap: 'wrap',
-                    marginBottom: 10,
+                    fontSize: 15,
+                    marginTop: 12,
+                    lineHeight: 1.5,
+                    maxWidth: 560,
                   }}
                 >
-                  <span>TRAINER · L1 VERIFIED</span>
-                  <span className="mf-fg-mute">·</span>
-                  <StatusPill kind={p.accepting ? 'accepting' : 'waitlist'} />
+                  {p.headline}
                 </div>
-                <h1
-                  className="mf-font-display"
-                  style={{
-                    fontSize: 'clamp(40px, 6vw, 64px)',
-                    lineHeight: 0.92,
-                    letterSpacing: '-0.015em',
-                    textTransform: 'uppercase',
-                    fontWeight: 600,
-                    margin: 0,
-                  }}
-                >
-                  {p.name}
-                </h1>
-                {p.headline ? (
-                  <div
-                    className="mf-fg-dim"
-                    style={{
-                      fontSize: 15,
-                      marginTop: 12,
-                      lineHeight: 1.5,
-                      maxWidth: 560,
-                    }}
-                  >
-                    {p.headline}
-                  </div>
+              ) : null}
+              <div
+                className="mf-font-mono mf-fg-mute"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  marginTop: 16,
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {p.location ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <MapPin size={11} />
+                    {p.location}
+                  </span>
                 ) : null}
-                <div
-                  className="mf-font-mono mf-fg-mute"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 16,
-                    marginTop: 16,
-                    fontSize: 11,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  {p.location ? (
+                {p.accepting ? (
+                  <>
+                    <span>·</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <MapPin size={11} />
-                      {p.location}
+                      <Clock size={11} />
+                      Responds within 4h
                     </span>
-                  ) : null}
-                  {p.accepting ? (
-                    <>
-                      <span>·</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Clock size={11} />
-                        Responds within 4h
-                      </span>
-                    </>
-                  ) : null}
-                </div>
+                  </>
+                ) : null}
               </div>
             </div>
             <div
@@ -147,7 +140,6 @@ export default function ProfileHeader({ p }: { p: ProfileData }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                paddingBottom: 8,
                 flexWrap: 'wrap',
               }}
             >

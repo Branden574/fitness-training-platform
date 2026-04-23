@@ -97,7 +97,17 @@ export default function ClientDesktopShell({
     <div data-mf className="flex mf-bg mf-fg" style={{ minHeight: '100vh' }}>
       <aside
         className="mf-s1 flex flex-col shrink-0"
-        style={{ width: 220, borderRight: '1px solid var(--mf-hairline)' }}
+        style={{
+          width: 220,
+          borderRight: '1px solid var(--mf-hairline)',
+          // Pin the sidebar to the viewport so Sign out at the bottom
+          // stays visible even when the main content is much taller than
+          // the screen (client settings, programs, schedule, etc).
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          overflowY: 'auto',
+        }}
       >
         <CoachBrandChip
           brandDisplayName={brandDisplayName}
