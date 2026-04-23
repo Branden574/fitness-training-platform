@@ -659,7 +659,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section id="section-headline" title="HEADLINE (one sentence shown under your name)">
+      <Section id="section-headline" span="half" title="HEADLINE (one sentence shown under your name)">
         <input
           className="mf-input"
           placeholder="Strength coach helping busy professionals get lean."
@@ -669,7 +669,7 @@ function ProfileForm() {
         />
       </Section>
 
-      <Section id="section-location" title="LOCATION">
+      <Section id="section-location" span="half" title="LOCATION">
         <input
           className="mf-input"
           placeholder="Fresno, CA · The Iron Office"
@@ -679,7 +679,7 @@ function ProfileForm() {
         />
       </Section>
 
-      <Section title="INSTAGRAM">
+      <Section span="half" title="INSTAGRAM">
         <div
           style={{
             display: 'flex',
@@ -713,7 +713,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="TIKTOK">
+      <Section span="half" title="TIKTOK">
         <div
           style={{
             display: 'flex',
@@ -747,7 +747,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="YOUTUBE">
+      <Section span="half" title="YOUTUBE">
         <div
           style={{
             display: 'flex',
@@ -781,7 +781,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="CONTACT PHONE (shown on your apply page)">
+      <Section span="half" title="CONTACT PHONE (shown on your apply page)">
         <input
           type="tel"
           className="mf-input"
@@ -796,7 +796,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="REPLY-TO EMAIL (optional)">
+      <Section span="half" title="REPLY-TO EMAIL (optional)">
         <input
           type="email"
           className="mf-input"
@@ -812,7 +812,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="REPLY-FROM NAME (optional)">
+      <Section span="half" title="REPLY-FROM NAME (optional)">
         <input
           type="text"
           className="mf-input"
@@ -910,7 +910,7 @@ function ProfileForm() {
         )}
       </Section>
 
-      <Section title="EXPERIENCE (YEARS)">
+      <Section span="half" title="EXPERIENCE (YEARS)">
         <input
           type="number"
           className="mf-input"
@@ -923,7 +923,7 @@ function ProfileForm() {
         />
       </Section>
 
-      <Section title="CLIENTS TRAINED (lifetime, optional)">
+      <Section span="half" title="CLIENTS TRAINED (lifetime, optional)">
         <input
           type="number"
           className="mf-input"
@@ -1298,7 +1298,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="PRICE TIER">
+      <Section span="half" title="PRICE TIER">
         <div style={{ display: 'flex', gap: 6 }}>
           {TIERS.map((t) => (
             <button
@@ -1325,7 +1325,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="HOURLY RATE (USD)">
+      <Section span="half" title="HOURLY RATE (USD)">
         <input
           type="number"
           className="mf-input"
@@ -1339,7 +1339,7 @@ function ProfileForm() {
         />
       </Section>
 
-      <Section title="SERVICE MODES">
+      <Section span="half" title="SERVICE MODES">
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
             <input
