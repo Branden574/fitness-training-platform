@@ -546,7 +546,7 @@ function ProfileForm() {
         </div>
       )}
 
-      <Section title="PUBLIC PHOTO">
+      <Section id="section-photo" title="PUBLIC PHOTO">
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <div
             style={{
@@ -589,7 +589,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="COVER IMAGE (optional)">
+      <Section id="section-cover" title="COVER IMAGE (optional)">
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
           <div
             style={{
@@ -650,7 +650,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="HEADLINE (one sentence shown under your name)">
+      <Section id="section-headline" title="HEADLINE (one sentence shown under your name)">
         <input
           className="mf-input"
           placeholder="Strength coach helping busy professionals get lean."
@@ -660,7 +660,7 @@ function ProfileForm() {
         />
       </Section>
 
-      <Section title="LOCATION">
+      <Section id="section-location" title="LOCATION">
         <input
           className="mf-input"
           placeholder="Fresno, CA · The Iron Office"
@@ -814,7 +814,7 @@ function ProfileForm() {
         />
       </Section>
 
-      <Section title="BIO (max 500 chars)">
+      <Section id="section-bio" title="BIO (max 500 chars)">
         <textarea
           className="mf-input"
           rows={4}
@@ -824,7 +824,7 @@ function ProfileForm() {
         />
       </Section>
 
-      <Section title="SPECIALTIES (up to 5)">
+      <Section id="section-specialties" title="SPECIALTIES (up to 5)">
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
           {profile.specialties.map((s) => (
             <span
@@ -934,7 +934,7 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="QUICK FACTS · sidebar bullet points">
+      <Section id="section-quick-facts" title="QUICK FACTS · sidebar bullet points">
         <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
           Short facts that show in the sidebar of your profile — one small
           heading plus a detail per row. Example: <b>EXPERIENCE</b> · 10+ years.
@@ -982,7 +982,7 @@ function ProfileForm() {
         </button>
       </Section>
 
-      <Section title="APPROACH PILLARS · up to 6 cards on your profile">
+      <Section id="section-pillars" title="APPROACH PILLARS · up to 6 cards on your profile">
         <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
           The core things you focus on with clients. Each card has a title,
           a small icon, and a short description.
@@ -1047,7 +1047,7 @@ function ProfileForm() {
         </button>
       </Section>
 
-      <Section title={`GALLERY (${profile.gallery.length}/30)`}>
+      <Section id="section-gallery" title={`GALLERY (${profile.gallery.length}/30)`}>
         <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 12 }}>
           Upload photos of your training sessions, facility, competitions,
           or athletes. Each image saves to your gallery instantly.
@@ -1151,7 +1151,7 @@ function ProfileForm() {
         </button>
       </Section>
 
-      <Section title="SERVICES & PRICING · up to 8 cards">
+      <Section id="section-services" title="SERVICES & PRICING · up to 8 cards">
         <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
           Each card is one thing clients can buy from you — for example
           &ldquo;1:1 Online Coaching · $249 per month · Apply.&rdquo;
@@ -1236,7 +1236,7 @@ function ProfileForm() {
         </button>
       </Section>
 
-      <Section title="CERTIFICATIONS">
+      <Section id="section-certifications" title="CERTIFICATIONS">
         <div style={{ display: 'grid', gap: 6, marginBottom: 8 }}>
           {profile.certifications.map((c, i) => (
             <div
