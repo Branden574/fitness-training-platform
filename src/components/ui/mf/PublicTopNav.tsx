@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import Btn from './Btn';
 
 export interface PublicTopNavProps {
@@ -38,7 +40,39 @@ function BrandMark({ size = 28 }: { size?: number }) {
   );
 }
 
+const NAV_LINKS: Array<{
+  href: string;
+  label: string;
+  key: PublicTopNavProps['activeSection'];
+}> = [
+  { href: '/#platform', label: 'Platform', key: 'platform' },
+  { href: '/?as=trainer#role-split', label: 'For Trainers', key: 'trainers' },
+  { href: '/?as=client#role-split', label: 'For Clients', key: 'clients' },
+  { href: '/trainers', label: 'Trainers', key: 'trainers-dir' },
+  { href: '/#pricing', label: 'Pricing', key: 'pricing' },
+];
+
 export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Close the mobile menu any time the route changes — clicking a link
+  // navigates without refreshing the component, so we need an explicit
+  // close on pathname change.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll while the mobile menu is open.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   const linkClass = (key: PublicTopNavProps['activeSection']) =>
     activeSection === key
       ? 'text-[color:var(--mf-fg)]'
@@ -57,7 +91,7 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
         className="max-w-[1200px] mx-auto px-6 flex items-center justify-between"
         style={{ height: 64 }}
       >
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-10 min-w-0">
           <Link href="/" className="flex items-center gap-2">
             <BrandMark />
             <span
@@ -71,11 +105,11 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
             className="hidden md:flex items-center gap-6"
             style={{ fontSize: 14 }}
           >
-            <Link href="/#platform" className={linkClass('platform')}>Platform</Link>
-            <Link href="/?as=trainer#role-split" className={linkClass('trainers')}>For Trainers</Link>
-            <Link href="/?as=client#role-split" className={linkClass('clients')}>For Clients</Link>
-            <Link href="/trainers" className={linkClass('trainers-dir')}>Trainers</Link>
-            <Link href="/#pricing" className={linkClass('pricing')}>Pricing</Link>
+            {NAV_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className={linkClass(l.key)}>
+                {l.label}
+              </Link>
+            ))}
           </nav>
         </div>
         <div className="flex items-center gap-2">
@@ -86,14 +120,85 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
           >
             Become a trainer
           </Link>
-          <Link href="/auth/signin">
+          <Link href="/auth/signin" className="hidden sm:inline">
             <Btn variant="ghost">Sign in</Btn>
           </Link>
           <Link href="/apply">
             <Btn variant="primary" icon={ArrowRight}>Apply</Btn>
           </Link>
+          <button
+            type="button"
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            aria-controls="public-nav-mobile-panel"
+            className="mf-btn mf-btn-ghost md:hidden"
+            style={{ width: 40, height: 40, padding: 0 }}
+          >
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile panel */}
+      {mobileOpen ? (
+        <div
+          id="public-nav-mobile-panel"
+          className="md:hidden"
+          style={{
+            borderTop: '1px solid var(--mf-hairline)',
+            background: 'var(--mf-bg)',
+          }}
+        >
+          <nav
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '12px 24px 20px',
+              gap: 4,
+            }}
+          >
+            {NAV_LINKS.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setMobileOpen(false)}
+                className={linkClass(l.key)}
+                style={{
+                  padding: '14px 4px',
+                  fontSize: 16,
+                  borderBottom: '1px solid var(--mf-hairline)',
+                }}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <Link
+              href="/for-trainers/signup"
+              onClick={() => setMobileOpen(false)}
+              className="mf-fg-dim"
+              style={{
+                padding: '14px 4px',
+                fontSize: 15,
+                borderBottom: '1px solid var(--mf-hairline)',
+              }}
+            >
+              Become a trainer
+            </Link>
+            <Link
+              href="/auth/signin"
+              onClick={() => setMobileOpen(false)}
+              className="sm:hidden"
+              style={{
+                padding: '14px 4px',
+                fontSize: 15,
+              }}
+            >
+              Sign in
+            </Link>
+          </nav>
+        </div>
+      ) : null}
     </div>
   );
 }
