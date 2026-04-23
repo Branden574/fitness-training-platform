@@ -551,7 +551,10 @@ function ProfileForm() {
         className="xl:grid-cols-[minmax(0,720px)_320px]"
         style={{ display: 'grid', gap: 24, alignItems: 'start' }}
       >
-        <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
+        <div
+          className="md:grid-cols-2"
+          style={{ display: 'grid', gap: 16, minWidth: 0 }}
+        >
           <Section id="section-photo" title="PUBLIC PHOTO">
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <div
