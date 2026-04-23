@@ -1381,9 +1381,23 @@ function ProfileForm() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  id,
+  title,
+  children,
+}: {
+  id?: string;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="mf-card" style={{ padding: 16 }}>
+    <div
+      id={id}
+      className="mf-card"
+      // scrollMarginTop keeps the section's title visible below the sticky
+      // save row when the checklist smooth-scrolls us to this anchor.
+      style={{ padding: 16, scrollMarginTop: 96 }}
+    >
       <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
         {title}
       </div>
