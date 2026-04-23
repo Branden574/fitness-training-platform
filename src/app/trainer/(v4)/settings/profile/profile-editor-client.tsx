@@ -77,6 +77,10 @@ function ProfileForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [galleryUploading, setGalleryUploading] = useState(false);
   const [specialtyInput, setSpecialtyInput] = useState('');
   const [specialtyHints, setSpecialtyHints] = useState<string[]>([]);
   const [certInput, setCertInput] = useState('');
@@ -234,19 +238,6 @@ function ProfileForm() {
   const removePillar = (i: number) =>
     update('pillars', profile.pillars.filter((_, idx) => idx !== i));
 
-  const addGalleryItem = () => {
-    if (profile.gallery.length >= 30) return;
-    update('gallery', [...profile.gallery, '']);
-  };
-  const updateGalleryItem = (i: number, v: string) => {
-    update(
-      'gallery',
-      profile.gallery.map((g, idx) => (idx === i ? v : g)),
-    );
-  };
-  const removeGalleryItem = (i: number) =>
-    update('gallery', profile.gallery.filter((_, idx) => idx !== i));
-
   const addService = () => {
     if (profile.services.length >= 8) return;
     update('services', [
@@ -291,6 +282,93 @@ function ProfileForm() {
     setTimeout(() => setMessage(null), 2000);
   };
 
+  const uploadCover = async (file: File) => {
+    setError(null);
+    setCoverUploading(true);
+    try {
+      const form = new FormData();
+      form.append('cover', file);
+      const res = await fetch('/api/trainers/me/cover', {
+        method: 'POST',
+        body: form,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Cover upload failed');
+        return;
+      }
+      const data = await res.json();
+      update('coverImageUrl', data.coverImageUrl);
+      setMessage('Cover image updated.');
+      setTimeout(() => setMessage(null), 2000);
+    } finally {
+      setCoverUploading(false);
+    }
+  };
+
+  const removeCover = async () => {
+    setError(null);
+    const res = await fetch('/api/trainers/me/cover', { method: 'DELETE' });
+    if (!res.ok) {
+      setError('Failed to remove cover');
+      return;
+    }
+    update('coverImageUrl', null);
+  };
+
+  const uploadGalleryImage = async (file: File) => {
+    setError(null);
+    setGalleryUploading(true);
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const res = await fetch('/api/trainers/me/gallery', {
+        method: 'POST',
+        body: form,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Gallery upload failed');
+        return;
+      }
+      const data = await res.json();
+      // Server returns the full updated gallery so we stay in sync.
+      if (Array.isArray(data.gallery)) {
+        update('gallery', data.gallery as string[]);
+      }
+      setMessage('Image added.');
+      setTimeout(() => setMessage(null), 2000);
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
+  const deleteGalleryEntry = async (url: string) => {
+    setError(null);
+    // Remove locally first for responsive UI; if the server rejects we
+    // fall back to the authoritative array it returns.
+    update('gallery', profile.gallery.filter((g) => g !== url));
+    const res = await fetch('/api/trainers/me/gallery', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.gallery)) {
+        update('gallery', data.gallery as string[]);
+      }
+    } else {
+      // Refetch full profile to recover authoritative state.
+      const fresh = await fetch('/api/trainers/me/profile', { cache: 'no-store' });
+      if (fresh.ok) {
+        const data = await fresh.json();
+        if (Array.isArray(data.gallery)) update('gallery', data.gallery as string[]);
+      }
+      setError('Failed to remove image');
+    }
+  };
+
   const save = async () => {
     setError(null);
     setSaving(true);
@@ -300,11 +378,15 @@ function ProfileForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bio: profile.bio ?? undefined,
+          headline: profile.headline ?? null,
           location: profile.location ?? undefined,
           instagramHandle: profile.instagramHandle ?? undefined,
+          tiktokHandle: profile.tiktokHandle ?? null,
+          youtubeHandle: profile.youtubeHandle ?? null,
           contactPhone: profile.contactPhone ?? null,
           specialties: profile.specialties,
           experience: profile.experience,
+          clientsTrained: profile.clientsTrained ?? null,
           certifications: profile.certifications,
           priceTier: profile.priceTier ?? undefined,
           hourlyRate: profile.hourlyRate ?? undefined,
@@ -312,6 +394,18 @@ function ProfileForm() {
           acceptsOnline: profile.acceptsOnline,
           replyFromEmail: profile.replyFromEmail ?? null,
           replyFromName: profile.replyFromName ?? null,
+          // Strip any empty rows before sending — the API's Zod schema
+          // requires min(1) lengths on strings inside JSON arrays.
+          quickFacts: profile.quickFacts.filter(
+            (f) => f.label.trim() && f.value.trim(),
+          ),
+          pillars: profile.pillars.filter(
+            (p) => p.title.trim() && p.description.trim(),
+          ),
+          gallery: profile.gallery.filter((g) => g.trim().length > 0),
+          services: profile.services.filter(
+            (s) => s.title.trim() && s.description.trim() && s.price.trim() && s.cta.trim(),
+          ),
         }),
       });
       if (!res.ok) {
@@ -414,16 +508,64 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="COVER IMAGE URL (optional)">
-        <input
-          className="mf-input"
-          placeholder="https://cdn.martinezfitness559.com/…"
-          value={profile.coverImageUrl ?? ''}
-          onChange={(e) => update('coverImageUrl', e.target.value)}
-          maxLength={500}
-        />
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
-          Paste a full https:// URL to an image. Leave blank to use the editorial gradient placeholder with your name on the header.
+      <Section title="COVER IMAGE (optional)">
+        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+          <div
+            style={{
+              width: 220,
+              height: 120,
+              borderRadius: 6,
+              background: 'var(--mf-surface-2)',
+              border: '1px solid var(--mf-hairline)',
+              backgroundImage: profile.coverImageUrl
+                ? `url(${profile.coverImageUrl})`
+                : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadCover(f);
+                e.target.value = '';
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="mf-btn"
+                onClick={() => coverInputRef.current?.click()}
+                disabled={coverUploading}
+              >
+                {coverUploading
+                  ? 'Uploading…'
+                  : profile.coverImageUrl
+                    ? 'Replace cover'
+                    : 'Upload cover'}
+              </button>
+              {profile.coverImageUrl ? (
+                <button
+                  type="button"
+                  className="mf-btn"
+                  onClick={removeCover}
+                  disabled={coverUploading}
+                >
+                  Remove
+                </button>
+              ) : null}
+            </div>
+            <div className="mf-fg-dim" style={{ fontSize: 11 }}>
+              JPEG, PNG, or WebP · Max 8 MB · wide landscape (3:1 or wider) looks best.
+              Leave blank to use the editorial gradient placeholder.
+            </div>
+          </div>
         </div>
       </Section>
 
@@ -814,45 +956,107 @@ function ProfileForm() {
         </button>
       </Section>
 
-      <Section title="GALLERY (image URLs or placeholder labels)">
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 8 }}>
-          Paste a full https:// URL for each image, or a short label like
-          “SQUAT RACK · 405” to render a placeholder tile until you upload a
-          real photo.
+      <Section title={`GALLERY (${profile.gallery.length}/30)`}>
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 12 }}>
+          Upload photos of your training sessions, facility, competitions,
+          or athletes. Each image saves to your gallery instantly.
         </div>
-        <div style={{ display: 'grid', gap: 6 }}>
-          {profile.gallery.map((g, i) => (
-            <div
-              key={i}
-              style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}
-            >
-              <input
-                className="mf-input"
-                placeholder="https://… or LABEL"
-                value={g}
-                onChange={(e) => updateGalleryItem(i, e.target.value)}
-                maxLength={240}
-              />
-              <button
-                type="button"
-                className="mf-btn"
-                onClick={() => removeGalleryItem(i)}
-                style={{ height: 40, width: 40, padding: 0 }}
-                aria-label="Remove image"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
+
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadGalleryImage(f);
+            e.target.value = '';
+          }}
+        />
+
+        {profile.gallery.length > 0 ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            {profile.gallery.map((g, i) => {
+              const isUrl = /^https?:\/\//i.test(g) || g.startsWith('/');
+              return (
+                <div
+                  key={`${g}-${i}`}
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '1 / 1',
+                    borderRadius: 6,
+                    overflow: 'hidden',
+                    background: 'var(--mf-surface-3)',
+                    backgroundImage: isUrl ? `url(${g})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    border: '1px solid var(--mf-hairline)',
+                  }}
+                >
+                  {!isUrl ? (
+                    <div
+                      className="mf-font-mono mf-fg-mute"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        padding: 8,
+                        fontSize: 10,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {g}
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => deleteGalleryEntry(g)}
+                    aria-label="Remove image"
+                    style={{
+                      position: 'absolute',
+                      top: 6,
+                      right: 6,
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      background: 'rgba(10,10,11,0.75)',
+                      color: 'var(--mf-fg)',
+                      border: '1px solid var(--mf-hairline-strong)',
+                      cursor: 'pointer',
+                      display: 'grid',
+                      placeItems: 'center',
+                      fontSize: 16,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
         <button
           type="button"
           className="mf-btn"
-          onClick={addGalleryItem}
-          disabled={profile.gallery.length >= 30}
-          style={{ marginTop: 8 }}
+          onClick={() => galleryInputRef.current?.click()}
+          disabled={galleryUploading || profile.gallery.length >= 30}
         >
-          + Add image
+          {galleryUploading
+            ? 'Uploading…'
+            : profile.gallery.length >= 30
+              ? 'Gallery full'
+              : '+ Upload image'}
         </button>
       </Section>
 
