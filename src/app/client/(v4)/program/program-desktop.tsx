@@ -64,6 +64,7 @@ export default function ProgramDesktop({
         breadcrumbs={BreadcrumbText(data)}
         athleteInitials={ctx.initials}
         athleteName={ctx.name ?? ctx.email}
+        athletePhotoUrl={ctx.image}
         athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
       >
         <div className="p-6">

@@ -38,6 +38,12 @@ export interface ClientDesktopShellProps {
   athleteInitials?: string;
   athleteName?: string;
   athleteMeta?: string;
+  /**
+   * The client's own profile photo (User.image). When present the sidebar
+   * swaps the initials chip for their headshot — matching what the trainer
+   * chip does above it.
+   */
+  athletePhotoUrl?: string | null;
   unreadMessages?: number;
 }
 
@@ -83,8 +89,10 @@ export default function ClientDesktopShell({
   athleteInitials = 'JR',
   athleteName = 'Athlete',
   athleteMeta,
+  athletePhotoUrl,
   unreadMessages,
 }: ClientDesktopShellProps) {
+  const safeAthletePhoto = safeImageUrl(athletePhotoUrl);
   const pathname = usePathname();
   const resolved = active ?? deriveActive(pathname);
   const { trainer } = useAssignedTrainer();
@@ -121,20 +129,35 @@ export default function ClientDesktopShell({
           className="px-3 flex items-center gap-2"
           style={{ padding: '16px 12px', borderBottom: '1px solid var(--mf-hairline)' }}
         >
-          <div
-            className="grid place-items-center mf-font-mono"
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 6,
-              background: 'var(--mf-surface-3)',
-              border: '1px solid var(--mf-hairline)',
-              fontSize: 12,
-              fontWeight: 600,
-            }}
-          >
-            {athleteInitials}
-          </div>
+          {safeAthletePhoto ? (
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 6,
+                backgroundImage: `url(${JSON.stringify(safeAthletePhoto)})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: '1px solid var(--mf-hairline)',
+              }}
+              aria-label={athleteName}
+            />
+          ) : (
+            <div
+              className="grid place-items-center mf-font-mono"
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 6,
+                background: 'var(--mf-surface-3)',
+                border: '1px solid var(--mf-hairline)',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {athleteInitials}
+            </div>
+          )}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {athleteName}

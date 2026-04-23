@@ -94,6 +94,7 @@ export default async function ActiveWorkoutPage({
         initial={payload}
         athleteInitials={ctx.initials}
         athleteName={ctx.name ?? ctx.email}
+        athletePhotoUrl={ctx.image}
       />
     </>
   );

@@ -24,6 +24,13 @@ export interface WorkoutDraft {
   logsByExercise: Record<string, SetLogPersisted[]>;
   /** True after a failed submit so the UI can surface "queued for sync". */
   pendingSubmit?: boolean;
+  /**
+   * When (ms since epoch) the user tapped "Start" to actually begin the
+   * session. Unset until the first tap. The elapsed timer keys off this so
+   * navigating to the URL doesn't auto-start the clock, and a reload mid-run
+   * doesn't reset it.
+   */
+  userStartedAtMs?: number;
 }
 
 function k(sessionId: string): string {
@@ -79,5 +86,6 @@ export function markDraftPendingSubmit(sessionId: string): void {
     activeSetIdx: existing.activeSetIdx,
     logsByExercise: existing.logsByExercise,
     pendingSubmit: true,
+    userStartedAtMs: existing.userStartedAtMs,
   });
 }

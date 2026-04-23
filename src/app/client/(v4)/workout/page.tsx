@@ -261,6 +261,7 @@ export default async function WorkoutLandingPage() {
             title="Choose a workout"
             athleteInitials={ctx.initials}
             athleteName={ctx.name ?? ctx.email}
+            athletePhotoUrl={ctx.image}
             athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
           >
             <div className="p-6">
@@ -342,6 +343,7 @@ export default async function WorkoutLandingPage() {
           title="Choose a workout"
           athleteInitials={ctx.initials}
           athleteName={ctx.name ?? ctx.email}
+          athletePhotoUrl={ctx.image}
           athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
         >
           <div className="p-6">

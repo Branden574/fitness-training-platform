@@ -15,6 +15,11 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { Btn, Chip, ClientDesktopShell } from '@/components/ui/mf';
+import {
+  clearWorkoutDraft,
+  loadWorkoutDraft,
+  saveWorkoutDraft,
+} from '@/lib/workoutDraft';
 
 interface ExerciseDef {
   id: string;
@@ -66,16 +71,19 @@ export default function ActiveWorkoutDesktop({
   initial,
   athleteInitials,
   athleteName,
+  athletePhotoUrl,
 }: {
   initial: InitialPayload;
   athleteInitials?: string;
   athleteName?: string;
+  athletePhotoUrl?: string | null;
 }) {
   const router = useRouter();
   const celebrate = useCelebrate();
-  const [exerciseIdx, setExerciseIdx] = useState(0);
-  const [logsByExercise, setLogsByExercise] = useState<Record<string, SetLog[]>>(() =>
-    Object.fromEntries(
+  const draft = typeof window !== 'undefined' ? loadWorkoutDraft(initial.id) : null;
+  const [exerciseIdx, setExerciseIdx] = useState(() => draft?.exerciseIdx ?? 0);
+  const [logsByExercise, setLogsByExercise] = useState<Record<string, SetLog[]>>(() => {
+    const fresh = Object.fromEntries(
       initial.workout.exercises.map((e) => [
         e.id,
         Array.from({ length: e.targetSets }, (_, i) => ({
@@ -86,9 +94,30 @@ export default function ActiveWorkoutDesktop({
           done: false,
         })),
       ]),
-    ),
+    ) as Record<string, SetLog[]>;
+    if (!draft) return fresh;
+    const out: Record<string, SetLog[]> = {};
+    for (const ex of initial.workout.exercises) {
+      const stored = draft.logsByExercise[ex.id];
+      if (Array.isArray(stored) && stored.length === ex.targetSets) {
+        out[ex.id] = stored.map((s) => ({ ...s }));
+      } else {
+        out[ex.id] = fresh[ex.id]!;
+      }
+    }
+    return out;
+  });
+  const [activeSetIdx, setActiveSetIdx] = useState(() => draft?.activeSetIdx ?? 0);
+  // Manual-start: the elapsed timer doesn't begin until the user taps Start.
+  // We persist the moment they hit it so a reload or phone lock doesn't reset
+  // the running clock. Null = not started yet; numeric = ms since epoch.
+  const [userStartedAtMs, setUserStartedAtMs] = useState<number | null>(
+    () => draft?.userStartedAtMs ?? null,
   );
-  const [activeSetIdx, setActiveSetIdx] = useState(0);
+  // Rest countdown is derived from an absolute end-time so the display stays
+  // accurate even if the tab is backgrounded for 30s (setInterval pauses on
+  // mobile Safari; tick-based decrement would drift).
+  const [restEndAtMs, setRestEndAtMs] = useState<number | null>(null);
   const [rest, setRest] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -100,31 +129,70 @@ export default function ActiveWorkoutDesktop({
   const [formVideoLoading, setFormVideoLoading] = useState(false);
   const [formVideoError, setFormVideoError] = useState<string | null>(null);
 
-  const startedAtMs = useRef(new Date(initial.startedAt).getTime());
+  const startedAtMs = useRef<number | null>(userStartedAtMs);
   const pausedElapsedRef = useRef<number | null>(null);
 
   useEffect(() => {
+    startedAtMs.current = userStartedAtMs;
+  }, [userStartedAtMs]);
+
+  useEffect(() => {
+    // Timer doesn't run until the user has manually started the session.
+    if (startedAtMs.current === null) {
+      setElapsedSec(0);
+      return;
+    }
     if (paused) {
-      // Freeze elapsed where it is right now; stop ticking.
       pausedElapsedRef.current = Math.floor((Date.now() - startedAtMs.current) / 1000);
       return;
     }
-    // On resume, rebase startedAtMs so Date.now() - startedAtMs = frozen elapsed.
     if (pausedElapsedRef.current !== null) {
       startedAtMs.current = Date.now() - pausedElapsedRef.current * 1000;
+      setUserStartedAtMs(startedAtMs.current);
       pausedElapsedRef.current = null;
     }
-    const id = setInterval(() => {
+    const tick = () => {
+      if (startedAtMs.current === null) return;
       setElapsedSec(Math.floor((Date.now() - startedAtMs.current) / 1000));
-    }, 1000);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, userStartedAtMs]);
 
+  // Derive the displayed rest seconds from an absolute end-time so
+  // foreground/background cycles can't drift the value.
   useEffect(() => {
-    if (rest <= 0 || paused) return;
-    const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000);
+    if (restEndAtMs === null || paused) {
+      if (restEndAtMs === null) setRest(0);
+      return;
+    }
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((restEndAtMs - Date.now()) / 1000));
+      setRest(remaining);
+      if (remaining === 0) setRestEndAtMs(null);
+    };
+    tick();
+    const id = setInterval(tick, 250);
     return () => clearInterval(id);
-  }, [rest, paused]);
+  }, [restEndAtMs, paused]);
+
+  // Persist draft + start timestamp on every relevant mutation so a crash,
+  // reload, or phone-lock doesn't reset the logged sets or running timer.
+  useEffect(() => {
+    saveWorkoutDraft(initial.id, {
+      exerciseIdx,
+      activeSetIdx,
+      logsByExercise,
+      userStartedAtMs: userStartedAtMs ?? undefined,
+    });
+  }, [initial.id, exerciseIdx, activeSetIdx, logsByExercise, userStartedAtMs]);
+
+  function startWorkout() {
+    const now = Date.now();
+    setUserStartedAtMs(now);
+    startedAtMs.current = now;
+  }
 
   const currentExercise = initial.workout.exercises[exerciseIdx]!;
   const currentLogs = logsByExercise[currentExercise.id]!;
@@ -171,19 +239,21 @@ export default function ActiveWorkoutDesktop({
   }
 
   function completeSet() {
+    if (userStartedAtMs === null) return;
     mutateSet({ done: true });
+    const restMs = Date.now() + currentExercise.restSeconds * 1000;
     const nextSet = activeSetIdx + 1;
     if (nextSet < currentLogs.length) {
       setActiveSetIdx(nextSet);
-      setRest(currentExercise.restSeconds);
+      setRestEndAtMs(restMs);
     } else {
       const nextEx = exerciseIdx + 1;
       if (nextEx < initial.workout.exercises.length) {
         setExerciseIdx(nextEx);
         setActiveSetIdx(0);
-        setRest(currentExercise.restSeconds);
+        setRestEndAtMs(restMs);
       } else {
-        setRest(0);
+        setRestEndAtMs(null);
       }
     }
   }
@@ -241,6 +311,8 @@ export default function ActiveWorkoutDesktop({
       });
       if (!patch.ok) throw new Error('Could not close session');
 
+      clearWorkoutDraft(initial.id);
+
       if (detectedPrs.length > 0) {
         setPrs(detectedPrs);
         const top = detectedPrs[0]!;
@@ -293,23 +365,118 @@ export default function ActiveWorkoutDesktop({
         title="Active Session"
         athleteInitials={athleteInitials}
         athleteName={athleteName}
+        athletePhotoUrl={athletePhotoUrl}
         headerRight={
           <>
-            <Chip kind={paused ? 'warn' : 'live'}>
-              {paused ? 'PAUSED' : '● LIVE'} · {String(elapsedM).padStart(2, '0')}:{String(elapsedS).padStart(2, '0')}
-            </Chip>
-            <Btn
-              icon={paused ? Play : Pause}
-              onClick={() => setPaused((p) => !p)}
-            >
-              {paused ? 'Resume' : 'Pause'}
-            </Btn>
+            {userStartedAtMs === null ? (
+              <>
+                <Chip kind="warn">READY · 00:00</Chip>
+                <Btn icon={Play} onClick={startWorkout}>Start workout</Btn>
+              </>
+            ) : (
+              <>
+                <Chip kind={paused ? 'warn' : 'live'}>
+                  {paused ? 'PAUSED' : '● LIVE'} · {String(elapsedM).padStart(2, '0')}:{String(elapsedS).padStart(2, '0')}
+                </Chip>
+                <Btn
+                  icon={paused ? Play : Pause}
+                  onClick={() => setPaused((p) => !p)}
+                >
+                  {paused ? 'Resume' : 'Pause'}
+                </Btn>
+              </>
+            )}
             <Btn icon={X} onClick={handleFinish} disabled={finishing}>
               {finishing ? 'Saving…' : 'End session'}
             </Btn>
           </>
         }
       >
+        {userStartedAtMs === null && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Start workout"
+            style={{
+              position: 'fixed',
+              top: 56,
+              left: 220,
+              right: 0,
+              bottom: 0,
+              zIndex: 40,
+              background: 'rgba(10,10,11,0.72)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 24,
+            }}
+          >
+            <div
+              className="mf-card-elev"
+              style={{
+                padding: 32,
+                maxWidth: 420,
+                width: '100%',
+                borderColor: 'var(--mf-accent)',
+                background:
+                  'linear-gradient(180deg, rgba(255,77,28,0.10), transparent 60%)',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                className="mf-eyebrow"
+                style={{ color: 'var(--mf-accent)', marginBottom: 12 }}
+              >
+                READY WHEN YOU ARE
+              </div>
+              <div
+                className="mf-font-display"
+                style={{
+                  fontSize: 28,
+                  letterSpacing: '-0.01em',
+                  lineHeight: 1.1,
+                  textTransform: 'uppercase',
+                  marginBottom: 8,
+                }}
+              >
+                {initial.workout.title}
+              </div>
+              <div
+                className="mf-fg-dim"
+                style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}
+              >
+                {totalExercises} exercise{totalExercises === 1 ? '' : 's'} ·{' '}
+                {initial.workout.duration} min target. The clock only starts
+                when you tap below.
+              </div>
+              <button
+                type="button"
+                onClick={startWorkout}
+                className="mf-font-display"
+                style={{
+                  width: '100%',
+                  height: 56,
+                  borderRadius: 6,
+                  background: 'var(--mf-accent)',
+                  color: 'var(--mf-accent-ink)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 18,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 12,
+                }}
+              >
+                <Play size={18} /> START WORKOUT
+              </button>
+            </div>
+          </div>
+        )}
         <div className="p-6 grid grid-cols-12 gap-5">
           {/* Exercise list */}
           <aside
@@ -516,7 +683,11 @@ export default function ActiveWorkoutDesktop({
                     </div>
                     <div className="flex gap-2" style={{ marginTop: 16 }}>
                       <button
-                        onClick={() => setRest((r) => r + 15)}
+                        onClick={() =>
+                          setRestEndAtMs((prev) =>
+                            prev !== null ? prev + 15_000 : Date.now() + 15_000,
+                          )
+                        }
                         className="mf-btn"
                         style={{
                           height: 32,
@@ -529,7 +700,11 @@ export default function ActiveWorkoutDesktop({
                         +15s
                       </button>
                       <button
-                        onClick={() => setRest((r) => r + 30)}
+                        onClick={() =>
+                          setRestEndAtMs((prev) =>
+                            prev !== null ? prev + 30_000 : Date.now() + 30_000,
+                          )
+                        }
                         className="mf-btn"
                         style={{
                           height: 32,
@@ -542,7 +717,7 @@ export default function ActiveWorkoutDesktop({
                         +30s
                       </button>
                       <button
-                        onClick={() => setRest(0)}
+                        onClick={() => setRestEndAtMs(null)}
                         className="mf-btn"
                         style={{
                           height: 32,

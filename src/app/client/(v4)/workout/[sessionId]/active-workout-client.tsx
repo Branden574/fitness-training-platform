@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Plus, Minus, Check, X, ChevronRight, MoreHorizontal, Video } from 'lucide-react';
+import { ChevronLeft, Plus, Minus, Check, X, ChevronRight, MoreHorizontal, Video, Play } from 'lucide-react';
 import { Chip } from '@/components/ui/mf';
 import { Btn } from '@/components/ui/mf';
 import { useCelebrate } from '@/components/animations';
@@ -98,6 +98,18 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
     return out;
   });
   const [activeSetIdx, setActiveSetIdx] = useState(() => draft?.activeSetIdx ?? 0);
+  // Manual-start: the elapsed timer only runs after the user taps Start.
+  // Stored in localStorage via the draft so a phone-lock or reload doesn't
+  // silently restart the clock.
+  const [userStartedAtMs, setUserStartedAtMs] = useState<number | null>(
+    () => draft?.userStartedAtMs ?? null,
+  );
+  // Rest is derived from an absolute end-time (restEndAtMs) instead of a
+  // decrementing counter. Mobile Safari throttles setInterval when the tab
+  // is backgrounded or the phone screen is off, which made the old
+  // decrement-every-tick rest timer stall visibly when the user looked at
+  // their phone mid-rest.
+  const [restEndAtMs, setRestEndAtMs] = useState<number | null>(null);
   const [rest, setRest] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [finishing, setFinishing] = useState(false);
@@ -108,22 +120,48 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
   const [formVideoLoading, setFormVideoLoading] = useState(false);
   const [formVideoError, setFormVideoError] = useState<string | null>(null);
 
-  const startedAtMs = useRef(Date.now() - (Date.now() - new Date(initial.startedAt).getTime()));
+  const startedAtMs = useRef<number | null>(userStartedAtMs);
 
-  // Total elapsed timer
   useEffect(() => {
-    const id = setInterval(() => {
+    startedAtMs.current = userStartedAtMs;
+  }, [userStartedAtMs]);
+
+  // Total elapsed timer — only runs after the user has manually started.
+  useEffect(() => {
+    if (userStartedAtMs === null) {
+      setElapsedSec(0);
+      return;
+    }
+    const tick = () => {
+      if (startedAtMs.current === null) return;
       setElapsedSec(Math.floor((Date.now() - startedAtMs.current) / 1000));
-    }, 1000);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [userStartedAtMs]);
 
-  // Rest countdown
+  // Rest countdown — end-time based so backgrounded phones don't desync.
   useEffect(() => {
-    if (rest <= 0) return;
-    const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000);
+    if (restEndAtMs === null) {
+      setRest(0);
+      return;
+    }
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((restEndAtMs - Date.now()) / 1000));
+      setRest(remaining);
+      if (remaining === 0) setRestEndAtMs(null);
+    };
+    tick();
+    const id = setInterval(tick, 250);
     return () => clearInterval(id);
-  }, [rest]);
+  }, [restEndAtMs]);
+
+  function startWorkout() {
+    const now = Date.now();
+    setUserStartedAtMs(now);
+    startedAtMs.current = now;
+  }
 
   // Persist every meaningful state mutation to localStorage so a tab crash,
   // backgrounded phone, or wifi drop doesn't erase logged sets. Debounced by
@@ -134,8 +172,9 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
       exerciseIdx,
       activeSetIdx,
       logsByExercise,
+      userStartedAtMs: userStartedAtMs ?? undefined,
     });
-  }, [initial.id, exerciseIdx, activeSetIdx, logsByExercise]);
+  }, [initial.id, exerciseIdx, activeSetIdx, logsByExercise, userStartedAtMs]);
 
   const currentExercise = initial.workout.exercises[exerciseIdx]!;
   const currentLogs = logsByExercise[currentExercise.id]!;
@@ -182,21 +221,23 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
   }
 
   function completeSet() {
+    if (userStartedAtMs === null) return;
     mutateSet({ done: true });
+    const restMs = Date.now() + currentExercise.restSeconds * 1000;
     const nextSet = activeSetIdx + 1;
     if (nextSet < currentLogs.length) {
       setActiveSetIdx(nextSet);
-      setRest(currentExercise.restSeconds);
+      setRestEndAtMs(restMs);
     } else {
       // Move to next exercise automatically
       const nextEx = exerciseIdx + 1;
       if (nextEx < initial.workout.exercises.length) {
         setExerciseIdx(nextEx);
         setActiveSetIdx(0);
-        setRest(currentExercise.restSeconds);
+        setRestEndAtMs(restMs);
       } else {
         // Last set of last exercise — no rest needed
-        setRest(0);
+        setRestEndAtMs(null);
       }
     }
   }
@@ -354,7 +395,9 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
             {initial.workout.exercises.length}
           </div>
           <div style={{ fontSize: 12, fontWeight: 600 }}>
-            {String(elapsedM).padStart(2, '0')}:{String(elapsedS).padStart(2, '0')} ELAPSED
+            {userStartedAtMs === null
+              ? 'READY'
+              : `${String(elapsedM).padStart(2, '0')}:${String(elapsedS).padStart(2, '0')} ELAPSED`}
           </div>
         </div>
         <button
@@ -365,6 +408,91 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
           <MoreHorizontal size={16} />
         </button>
       </div>
+
+      {/* Pre-start overlay — blocks logging + timer until the user taps Start */}
+      {userStartedAtMs === null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Start workout"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 50,
+            background: 'rgba(10,10,11,0.82)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            className="mf-card-elev"
+            style={{
+              width: '100%',
+              maxWidth: 360,
+              padding: 24,
+              borderColor: 'var(--mf-accent)',
+              background:
+                'linear-gradient(180deg, rgba(255,77,28,0.12), transparent 60%)',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              className="mf-eyebrow"
+              style={{ color: 'var(--mf-accent)', marginBottom: 10 }}
+            >
+              READY WHEN YOU ARE
+            </div>
+            <div
+              className="mf-font-display"
+              style={{
+                fontSize: 24,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.1,
+                textTransform: 'uppercase',
+                marginBottom: 8,
+              }}
+            >
+              {initial.workout.title}
+            </div>
+            <div
+              className="mf-fg-dim"
+              style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 18 }}
+            >
+              {initial.workout.exercises.length} exercise
+              {initial.workout.exercises.length === 1 ? '' : 's'} ·{' '}
+              {initial.workout.duration} min target. The clock only starts when
+              you tap below.
+            </div>
+            <button
+              type="button"
+              onClick={startWorkout}
+              className="mf-font-display"
+              style={{
+                width: '100%',
+                height: 52,
+                borderRadius: 6,
+                background: 'var(--mf-accent)',
+                color: 'var(--mf-accent-ink)',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 16,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+              }}
+            >
+              <Play size={18} /> START WORKOUT
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Rest banner */}
       {rest > 0 && (
@@ -392,7 +520,7 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
               </div>
             </div>
             <button
-              onClick={() => setRest(0)}
+              onClick={() => setRestEndAtMs(null)}
               className="mf-btn"
               style={{
                 height: 36,

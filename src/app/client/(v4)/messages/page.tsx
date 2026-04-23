@@ -41,6 +41,7 @@ export default async function ClientMessagesPage() {
             breadcrumbs="CONNECT"
             athleteInitials={ctx.initials}
             athleteName={ctx.name ?? ctx.email}
+            athletePhotoUrl={ctx.image}
           >
             {empty}
           </ClientDesktopShell>

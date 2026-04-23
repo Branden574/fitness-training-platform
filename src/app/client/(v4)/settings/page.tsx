@@ -83,6 +83,7 @@ export default async function ClientSettingsPage() {
           breadcrumbs="ACCOUNT / SETTINGS"
           athleteInitials={ctx.initials}
           athleteName={ctx.name ?? ctx.email}
+          athletePhotoUrl={ctx.image}
           athleteMeta={
             ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined
           }

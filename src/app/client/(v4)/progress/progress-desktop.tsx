@@ -77,6 +77,7 @@ export default function ProgressDesktop({
         breadcrumbs="ANALYZE"
         athleteInitials={ctx.initials}
         athleteName={ctx.name ?? ctx.email}
+        athletePhotoUrl={ctx.image}
         athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
         headerRight={
           <>
