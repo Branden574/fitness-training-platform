@@ -61,7 +61,13 @@ export default function GallerySection({ gallery }: { gallery: string[] }) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            // Cap each tile at ~220px so a trainer with only 1–2 photos
+            // gets thumbnail-sized tiles instead of one image that fills
+            // the whole row. `auto-fill` lays out as many fixed-size
+            // columns as fit; `justify-content: start` keeps extras from
+            // being distributed into empty space.
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 220px))',
+            justifyContent: 'start',
             gap: 12,
           }}
         >
