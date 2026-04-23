@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/mf';
 import type { ClientContext } from '@/lib/client-data';
 import type { TodayData } from './today-mobile';
+import RequestSessionButton from '@/components/scheduling/RequestSessionButton';
 
 export interface TodayDesktopProps {
   ctx: ClientContext;
@@ -55,12 +56,17 @@ export default function TodayDesktop({ ctx, data }: TodayDesktopProps) {
         breadcrumbs="HOME"
         athleteInitials={ctx.initials}
         athleteName={ctx.name ?? ctx.email}
+        athletePhotoUrl={ctx.image}
         athleteMeta={ctx.trainer?.name ? `COACH · ${ctx.trainer.name.toUpperCase()}` : undefined}
         headerRight={
           <>
             <Chip kind={data.streak > 0 ? 'ok' : 'default'}>
               {data.streak > 0 ? `STREAK · ${data.streak}D` : 'READY'}
             </Chip>
+            <RequestSessionButton
+              coachId={ctx.trainer?.id ?? null}
+              coachName={ctx.trainer?.name ?? null}
+            />
           </>
         }
       >

@@ -21,7 +21,7 @@ export default async function TrainerSchedulePage() {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
 
-  const [appointments, clients] = await Promise.all([
+  const [appointments, clients, pendingRequests] = await Promise.all([
     prisma.appointment.findMany({
       where: {
         trainerId: session.user.id,
@@ -34,7 +34,26 @@ export default async function TrainerSchedulePage() {
       where: { trainerId: session.user.id, role: 'CLIENT' },
       select: { id: true, name: true, email: true, image: true },
     }),
+    // All PENDING requests for this trainer, not bounded by week — a client
+    // could request a session weeks in advance and we still need to surface
+    // it for approval.
+    prisma.appointment.findMany({
+      where: { trainerId: session.user.id, status: 'PENDING' },
+      orderBy: { startTime: 'asc' },
+      include: { client: { select: { id: true, name: true, email: true, image: true } } },
+    }),
   ]);
+
+  const pendingRequestsSerialized = pendingRequests.map((r) => ({
+    id: r.id,
+    title: r.title,
+    startTime: r.startTime.toISOString(),
+    endTime: r.endTime.toISOString(),
+    duration: r.duration,
+    location: r.location,
+    notes: r.notes,
+    client: r.client,
+  }));
 
   return (
     <>
@@ -43,12 +62,14 @@ export default async function TrainerSchedulePage() {
         clients={clients}
         weekStart={weekStart}
         weekEnd={weekEnd}
+        pendingRequests={pendingRequestsSerialized}
       />
       <ScheduleDesktop
         appointments={appointments}
         clients={clients}
         weekStart={weekStart}
         weekEnd={weekEnd}
+        pendingRequests={pendingRequestsSerialized}
       />
     </>
   );

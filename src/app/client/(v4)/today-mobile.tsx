@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Flame, Play, Check, ChevronRight } from 'lucide-react';
 import { Avatar, Chip, Btn } from '@/components/ui/mf';
 import type { ClientContext } from '@/lib/client-data';
+import RequestSessionButton from '@/components/scheduling/RequestSessionButton';
 
 export interface TodayWorkoutExercise {
   id: string;
@@ -93,14 +94,21 @@ export default function TodayMobile({ ctx, data }: TodayMobileProps) {
               Morning, {firstName}.
             </div>
           </div>
-          <Link href="/client/profile">
-            <Avatar
-              initials={ctx.initials}
-              image={ctx.image}
-              alt={ctx.name ?? ctx.email}
-              size={36}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <RequestSessionButton
+              coachId={ctx.trainer?.id ?? null}
+              coachName={ctx.trainer?.name ?? null}
+              layout="compact"
             />
-          </Link>
+            <Link href="/client/profile">
+              <Avatar
+                initials={ctx.initials}
+                image={ctx.image}
+                alt={ctx.name ?? ctx.email}
+                size={36}
+              />
+            </Link>
+          </div>
         </div>
 
         {/* Streak strip */}

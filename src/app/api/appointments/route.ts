@@ -419,7 +419,46 @@ export async function PATCH(request: NextRequest) {
           { status: 403 }
         );
       }
-      
+
+      // OVERBOOKING GUARD: approving a PENDING request must not collide
+      // with an already-APPROVED appointment in the same slot. POST already
+      // rejects conflicting new creates, but a trainer might approve two
+      // overlapping PENDING requests in sequence without this check.
+      if (status === 'APPROVED') {
+        const overlap = await prisma.appointment.findFirst({
+          where: {
+            trainerId: appointment.trainerId,
+            status: 'APPROVED',
+            id: { not: appointment.id },
+            // Overlap condition: existing.startTime < new.endTime
+            //                    AND existing.endTime   > new.startTime
+            startTime: { lt: appointment.endTime },
+            endTime: { gt: appointment.startTime },
+          },
+          select: {
+            id: true,
+            startTime: true,
+            endTime: true,
+            client: { select: { name: true } },
+          },
+        });
+        if (overlap) {
+          const when = overlap.startTime.toLocaleString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+          return NextResponse.json(
+            {
+              error: `Time slot conflicts with ${overlap.client?.name ?? 'another client'}'s session at ${when}. Decline or reschedule the other session first.`,
+              conflictAppointmentId: overlap.id,
+            },
+            { status: 409 },
+          );
+        }
+      }
     } else if (status === 'CANCELLED') {
       if (appointment.trainerId !== actualUserId && appointment.clientId !== actualUserId) {
         return NextResponse.json(

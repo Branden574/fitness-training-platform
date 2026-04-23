@@ -1,14 +1,19 @@
 import Link from 'next/link';
-import { Calendar as CalendarIcon, Plus, Check, Video } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, Video } from 'lucide-react';
 import { Avatar, Chip, TrainerMobileTabs } from '@/components/ui/mf';
 import type { ScheduleAppointment, ScheduleClient } from './schedule-desktop';
 import type { AppointmentType, AppointmentStatus } from '@prisma/client';
+import PendingRequestsPanel, {
+  type PendingRequest,
+} from '@/components/scheduling/PendingRequestsPanel';
+import ScheduleActions from './schedule-actions';
 
 export interface ScheduleMobileProps {
   appointments: ScheduleAppointment[];
   clients: ScheduleClient[];
   weekStart: Date;
   weekEnd: Date;  // accepted for parity with desktop component
+  pendingRequests: PendingRequest[];
 }
 
 function typeLabel(t: AppointmentType): string {
@@ -59,6 +64,8 @@ function initialsFor(name: string | null, email: string): string {
 export default function ScheduleMobile({
   appointments,
   weekStart,
+  clients,
+  pendingRequests,
 }: ScheduleMobileProps) {
   const now = new Date();
   const today = new Date();
@@ -148,19 +155,7 @@ export default function ScheduleMobile({
               >
                 <CalendarIcon size={14} />
               </button>
-              <button
-                type="button"
-                className="grid place-items-center rounded"
-                style={{
-                  width: 36,
-                  height: 36,
-                  background: 'var(--mf-accent)',
-                  color: 'var(--mf-accent-ink)',
-                }}
-                aria-label="New session"
-              >
-                <Plus size={14} />
-              </button>
+              <ScheduleActions clients={clients} layout="icon" />
             </div>
           </div>
 
@@ -250,6 +245,10 @@ export default function ScheduleMobile({
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 80px' }}>
+          {pendingRequests.length > 0 ? (
+            <PendingRequestsPanel requests={pendingRequests} />
+          ) : null}
+
           {/* Current session hero */}
           {current && (
             <div

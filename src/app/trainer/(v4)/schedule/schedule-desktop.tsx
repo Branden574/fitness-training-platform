@@ -1,6 +1,10 @@
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Btn, DesktopShell } from '@/components/ui/mf';
 import type { AppointmentType, AppointmentStatus } from '@prisma/client';
+import PendingRequestsPanel, {
+  type PendingRequest,
+} from '@/components/scheduling/PendingRequestsPanel';
+import ScheduleActions from './schedule-actions';
 
 export interface ScheduleAppointment {
   id: string;
@@ -25,6 +29,7 @@ export interface ScheduleDesktopProps {
   clients: ScheduleClient[];
   weekStart: Date;
   weekEnd: Date;
+  pendingRequests: PendingRequest[];
 }
 
 function decimalHour(d: Date): number {
@@ -52,6 +57,7 @@ export default function ScheduleDesktop({
   clients,
   weekStart,
   weekEnd,
+  pendingRequests,
 }: ScheduleDesktopProps) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
@@ -93,7 +99,7 @@ export default function ScheduleDesktop({
         headerRight={
           <>
             <Btn icon={CalendarIcon}>Sync to Google</Btn>
-            <Btn variant="primary" icon={Plus}>New session</Btn>
+            <ScheduleActions clients={clients} />
           </>
         }
       >
@@ -167,6 +173,12 @@ export default function ScheduleDesktop({
             ))}
           </div>
         </div>
+
+        {pendingRequests.length > 0 ? (
+          <div style={{ padding: '16px 24px 0' }}>
+            <PendingRequestsPanel requests={pendingRequests} />
+          </div>
+        ) : null}
 
         <div style={{ overflow: 'auto' }}>
           <div style={{ display: 'flex' }}>
