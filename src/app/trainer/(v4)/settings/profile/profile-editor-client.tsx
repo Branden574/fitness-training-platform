@@ -1715,3 +1715,92 @@ function PreviewBlock({
     </div>
   );
 }
+
+function ShareCard({ profile }: { profile: TrainerProfile }) {
+  const [copied, setCopied] = useState(false);
+
+  const publicUrl = (() => {
+    if (!profile.trainerSlug) return null;
+    // Server render returns '' then hydrates correctly on first client pass.
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/t/${profile.trainerSlug}`;
+  })();
+
+  const canShare = profile.trainerIsPublic && publicUrl !== null;
+
+  async function copy() {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API can fail in non-secure contexts or older browsers.
+      // We don't bother with a fallback — the URL is still visible as text
+      // for the user to select manually.
+    }
+  }
+
+  return (
+    <div className="mf-card" style={{ padding: 14 }}>
+      <div className="mf-eyebrow" style={{ marginBottom: 10 }}>
+        Share your profile
+      </div>
+
+      {canShare ? (
+        <>
+          <div
+            className="mf-font-mono"
+            style={{
+              fontSize: 10,
+              lineHeight: 1.4,
+              padding: '8px 10px',
+              background: 'var(--mf-surface-2)',
+              border: '1px solid var(--mf-hairline)',
+              borderRadius: 4,
+              wordBreak: 'break-all',
+              marginBottom: 10,
+            }}
+          >
+            {publicUrl}
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              type="button"
+              className="mf-btn focus-ring"
+              onClick={copy}
+              style={{ flex: 1, height: 32, fontSize: 11 }}
+            >
+              {copied ? 'Copied ✓' : 'Copy link'}
+            </button>
+            <a
+              href={publicUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mf-btn focus-ring"
+              style={{
+                flex: 1,
+                height: 32,
+                fontSize: 11,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              View live profile
+            </a>
+          </div>
+        </>
+      ) : (
+        <div
+          className="mf-fg-mute"
+          style={{ fontSize: 11, fontStyle: 'italic', lineHeight: 1.4 }}
+        >
+          Publish your profile to start sharing. Private profiles are hidden
+          from the public and the directory.
+        </div>
+      )}
+    </div>
+  );
+}
