@@ -51,9 +51,19 @@ interface TrainerProfile {
   services: Service[];
 }
 
-const PILLAR_ICONS = [
-  'TrendingUp', 'Apple', 'Moon', 'MessageSquare',
-  'Heart', 'Award', 'Dumbbell', 'Flame', 'Target',
+// Human-readable labels for the Lucide icons the public profile renders on
+// each Approach Pillar card. Trainers pick by what the icon *means*, not by
+// its raw Lucide name — 'Target' was confusing as a dropdown value.
+const PILLAR_ICONS: Array<{ value: string; label: string }> = [
+  { value: 'TrendingUp', label: 'Progress chart' },
+  { value: 'Dumbbell', label: 'Strength / weights' },
+  { value: 'Flame', label: 'Intensity / fat loss' },
+  { value: 'Heart', label: 'Health' },
+  { value: 'Apple', label: 'Nutrition' },
+  { value: 'Moon', label: 'Recovery / sleep' },
+  { value: 'MessageSquare', label: 'Communication' },
+  { value: 'Award', label: 'Achievement' },
+  { value: 'Target', label: 'Goals' },
 ];
 
 const TIERS: Array<{ value: string; label: string }> = [
@@ -446,6 +456,66 @@ function ProfileForm() {
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
+      {/* Primary action row — pinned at the top so the "Profile saved"
+          banner is visible right after tapping Save. Old placement at the
+          bottom meant trainers saved and never saw the confirmation because
+          the banner lived above ~1500px of form. */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          position: 'sticky',
+          top: 0,
+          zIndex: 2,
+          padding: '10px 0',
+          background: 'var(--mf-bg)',
+          borderBottom: '1px solid var(--mf-hairline)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="mf-btn mf-btn-primary"
+          style={{ height: 40, padding: '0 20px' }}
+        >
+          {saving ? 'Saving…' : 'Save profile'}
+        </button>
+        <button
+          type="button"
+          onClick={togglePublish}
+          disabled={!canPublish && !profile.trainerIsPublic}
+          className="mf-btn"
+          style={{ height: 40, padding: '0 16px' }}
+          title={
+            !canPublish && !profile.trainerIsPublic
+              ? 'Fill photo + bio + specialties + location first'
+              : undefined
+          }
+        >
+          {profile.trainerIsPublic
+            ? '● Public — click to hide'
+            : '○ Private — click to publish'}
+        </button>
+        <a
+          href="/trainer/settings"
+          className="mf-btn"
+          style={{
+            height: 40,
+            padding: '0 14px',
+            marginLeft: 'auto',
+            fontSize: 12,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}
+        >
+          ← Back to Settings
+        </a>
+      </div>
+
       {message && (
         <div
           style={{
@@ -864,7 +934,11 @@ function ProfileForm() {
         </div>
       </Section>
 
-      <Section title="QUICK FACTS (key/value rows shown in the profile sidebar)">
+      <Section title="QUICK FACTS · sidebar bullet points">
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
+          Short facts that show in the sidebar of your profile — one small
+          heading plus a detail per row. Example: <b>EXPERIENCE</b> · 10+ years.
+        </div>
         <div style={{ display: 'grid', gap: 6 }}>
           {profile.quickFacts.map((f, i) => (
             <div
@@ -873,14 +947,14 @@ function ProfileForm() {
             >
               <input
                 className="mf-input"
-                placeholder="LABEL"
+                placeholder="Heading (e.g. EXPERIENCE)"
                 value={f.label}
                 onChange={(e) => updateQuickFact(i, 'label', e.target.value.toUpperCase())}
                 maxLength={40}
               />
               <input
                 className="mf-input"
-                placeholder="Value"
+                placeholder="Detail (e.g. 10+ years)"
                 value={f.value}
                 onChange={(e) => updateQuickFact(i, 'value', e.target.value)}
                 maxLength={200}
@@ -908,7 +982,11 @@ function ProfileForm() {
         </button>
       </Section>
 
-      <Section title="APPROACH PILLARS (up to 6 cards)">
+      <Section title="APPROACH PILLARS · up to 6 cards on your profile">
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
+          The core things you focus on with clients. Each card has a title,
+          a small icon, and a short description.
+        </div>
         <div style={{ display: 'grid', gap: 10 }}>
           {profile.pillars.map((p, i) => (
             <div
@@ -916,7 +994,7 @@ function ProfileForm() {
               className="mf-card"
               style={{ padding: 12, display: 'grid', gap: 6 }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px auto', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px auto', gap: 6 }}>
                 <input
                   className="mf-input"
                   placeholder="Title (e.g. Progressive Overload)"
@@ -928,10 +1006,12 @@ function ProfileForm() {
                   className="mf-input"
                   value={p.icon}
                   onChange={(e) => updatePillar(i, 'icon', e.target.value)}
+                  aria-label="Icon shown on this card"
+                  title="Icon shown on this card"
                 >
                   {PILLAR_ICONS.map((ic) => (
-                    <option key={ic} value={ic}>
-                      {ic}
+                    <option key={ic.value} value={ic.value}>
+                      Icon · {ic.label}
                     </option>
                   ))}
                 </select>
@@ -1071,7 +1151,11 @@ function ProfileForm() {
         </button>
       </Section>
 
-      <Section title="SERVICES / PRICING (up to 8 cards)">
+      <Section title="SERVICES & PRICING · up to 8 cards">
+        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
+          Each card is one thing clients can buy from you — for example
+          &ldquo;1:1 Online Coaching · $249 per month · Apply.&rdquo;
+        </div>
         <div style={{ display: 'grid', gap: 10 }}>
           {profile.services.map((s, i) => (
             <div
@@ -1082,7 +1166,7 @@ function ProfileForm() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}>
                 <input
                   className="mf-input"
-                  placeholder="Title (e.g. 1:1 Online Coaching)"
+                  placeholder="Service name (e.g. 1:1 Online Coaching)"
                   value={s.title}
                   onChange={(e) => updateService(i, 'title', e.target.value)}
                   maxLength={60}
@@ -1100,7 +1184,7 @@ function ProfileForm() {
               <textarea
                 className="mf-input"
                 rows={2}
-                placeholder="Short description"
+                placeholder="Short description of what's included"
                 value={s.description}
                 onChange={(e) => updateService(i, 'description', e.target.value)}
                 maxLength={280}
@@ -1115,14 +1199,16 @@ function ProfileForm() {
                 />
                 <input
                   className="mf-input"
-                  placeholder="Per (e.g. /month)"
+                  placeholder="How often (e.g. per month)"
+                  title="How often they pay this — per month, per session, one-time, etc. Leave blank for flat pricing."
                   value={s.per}
                   onChange={(e) => updateService(i, 'per', e.target.value)}
                   maxLength={24}
                 />
                 <input
                   className="mf-input"
-                  placeholder="CTA (e.g. Apply)"
+                  placeholder="Button text (e.g. Apply)"
+                  title="The text on the button clients tap to start this service"
                   value={s.cta}
                   onChange={(e) => updateService(i, 'cta', e.target.value)}
                   maxLength={24}
@@ -1134,7 +1220,7 @@ function ProfileForm() {
                   checked={s.featured}
                   onChange={(e) => updateService(i, 'featured', e.target.checked)}
                 />
-                Mark as &ldquo;MOST POPULAR&rdquo; (accent border)
+                Highlight this one as &ldquo;Most popular&rdquo; (adds an accent border)
               </label>
             </div>
           ))}
@@ -1289,29 +1375,8 @@ function ProfileForm() {
         }}
       />
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="mf-btn mf-btn-primary"
-          style={{ height: 44, padding: '0 24px' }}
-        >
-          {saving ? 'Saving…' : 'Save profile'}
-        </button>
-        <button
-          type="button"
-          onClick={togglePublish}
-          disabled={!canPublish && !profile.trainerIsPublic}
-          className="mf-btn"
-          style={{ height: 44, padding: '0 20px' }}
-          title={!canPublish && !profile.trainerIsPublic ? 'Fill photo + bio + specialties + location first' : undefined}
-        >
-          {profile.trainerIsPublic
-            ? '● Public — click to hide'
-            : '○ Private — click to publish'}
-        </button>
-      </div>
+      {/* Save + publish live in the sticky header at the top of this view
+          so the "Profile saved" banner is always in view after tapping. */}
     </div>
   );
 }

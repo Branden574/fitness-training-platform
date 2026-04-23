@@ -31,6 +31,9 @@ function SubNav({ current }: { current: 'profile' | 'testimonials' | 'transforma
     { k: 'testimonials', l: 'Testimonials', href: '/trainer/settings/testimonials' },
     { k: 'transformations', l: 'Transformations', href: '/trainer/settings/transformations' },
   ] as const;
+  // Back-to-Settings lives in the editor's sticky save row so it sits
+  // next to the primary Save / Publish buttons — keeping a second copy
+  // here would just duplicate the control on the same screen.
   return (
     <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
       {items.map((it) => (
@@ -52,21 +55,6 @@ function SubNav({ current }: { current: 'profile' | 'testimonials' | 'transforma
           {it.l}
         </Link>
       ))}
-      <Link
-        href="/trainer/settings"
-        className="mf-btn"
-        style={{
-          height: 36,
-          padding: '0 14px',
-          marginLeft: 'auto',
-          fontSize: 12,
-          textDecoration: 'none',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        ← Back to Settings
-      </Link>
     </div>
   );
 }
