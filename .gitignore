@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# superpowers brainstorm visual companion (local-only mockups)
+.superpowers/
+
 # next.js
 /.next/
 /out/
