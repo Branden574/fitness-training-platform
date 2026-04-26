@@ -578,6 +578,7 @@ model Message {
   content    String
   type       MessageType @default(TEXT)
   fileUrl    String?
+  attachment Json?
   read       Boolean     @default(false)
   createdAt  DateTime    @default(now())
   receiver   User        @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -818,6 +819,8 @@ enum MessageType {
   TEXT
   IMAGE
   FILE
+  VIDEO
+  VOICE
 }
 
 enum NotificationType {
