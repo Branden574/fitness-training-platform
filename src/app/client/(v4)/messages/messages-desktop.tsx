@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, Send } from 'lucide-react';
 import { Avatar, Btn, ClientDesktopShell, StatusDot } from '@/components/ui/mf';
 
@@ -51,6 +52,8 @@ export default function MessagesDesktop({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const fetchFull = useCallback(async () => {
     try {
@@ -75,6 +78,20 @@ export default function MessagesDesktop({
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // One-shot prefill: the workout completion panel and other deeplinks can
+  // open this page with ?draft=<text>. We seed the composer with that text
+  // and then clear the query string so it doesn't re-prefill on remount.
+  const prefillRanRef = useRef(false);
+  useEffect(() => {
+    if (prefillRanRef.current) return;
+    prefillRanRef.current = true;
+    const value = searchParams?.get('draft');
+    if (value) {
+      setDraft(value);
+      router.replace('/client/messages');
+    }
+  }, [searchParams, router]);
 
   // Realtime: SSE stream pushes new messages, with polling fallback — mirrors mobile client.
   useEffect(() => {
