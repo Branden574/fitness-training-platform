@@ -578,6 +578,10 @@ model Message {
   content    String
   type       MessageType @default(TEXT)
   fileUrl    String?
+  // Phase 2A (chat attachments). `attachment` is the canonical metadata blob
+  // ({ url, mime, size, name, durationSec?, width?, height?, posterUrl? });
+  // `fileUrl` mirrors `attachment.url` so pre-2A readers keep working.
+  // Writers must populate both. Renderers branch on `type` (IMAGE/VIDEO/VOICE/FILE).
   attachment Json?
   read       Boolean     @default(false)
   createdAt  DateTime    @default(now())
