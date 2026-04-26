@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, Send } from 'lucide-react';
-import { Avatar, Btn, ClientDesktopShell, StatusDot } from '@/components/ui/mf';
+import { Avatar, Btn, Chip, ClientDesktopShell, StatusDot } from '@/components/ui/mf';
+import { formatMessageDayDivider } from '@/lib/formatTime';
 
 interface Message {
   id: string;
@@ -194,6 +195,15 @@ export default function MessagesDesktop({
   const unreadCount = messages.filter(
     (m) => !m.fromMe && !m.id.startsWith('temp-'),
   ).length;
+
+  // Group messages by day so we can show iMessage-style date dividers.
+  const grouped: Array<{ label: string; items: Message[] }> = [];
+  for (const m of messages) {
+    const label = formatMessageDayDivider(m.at);
+    const last = grouped[grouped.length - 1];
+    if (last && last.label === label) last.items.push(m);
+    else grouped.push({ label, items: [m] });
+  }
 
   return (
     <div className="hidden md:block">
@@ -386,40 +396,47 @@ export default function MessagesDesktop({
                   NO MESSAGES YET. SAY HI.
                 </div>
               )}
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: m.fromMe ? 'flex-end' : 'flex-start',
-                  }}
-                >
-                  <div style={{ maxWidth: '60%' }}>
-                    <div
-                      style={{
-                        padding: '10px 16px',
-                        fontSize: 13,
-                        lineHeight: 1.5,
-                        background: m.fromMe ? 'var(--mf-accent)' : 'var(--mf-surface-2)',
-                        color: m.fromMe ? 'var(--mf-accent-ink)' : 'var(--mf-fg)',
-                        borderRadius: m.fromMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {m.content}
-                    </div>
-                    <div
-                      className="mf-font-mono mf-fg-mute"
-                      style={{
-                        fontSize: 9,
-                        marginTop: 4,
-                        textAlign: m.fromMe ? 'right' : 'left',
-                      }}
-                    >
-                      {formatTime(m.at)}
-                    </div>
+              {grouped.map((g, gi) => (
+                <div key={gi} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <Chip>{g.label}</Chip>
                   </div>
+                  {g.items.map((m) => (
+                    <div
+                      key={m.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: m.fromMe ? 'flex-end' : 'flex-start',
+                      }}
+                    >
+                      <div style={{ maxWidth: '60%' }}>
+                        <div
+                          style={{
+                            padding: '10px 16px',
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            background: m.fromMe ? 'var(--mf-accent)' : 'var(--mf-surface-2)',
+                            color: m.fromMe ? 'var(--mf-accent-ink)' : 'var(--mf-fg)',
+                            borderRadius: m.fromMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {m.content}
+                        </div>
+                        <div
+                          className="mf-font-mono mf-fg-mute"
+                          style={{
+                            fontSize: 9,
+                            marginTop: 4,
+                            textAlign: m.fromMe ? 'right' : 'left',
+                          }}
+                        >
+                          {formatTime(m.at)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
               <div ref={endRef} />

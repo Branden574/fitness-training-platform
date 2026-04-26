@@ -64,6 +64,43 @@ export function formatDateInZone(
 }
 
 /**
+ * iMessage-style day divider for chat threads. Returns one of:
+ *   TODAY · YESTERDAY · MONDAY (within last 6 days) · APR 22 (this year) · APR 22, 2025
+ *
+ * Always evaluated in the viewer's local timezone — both sides of a chat see
+ * "Today" relative to where they're sitting, which is the conventional UX.
+ */
+export function formatMessageDayDivider(
+  iso: string | Date,
+  now: Date = new Date(),
+): string {
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  if (Number.isNaN(d.getTime())) return '';
+
+  const today = new Date(now);
+  const yest = new Date(now);
+  yest.setDate(today.getDate() - 1);
+
+  if (d.toDateString() === today.toDateString()) return 'TODAY';
+  if (d.toDateString() === yest.toDateString()) return 'YESTERDAY';
+
+  // Within the last 6 days (excluding today/yesterday): show weekday name.
+  const dayMs = 24 * 60 * 60 * 1000;
+  const diffDays = Math.floor((today.getTime() - d.getTime()) / dayMs);
+  if (diffDays >= 0 && diffDays < 7) {
+    return d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  }
+
+  if (d.getFullYear() === today.getFullYear()) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+  }
+
+  return d
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    .toUpperCase();
+}
+
+/**
  * Combined short format: "Mon · 7:30 AM". Used in compact log rows where
  * both the day and time matter to a trainer scanning a week of entries.
  */

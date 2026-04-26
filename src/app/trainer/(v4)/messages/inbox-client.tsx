@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Paperclip, Send, User } from 'lucide-react';
 import { Avatar, Btn, Chip } from '@/components/ui/mf';
+import { formatMessageDayDivider } from '@/lib/formatTime';
 
 interface RailItem {
   id: string;
@@ -358,45 +359,56 @@ export default function TrainerInboxClient({
                   NO MESSAGES YET
                 </div>
               )}
-              {messages.length > 0 && (
-                <div style={{ textAlign: 'center' }}>
-                  <Chip>THREAD</Chip>
-                </div>
-              )}
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  style={{ display: 'flex', justifyContent: m.fromMe ? 'flex-end' : 'flex-start' }}
-                >
-                  <div style={{ maxWidth: '60%' }}>
-                    <div
-                      style={{
-                        padding: '10px 16px',
-                        borderRadius: 10,
-                        fontSize: 14,
-                        lineHeight: 1.4,
-                        background: m.fromMe ? 'var(--mf-accent)' : 'var(--mf-surface-2)',
-                        color: m.fromMe ? 'var(--mf-accent-ink)' : 'var(--mf-fg)',
-                        border: m.fromMe ? 'none' : '1px solid var(--mf-hairline)',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {m.content}
+              {(() => {
+                const grouped: Array<{ label: string; items: Message[] }> = [];
+                for (const m of messages) {
+                  const label = formatMessageDayDivider(m.at);
+                  const last = grouped[grouped.length - 1];
+                  if (last && last.label === label) last.items.push(m);
+                  else grouped.push({ label, items: [m] });
+                }
+                return grouped.map((g, gi) => (
+                  <div key={gi} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <Chip>{g.label}</Chip>
                     </div>
-                    <div
-                      className="mf-font-mono mf-fg-mute"
-                      style={{
-                        fontSize: 9,
-                        marginTop: 4,
-                        textAlign: m.fromMe ? 'right' : 'left',
-                      }}
-                    >
-                      {formatTime(m.at)}
-                    </div>
+                    {g.items.map((m) => (
+                      <div
+                        key={m.id}
+                        style={{ display: 'flex', justifyContent: m.fromMe ? 'flex-end' : 'flex-start' }}
+                      >
+                        <div style={{ maxWidth: '60%' }}>
+                          <div
+                            style={{
+                              padding: '10px 16px',
+                              borderRadius: 10,
+                              fontSize: 14,
+                              lineHeight: 1.4,
+                              background: m.fromMe ? 'var(--mf-accent)' : 'var(--mf-surface-2)',
+                              color: m.fromMe ? 'var(--mf-accent-ink)' : 'var(--mf-fg)',
+                              border: m.fromMe ? 'none' : '1px solid var(--mf-hairline)',
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {m.content}
+                          </div>
+                          <div
+                            className="mf-font-mono mf-fg-mute"
+                            style={{
+                              fontSize: 9,
+                              marginTop: 4,
+                              textAlign: m.fromMe ? 'right' : 'left',
+                            }}
+                          >
+                            {formatTime(m.at)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
+                ));
+              })()}
               <div ref={endRef} />
             </div>
             <form

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Paperclip, Send } from 'lucide-react';
 import { Avatar, Chip } from '@/components/ui/mf';
+import { formatMessageDayDivider } from '@/lib/formatTime';
 
 interface Message {
   id: string;
@@ -28,16 +29,6 @@ function trainerInitials(name: string | null): string {
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatDateHeader(iso: string): string {
-  const d = new Date(iso);
-  const today = new Date();
-  const yest = new Date();
-  yest.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return 'TODAY';
-  if (d.toDateString() === yest.toDateString()) return 'YESTERDAY';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
 }
 
 export default function MessagesClient({
@@ -180,7 +171,7 @@ export default function MessagesClient({
   // Group messages by date so we can show day chips
   const grouped: Array<{ label: string; items: Message[] }> = [];
   for (const m of messages) {
-    const label = formatDateHeader(m.at);
+    const label = formatMessageDayDivider(m.at);
     const last = grouped[grouped.length - 1];
     if (last && last.label === label) last.items.push(m);
     else grouped.push({ label, items: [m] });

@@ -4,7 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Edit, ChevronLeft, Send, Paperclip, User } from 'lucide-react';
-import { Avatar, Btn, TrainerMobileTabs } from '@/components/ui/mf';
+import { Avatar, Btn, Chip, TrainerMobileTabs } from '@/components/ui/mf';
+import { formatMessageDayDivider } from '@/lib/formatTime';
 
 export interface InboxMobileRailItem {
   id: string;
@@ -325,43 +326,59 @@ export default function InboxMobile({
                 NO MESSAGES YET
               </div>
             )}
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: m.fromMe ? 'flex-end' : 'flex-start',
-                }}
-              >
-                <div style={{ maxWidth: '78%' }}>
-                  <div
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 10,
-                      fontSize: 13,
-                      lineHeight: 1.4,
-                      background: m.fromMe ? 'var(--mf-accent)' : 'var(--mf-surface-2)',
-                      color: m.fromMe ? 'var(--mf-accent-ink)' : 'var(--mf-fg)',
-                      border: m.fromMe ? 'none' : '1px solid var(--mf-hairline)',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {m.content}
+            {(() => {
+              const grouped: Array<{ label: string; items: InboxMobileMessage[] }> = [];
+              for (const m of messages) {
+                const label = formatMessageDayDivider(m.at);
+                const last = grouped[grouped.length - 1];
+                if (last && last.label === label) last.items.push(m);
+                else grouped.push({ label, items: [m] });
+              }
+              return grouped.map((g, gi) => (
+                <div key={gi} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <Chip>{g.label}</Chip>
                   </div>
-                  <div
-                    className="mf-font-mono mf-fg-mute"
-                    style={{
-                      fontSize: 9,
-                      marginTop: 3,
-                      textAlign: m.fromMe ? 'right' : 'left',
-                    }}
-                  >
-                    {formatTime(m.at)}
-                  </div>
+                  {g.items.map((m) => (
+                    <div
+                      key={m.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: m.fromMe ? 'flex-end' : 'flex-start',
+                      }}
+                    >
+                      <div style={{ maxWidth: '78%' }}>
+                        <div
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 10,
+                            fontSize: 13,
+                            lineHeight: 1.4,
+                            background: m.fromMe ? 'var(--mf-accent)' : 'var(--mf-surface-2)',
+                            color: m.fromMe ? 'var(--mf-accent-ink)' : 'var(--mf-fg)',
+                            border: m.fromMe ? 'none' : '1px solid var(--mf-hairline)',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {m.content}
+                        </div>
+                        <div
+                          className="mf-font-mono mf-fg-mute"
+                          style={{
+                            fontSize: 9,
+                            marginTop: 3,
+                            textAlign: m.fromMe ? 'right' : 'left',
+                          }}
+                        >
+                          {formatTime(m.at)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
             <div ref={endRef} />
           </div>
 
