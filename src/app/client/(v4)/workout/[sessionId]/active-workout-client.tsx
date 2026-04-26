@@ -292,6 +292,8 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
 
       const completedSetCount = Object.values(logsByExercise).flat().filter((s) => s.done).length;
       const totalSetCount = Object.values(logsByExercise).flat().length;
+      const workoutStartedMs = startedAtMs.current ?? new Date(initial.startedAt).getTime();
+      const durationMs = Math.max(0, Date.now() - workoutStartedMs);
 
       const patch = await fetch('/api/workout-sessions', {
         method: 'PATCH',
@@ -302,6 +304,7 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
           endTime: new Date().toISOString(),
           completedSetCount,
           totalSetCount,
+          durationMs,
         }),
       });
       if (!patch.ok) throw new Error('Could not close session');
@@ -335,7 +338,7 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
           workoutTitle: initial.workout?.title ?? 'your workout',
           completedSetCount,
           totalSetCount,
-          durationMs: Date.now() - new Date(initial.startedAt).getTime(),
+          durationMs,
         });
       }
     } catch (e) {

@@ -180,6 +180,7 @@ export async function PATCH(request: NextRequest) {
       caloriesBurned,
       completedSetCount,
       totalSetCount,
+      durationMs,
     } = body as {
       id?: string;
       completed?: boolean;
@@ -189,6 +190,7 @@ export async function PATCH(request: NextRequest) {
       caloriesBurned?: number | null;
       completedSetCount?: number;
       totalSetCount?: number;
+      durationMs?: number;
     };
 
     if (!id) {
@@ -240,7 +242,7 @@ export async function PATCH(request: NextRequest) {
         workoutTitle: existing.workout?.title ?? null,
         completedSetCount: completedSetCount ?? 0,
         totalSetCount: totalSetCount ?? 0,
-        durationMs: Math.max(0, endMs - startMs),
+        durationMs: typeof durationMs === 'number' && durationMs >= 0 ? durationMs : Math.max(0, endMs - startMs),
         clientId: existing.user?.id ?? '',
       });
 
