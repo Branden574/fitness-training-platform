@@ -9,6 +9,11 @@
 // The Prisma schema column is `attachment Json?` (no DB-level shape
 // enforcement); this Zod schema is the contract everything else parses
 // against, so renderers don't have to do unsafe `as` casts on Json reads.
+//
+// SHAPE-ONLY: this schema validates structure, not values. A 500 MB image
+// parses cleanly. Server callers MUST also run `validateAttachment(intent,
+// payload.mime, payload.size)` from `./attachmentLimits` after parsing —
+// otherwise per-intent caps are silently bypassed.
 
 import { z } from 'zod';
 

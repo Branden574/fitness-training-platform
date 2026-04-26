@@ -69,10 +69,9 @@ export function mimeToExtension(mime: string): string {
   return map[mime] ?? 'bin';
 }
 
-export interface ValidateResult {
-  ok: boolean;
-  error?: string;
-}
+export type ValidateResult =
+  | { ok: true }
+  | { ok: false; error: string };
 
 /** Cheap validation usable on both client and server. */
 export function validateAttachment(
