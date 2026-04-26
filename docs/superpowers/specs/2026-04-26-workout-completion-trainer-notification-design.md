@@ -58,9 +58,17 @@ A double-tap of FINISH or a network retry will not produce duplicate notificatio
 
 Pure client-side — zero new server endpoints.
 
-**Trigger:** client taps "Tell your coach" button on the celebration screen that already renders after a successful FINISH.
+**Resolution of UX gap discovered during planning:** the existing post-FINISH UX is a transient `celebrate('workout')` overlay followed by a 2200 ms `router.push('/client')` auto-redirect. There is no static screen the button could live on. We add a small in-place **completion panel** rendered by the active-workout client itself after FINISH succeeds. The transient celebrate overlay still fires for the burst feel; the auto-redirect is removed; the panel stays up until the user picks an action. The global `CelebrationProvider` is **not** modified.
 
-**Mechanism:**
+**Completion panel contents:**
+
+- Headline: "Workout complete"
+- Stat line: `"{completedSetCount} of {totalSetCount} sets • {durationMin} min"`
+- Two buttons:
+  - **"Tell your coach"** (primary) — builds the draft and pushes to `/client/messages?draft=...`
+  - **"Done"** (ghost) — `router.push('/client')`
+
+**Mechanism for the "Tell your coach" tap:**
 1. Client builds the prefilled draft text:
    `"Just finished {workoutTitle} — {completedSetCount} of {totalSetCount} sets in {durationMin} min 💪"`
 2. `router.push('/client/messages?draft=' + encodeURIComponent(draft))`
@@ -92,10 +100,10 @@ Pure client-side — zero new server endpoints.
   - **Set counts come from the PATCH body, not a server query.** The active-workout client already knows `completedSetCount` and `totalSetCount` from its in-memory log state. Extend the PATCH request body and Zod schema to accept these two optional numeric fields, the same way `notes`, `rating`, and `caloriesBurned` are already passed. This avoids an extra `prisma.workoutProgress` query on the hot path.
   - Compute `durationMs = endTime.getTime() - startTime.getTime()`. Floor to minutes; if `< 1`, render as `"< 1"`.
   - Call `void dispatchNotification(...)` with the helper output.
-- **`src/app/client/(v4)/workout/[sessionId]/active-workout-client.tsx`** — locate the existing post-FINISH celebration UI (per `// No PR — still celebrate finishing the session.` near line 318). Add a new `<Btn>` "Tell your coach" inside the celebration screen as a primary action; placement is implementation-time per the existing layout. On click, build the draft and `router.push`. Pass `workoutTitle`, `completedSetCount`, `totalSetCount`, `endTime` from existing component state. Idempotent — pressing the button twice is fine.
-- **`src/app/client/(v4)/workout/[sessionId]/active-workout-desktop.tsx`** — apply the same button addition. Desktop and mobile celebration screens are siblings in this codebase per existing v4 pattern.
-- **`src/app/client/(v4)/messages/messages-client.tsx`** — on mount, `useEffect` reads `searchParams.get('draft')`. If present, set the composer state to that string and `router.replace('/client/messages')` to strip the query.
-- **`src/app/client/(v4)/messages/messages-desktop.tsx`** — same `?draft=` handling if the desktop messages surface has its own composer state. Verify during implementation; may share state with mobile.
+- **`src/app/client/(v4)/workout/[sessionId]/active-workout-client.tsx`** — replace the existing post-FINISH branch (the `else` block near line 318 that calls `celebrate('workout')` then `setTimeout(() => router.push('/client'), 2200)`) with: still call `celebrate('workout')` for the burst, but instead of the auto-redirect, set a new `phase: 'completed'` state flag. When that flag is true, render the in-place completion panel: headline, stat line, and the two buttons. The "Tell your coach" button builds the draft string and calls `router.push('/client/messages?draft=' + encodeURIComponent(draft))`. The "Done" button calls `router.push('/client')`. The PR branch (line 304 onwards) is left alone — PR celebrations still auto-redirect after 3.2s. The PATCH body in this file (around line 288) is also extended to include `completedSetCount` and `totalSetCount` from existing component state.
+- **`src/app/client/(v4)/workout/[sessionId]/active-workout-desktop.tsx`** — confirmed during implementation review: this file already exists as the desktop sibling. Apply the same completion panel + extended PATCH body pattern. Desktop layout is wider, but the panel content is identical.
+- **`src/app/client/(v4)/messages/messages-client.tsx`** — confirmed it has its own local `draft` state in `useState` (line 47). On mount, `useEffect` reads `searchParams.get('draft')`. If present, set `setDraft(value)` and call `router.replace('/client/messages')` to strip the query. The effect must guard against running twice (`useRef` flag) to handle React strict-mode double-invocation.
+- **`src/app/client/(v4)/messages/messages-desktop.tsx`** — confirmed it has its own separate local `draft` state in `useState` (mirrors the mobile client). Same `?draft=` reader needed independently.
 
 ## Data flow
 
