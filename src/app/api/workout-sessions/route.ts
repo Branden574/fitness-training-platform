@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { dispatchNotification } from '@/lib/notifications/dispatch';
+import { buildWorkoutCompletedNotification } from '@/lib/notifications/workoutCompleted';
 
 export async function POST(request: NextRequest) {
   try {
@@ -169,13 +171,24 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, completed, endTime, notes, rating, caloriesBurned } = body as {
+    const {
+      id,
+      completed,
+      endTime,
+      notes,
+      rating,
+      caloriesBurned,
+      completedSetCount,
+      totalSetCount,
+    } = body as {
       id?: string;
       completed?: boolean;
       endTime?: string | Date;
       notes?: string | null;
       rating?: number | null;
       caloriesBurned?: number | null;
+      completedSetCount?: number;
+      totalSetCount?: number;
     };
 
     if (!id) {
@@ -184,7 +197,14 @@ export async function PATCH(request: NextRequest) {
 
     const existing = await prisma.workoutSession.findFirst({
       where: { id, userId: session.user.id },
-      select: { id: true },
+      select: {
+        id: true,
+        completed: true,
+        endTime: true,
+        startTime: true,
+        user: { select: { id: true, name: true, trainerId: true } },
+        workout: { select: { title: true } },
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
@@ -200,6 +220,41 @@ export async function PATCH(request: NextRequest) {
         ...(caloriesBurned !== undefined ? { caloriesBurned } : {}),
       },
     });
+
+    // Auto-notify the trainer the first time a session transitions to completed.
+    // Idempotent: existing.completed===false AND existing.endTime===null guarantees
+    // we only fire on the first transition. Network retries or a double-tap of
+    // FINISH won't re-fire, and a client toggling completed back-and-forth won't
+    // either because endTime stays set after the first finish.
+    const trainerId = existing.user?.trainerId ?? null;
+    const justCompleted =
+      existing.completed === false &&
+      completed === true &&
+      existing.endTime === null;
+
+    if (justCompleted && trainerId) {
+      const startMs = existing.startTime?.getTime() ?? Date.now();
+      const endMs = endTime ? new Date(endTime).getTime() : Date.now();
+      const payload = buildWorkoutCompletedNotification({
+        clientName: existing.user?.name ?? null,
+        workoutTitle: existing.workout?.title ?? null,
+        completedSetCount: completedSetCount ?? 0,
+        totalSetCount: totalSetCount ?? 0,
+        durationMs: Math.max(0, endMs - startMs),
+        clientId: existing.user?.id ?? '',
+      });
+
+      // Fire-and-forget: dispatchNotification is already fail-open. A broken
+      // push subscription must not block the workout-session response.
+      void dispatchNotification({
+        userId: trainerId,
+        type: 'WORKOUT_COMPLETED',
+        title: payload.title,
+        body: payload.body,
+        actionUrl: payload.actionUrl,
+        metadata: { sessionId: id, workoutId: updated.workoutId },
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {
