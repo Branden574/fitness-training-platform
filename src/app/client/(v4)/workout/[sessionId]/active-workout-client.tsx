@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Plus, Minus, Check, X, ChevronRight, MoreHorizontal, Video, Play } from 'lucide-react';
-import { Chip } from '@/components/ui/mf';
-import { Btn } from '@/components/ui/mf';
+import { Btn, Chip } from '@/components/ui/mf';
 import { useCelebrate } from '@/components/animations';
 import {
   clearWorkoutDraft,
@@ -113,6 +112,12 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
   const [rest, setRest] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  const [completedSummary, setCompletedSummary] = useState<{
+    workoutTitle: string;
+    completedSetCount: number;
+    totalSetCount: number;
+    durationMs: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [prs, setPrs] = useState<Array<{ exerciseName: string; newWeight: number; previousWeight: number | null }> | null>(null);
   const [formVideoOpen, setFormVideoOpen] = useState(false);
@@ -285,6 +290,9 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
         detectedPrs = data.prs ?? [];
       }
 
+      const completedSetCount = Object.values(logsByExercise).flat().filter((s) => s.done).length;
+      const totalSetCount = Object.values(logsByExercise).flat().length;
+
       const patch = await fetch('/api/workout-sessions', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -292,6 +300,8 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
           id: initial.id,
           completed: true,
           endTime: new Date().toISOString(),
+          completedSetCount,
+          totalSetCount,
         }),
       });
       if (!patch.ok) throw new Error('Could not close session');
@@ -315,9 +325,18 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
         });
         setTimeout(() => router.push('/client'), 3200);
       } else {
-        // No PR — still celebrate finishing the session.
+        // No PR — still celebrate, but instead of auto-redirecting, surface an
+        // in-place completion panel so the client can choose to ping their coach.
+        // The panel renders below the rest of the workout UI when completedSummary
+        // is non-null. Auto-redirect is removed; the panel's "Done" button covers
+        // the navigation case.
         celebrate('workout');
-        setTimeout(() => router.push('/client'), 2200);
+        setCompletedSummary({
+          workoutTitle: initial.workout?.title ?? 'your workout',
+          completedSetCount,
+          totalSetCount,
+          durationMs: Date.now() - new Date(initial.startedAt).getTime(),
+        });
       }
     } catch (e) {
       // Save fell over — almost always a transient network drop. Mark the
@@ -373,6 +392,53 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
         paddingBottom: 76,
       }}
     >
+      {completedSummary && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'var(--mf-surface-0)',
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <div
+            className="mf-card"
+            style={{
+              maxWidth: 420,
+              width: '100%',
+              padding: 24,
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+          >
+            <div style={{ fontSize: 24, fontWeight: 700 }}>Workout complete</div>
+            <div style={{ color: 'var(--mf-fg-mute)' }}>
+              {completedSummary.completedSetCount} of {completedSummary.totalSetCount} sets •{' '}
+              {Math.max(1, Math.floor(completedSummary.durationMs / 60000))} min
+            </div>
+            <Btn
+              variant="primary"
+              onClick={() => {
+                const minutes = Math.max(1, Math.floor(completedSummary.durationMs / 60000));
+                const draft = `Just finished ${completedSummary.workoutTitle} — ${completedSummary.completedSetCount} of ${completedSummary.totalSetCount} sets in ${minutes} min 💪`;
+                router.push(`/client/messages?draft=${encodeURIComponent(draft)}`);
+              }}
+            >
+              Tell your coach
+            </Btn>
+            <Btn variant="ghost" onClick={() => router.push('/client')}>
+              Done
+            </Btn>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div
         className="flex items-center justify-between shrink-0"
