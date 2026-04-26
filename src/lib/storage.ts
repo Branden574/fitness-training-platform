@@ -105,6 +105,28 @@ export async function putImage({
   return publicUrl(key);
 }
 
+export interface PutBlobInput {
+  /** Object key inside the bucket. e.g. "messages/<userId>/<yyyymmdd>/<cuid>.<ext>" */
+  key: string;
+  /** Raw bytes — pass an ArrayBuffer straight from file.arrayBuffer() */
+  body: ArrayBuffer | Uint8Array | Buffer;
+  /** Any MIME type — image, video, audio, application/pdf, etc. */
+  contentType: string;
+}
+
+/**
+ * Generic R2 put. Use this for non-image uploads (video, audio, PDF, etc.) so
+ * call sites read clearly. `putImage` is retained for the existing image-only
+ * callers that want a self-documenting name.
+ */
+export async function putBlob({
+  key,
+  body,
+  contentType,
+}: PutBlobInput): Promise<string> {
+  return putImage({ key, body, contentType });
+}
+
 /**
  * Removes an object by key. Silently ignores "not found" errors — deleting
  * an already-missing object is the intended final state either way.
