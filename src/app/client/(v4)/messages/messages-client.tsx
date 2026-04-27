@@ -65,7 +65,8 @@ export default function MessagesClient({
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState<{
-    blob: Blob;
+    blob: Blob | null;
+    url?: string;
     mime: string;
     size: number;
     name: string | null;
@@ -120,11 +121,27 @@ export default function MessagesClient({
   useEffect(() => {
     if (prefillRanRef.current) return;
     prefillRanRef.current = true;
-    const value = searchParams?.get('draft');
-    if (value) {
-      setDraft(value);
-      router.replace('/client/messages');
+    const draftValue = searchParams?.get('draft');
+    const aUrl = searchParams?.get('attachmentUrl');
+    const aMime = searchParams?.get('attachmentMime');
+    const aSize = searchParams?.get('attachmentSize');
+    const aName = searchParams?.get('attachmentName');
+    if (draftValue) setDraft(draftValue);
+    if (aUrl && aMime && aSize) {
+      // Phase 2D: completion-panel handoff. The blob isn't available (it was
+      // uploaded by the source page), so we seed pending with `blob: null` and
+      // a pre-known url. handleSend skips the upload step when pending.url is
+      // present and just posts the message with the stored metadata.
+      setPending({
+        blob: null,
+        mime: aMime,
+        size: Number(aSize),
+        name: aName,
+        intent: 'image',
+        url: aUrl,
+      });
     }
+    if (draftValue || aUrl) router.replace('/client/messages');
   }, [searchParams, router]);
 
   // Realtime: SSE stream pushes new messages as they arrive, with a polling fallback
@@ -212,46 +229,63 @@ export default function MessagesClient({
     let outgoingType: Message['type'] = 'TEXT';
 
     if (pending) {
-      setUploadProgress(0);
-      try {
-        const fd = new FormData();
-        fd.append('intent', pending.intent);
-        fd.append('receiverId', trainer.id);
-        fd.append('file', pending.blob, pending.name ?? 'attachment');
-        const upRes = await fetch('/api/messages/upload', {
-          method: 'POST',
-          body: fd,
-        });
-        if (!upRes.ok) {
-          const err = (await upRes.json().catch(() => ({}))) as { error?: string };
-          throw new Error(err.error ?? 'Upload failed');
-        }
-        const meta = (await upRes.json()) as {
-          url: string;
-          mime: string;
-          size: number;
-          name?: string | null;
-        };
+      if (pending.url) {
+        // Phase 2D: attachment was already uploaded by the source page (the
+        // workout completion panel). Skip the upload, build attachmentMeta
+        // from the cached metadata, and let the existing message-create flow
+        // continue.
         attachmentMeta = {
-          ...meta,
+          url: pending.url,
+          mime: pending.mime,
+          size: pending.size,
+          name: pending.name,
           durationSec: pending.durationSec,
           width: pending.width,
           height: pending.height,
         };
-        outgoingType =
-          pending.intent === 'image'
-            ? 'IMAGE'
-            : pending.intent === 'video'
-              ? 'VIDEO'
-              : pending.intent === 'voice'
-                ? 'VOICE'
-                : 'FILE';
-        setUploadProgress(1);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Upload failed');
-        setSending(false);
-        setUploadProgress(undefined);
-        return;
+        outgoingType = 'IMAGE'; // 2D only ever pre-uploads images
+      } else {
+        setUploadProgress(0);
+        try {
+          const fd = new FormData();
+          fd.append('intent', pending.intent);
+          fd.append('receiverId', trainer.id);
+          fd.append('file', pending.blob!, pending.name ?? 'attachment');
+          const upRes = await fetch('/api/messages/upload', {
+            method: 'POST',
+            body: fd,
+          });
+          if (!upRes.ok) {
+            const err = (await upRes.json().catch(() => ({}))) as { error?: string };
+            throw new Error(err.error ?? 'Upload failed');
+          }
+          const meta = (await upRes.json()) as {
+            url: string;
+            mime: string;
+            size: number;
+            name?: string | null;
+          };
+          attachmentMeta = {
+            ...meta,
+            durationSec: pending.durationSec,
+            width: pending.width,
+            height: pending.height,
+          };
+          outgoingType =
+            pending.intent === 'image'
+              ? 'IMAGE'
+              : pending.intent === 'video'
+                ? 'VIDEO'
+                : pending.intent === 'voice'
+                  ? 'VOICE'
+                  : 'FILE';
+          setUploadProgress(1);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Upload failed');
+          setSending(false);
+          setUploadProgress(undefined);
+          return;
+        }
       }
     }
 
@@ -457,6 +491,7 @@ export default function MessagesClient({
               <div style={{ padding: '0 12px' }}>
                 <PendingAttachmentChip
                   blob={pending.blob}
+                  url={pending.url ?? null}
                   mime={pending.mime}
                   size={pending.size}
                   name={pending.name}
