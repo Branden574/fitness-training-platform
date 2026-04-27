@@ -106,3 +106,6 @@ export type { LightboxProps, LightboxItem } from './Lightbox';
 
 export { default as ImageCropperModal } from './ImageCropperModal';
 export type { ImageCropperModalProps } from './ImageCropperModal';
+
+export { default as PendingAttachmentChip } from './PendingAttachmentChip';
+export type { PendingAttachmentChipProps } from './PendingAttachmentChip';
