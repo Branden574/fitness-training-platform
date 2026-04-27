@@ -5,23 +5,15 @@ import { authOptions } from '@/lib/auth';
 import { sendNewMessageEmail } from '@/lib/email';
 import { dispatchNotification } from '@/lib/notifications/dispatch';
 import { z } from 'zod';
-
-const attachmentSchema = z.object({
-  url: z.string().url(),
-  mime: z.string(),
-  size: z.number().int().positive(),
-  name: z.string().nullable().optional(),
-  durationSec: z.number().optional(),
-  width: z.number().int().optional(),
-  height: z.number().int().optional(),
-});
+import { attachmentPayloadSchema } from '@/lib/messages/attachmentSchema';
+import { validateAttachment, type AttachmentIntent } from '@/lib/messages/attachmentLimits';
 
 const messageSchema = z
   .object({
     receiverId: z.string(),
     content: z.string().default(''),
     type: z.enum(['TEXT', 'IMAGE', 'FILE', 'VIDEO', 'VOICE']).default('TEXT'),
-    attachment: attachmentSchema.optional(),
+    attachment: attachmentPayloadSchema.optional(),
   })
   .refine(
     (m) => m.content.trim().length > 0 || !!m.attachment,
@@ -136,6 +128,25 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = messageSchema.parse(body);
 
+    // Defense-in-depth: even though the upload route validated mime/size, a
+    // malicious client could POST /api/messages directly with arbitrary metadata.
+    // Re-run the validator at this trust boundary too.
+    if (validatedData.attachment) {
+      const intent: AttachmentIntent =
+        validatedData.type === 'IMAGE' ? 'image'
+        : validatedData.type === 'VIDEO' ? 'video'
+        : validatedData.type === 'VOICE' ? 'voice'
+        : 'file';
+      const v = validateAttachment(
+        intent,
+        validatedData.attachment.mime,
+        validatedData.attachment.size,
+      );
+      if (!v.ok) {
+        return NextResponse.json({ message: v.error }, { status: 400 });
+      }
+    }
+
     // Validate sender-receiver relationship
     const sender = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, trainerId: true } });
     const receiver = await prisma.user.findUnique({ where: { id: validatedData.receiverId }, select: { id: true, role: true, trainerId: true } });
@@ -191,15 +202,6 @@ export async function POST(request: Request) {
       }
     });
 
-    // Fire-and-forget transactional email — never blocks the response
-    void sendNewMessageEmail({
-      toEmail: message.receiver.email,
-      toName: message.receiver.name,
-      fromName: message.sender.name,
-      fromRole: message.sender.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
-      preview: message.content,
-    });
-
     // In-app bell + OS push for the receiver. Dispatch is already fail-open
     // so a broken notification never blocks the message itself. actionUrl
     // routes to the recipient's messages view scoped by role.
@@ -238,11 +240,24 @@ export async function POST(request: Request) {
         ? `${attachmentLabel} · ${textPreview}`
         : attachmentLabel
       : textPreview;
+    // Bound the preview to ~200 chars so FCM's 256-byte body cap is safe even
+    // with multi-byte emoji + middle dot.
+    const boundedPreview = preview.length > 200 ? `${preview.slice(0, 200)}…` : preview;
+
+    // Fire-and-forget transactional email — never blocks the response
+    void sendNewMessageEmail({
+      toEmail: message.receiver.email,
+      toName: message.receiver.name,
+      fromName: message.sender.name,
+      fromRole: message.sender.role as 'CLIENT' | 'TRAINER' | 'ADMIN',
+      preview: boundedPreview,
+    });
+
     void dispatchNotification({
       userId: message.receiverId,
       type: 'MESSAGE_RECEIVED',
       title: `${message.sender.name ?? 'Someone'} sent a message`,
-      body: preview,
+      body: boundedPreview,
       actionUrl: messagesHref,
       metadata: { messageId: message.id, senderId: message.senderId },
     });

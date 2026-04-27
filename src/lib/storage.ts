@@ -170,3 +170,18 @@ export function keyFromPublicUrl(url: string | null | undefined): string | null 
   return url.slice(config.publicUrl.length + 1);
 }
 
+/**
+ * Returns true if the URL is hosted on the configured R2 public CDN. Used at
+ * the chat-message trust boundary to reject attachment URLs that didn't come
+ * from our /api/messages/upload route.
+ */
+export function isR2PublicUrl(url: string): boolean {
+  try {
+    const { config } = getClient();
+    return url.startsWith(config.publicUrl + '/');
+  } catch {
+    // Env not configured — fail closed.
+    return false;
+  }
+}
+

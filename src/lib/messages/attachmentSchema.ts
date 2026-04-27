@@ -16,16 +16,21 @@
 // otherwise per-intent caps are silently bypassed.
 
 import { z } from 'zod';
+import { isR2PublicUrl } from '@/lib/storage';
 
 export const attachmentPayloadSchema = z.object({
-  url: z.string().url(),
+  url: z.string().url().refine(isR2PublicUrl, {
+    message: 'Attachment URL must be hosted on the configured R2 CDN',
+  }),
   mime: z.string(),
   size: z.number().int().positive(),
   name: z.string().nullable().optional(),
   durationSec: z.number().optional(),
   width: z.number().int().optional(),
   height: z.number().int().optional(),
-  posterUrl: z.string().url().optional(),
+  posterUrl: z.string().url().refine(isR2PublicUrl, {
+    message: 'Poster URL must be hosted on the configured R2 CDN',
+  }).optional(),
 });
 
 export type AttachmentPayload = z.infer<typeof attachmentPayloadSchema>;
