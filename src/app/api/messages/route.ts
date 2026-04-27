@@ -38,6 +38,18 @@ export async function GET(request: Request) {
     let messages;
 
     if (conversationWith) {
+      // Mark every message FROM the other user TO me as read. Opening a
+      // thread is implicit acknowledgement — the unread badge on the rail
+      // and the per-thread count both rely on this side effect.
+      await prisma.message.updateMany({
+        where: {
+          senderId: conversationWith,
+          receiverId: session.user.id,
+          read: false,
+        },
+        data: { read: true },
+      });
+
       // Get conversation between current user and specific user
       messages = await prisma.message.findMany({
         where: {

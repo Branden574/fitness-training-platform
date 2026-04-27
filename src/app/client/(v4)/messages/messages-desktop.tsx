@@ -23,6 +23,7 @@ interface Message {
   at: string;
   type: 'TEXT' | 'IMAGE' | 'FILE' | 'VIDEO' | 'VOICE';
   attachment?: AttachmentBubbleAttachment | null;
+  read?: boolean;
 }
 
 export interface MessagesDesktopProps {
@@ -91,6 +92,7 @@ export default function MessagesDesktop({
         createdAt: string;
         type?: string;
         attachment?: AttachmentBubbleAttachment | null;
+        read?: boolean;
       }>;
       setMessages(
         data.map((m) => ({
@@ -100,6 +102,7 @@ export default function MessagesDesktop({
           at: m.createdAt,
           type: (m.type ?? 'TEXT') as Message['type'],
           attachment: (m.attachment ?? null) as AttachmentBubbleAttachment | null,
+          read: m.read ?? true,
         })),
       );
     } catch {
@@ -147,6 +150,7 @@ export default function MessagesDesktop({
             createdAt: string;
             type?: string;
             attachment?: AttachmentBubbleAttachment | null;
+            read?: boolean;
           }>;
           if (!Array.isArray(payload) || payload.length === 0) return;
           setMessages((prev) => {
@@ -162,6 +166,7 @@ export default function MessagesDesktop({
                 at: m.createdAt,
                 type: (m.type ?? 'TEXT') as Message['type'],
                 attachment: (m.attachment ?? null) as AttachmentBubbleAttachment | null,
+                read: m.read ?? true,
               }));
             if (!incoming.length) return prev;
             const withoutDupes = prev.filter(
@@ -298,8 +303,12 @@ export default function MessagesDesktop({
   const lastMsg = messages[messages.length - 1];
   const lastPreview = lastMsg?.content ?? 'No messages yet';
   const lastStamp = lastMsg ? relativeShort(lastMsg.at) : '';
+  // Unread = received messages I haven't read yet. Server marks-read happens
+  // on GET /api/messages?with=…, so by the time this thread is open and
+  // fetchFull has run, the count will be 0. SSE-pushed messages arrive
+  // unread (read defaults false on server insert) and decrement on next poll.
   const unreadCount = messages.filter(
-    (m) => !m.fromMe && !m.id.startsWith('temp-'),
+    (m) => !m.fromMe && !m.id.startsWith('temp-') && m.read === false,
   ).length;
 
   // Group messages by day so we can show iMessage-style date dividers.
