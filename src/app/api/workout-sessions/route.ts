@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dispatchNotification } from '@/lib/notifications/dispatch';
 import { buildWorkoutCompletedNotification } from '@/lib/notifications/workoutCompleted';
+import { summarizeWorkout } from '@/lib/ai/workoutSummary';
 
 export async function POST(request: NextRequest) {
   try {
@@ -237,14 +238,51 @@ export async function PATCH(request: NextRequest) {
     if (justCompleted && trainerId) {
       const startMs = existing.startTime?.getTime() ?? Date.now();
       const endMs = endTime ? new Date(endTime).getTime() : Date.now();
+      const effectiveDurationMs =
+        typeof durationMs === 'number' && durationMs >= 0
+          ? durationMs
+          : Math.max(0, endMs - startMs);
       const payload = buildWorkoutCompletedNotification({
         clientName: existing.user?.name ?? null,
         workoutTitle: existing.workout?.title ?? null,
         completedSetCount: completedSetCount ?? 0,
         totalSetCount: totalSetCount ?? 0,
-        durationMs: typeof durationMs === 'number' && durationMs >= 0 ? durationMs : Math.max(0, endMs - startMs),
+        durationMs: effectiveDurationMs,
         clientId: existing.user?.id ?? '',
       });
+
+      // Phase 3A: AI summary fires before notification dispatch so the body can
+      // include it. Hard 4s timeout inside summarizeWorkout means worst-case
+      // total latency is bounded. Returns null on disabled / skip / error —
+      // fall through to factual notification (today's behavior).
+      const aiSummary = await summarizeWorkout({
+        sessionId: id,
+        workoutId: updated.workoutId ?? null,
+        clientId: existing.user?.id ?? '',
+        clientName: existing.user?.name ?? null,
+        workoutTitle: existing.workout?.title ?? null,
+        completedSetCount: completedSetCount ?? 0,
+        totalSetCount: totalSetCount ?? 0,
+        durationMs: effectiveDurationMs,
+        trainerId,
+      });
+
+      if (aiSummary) {
+        // Persist for future surfaces (digest, workout detail view).
+        await prisma.workoutSession.update({
+          where: { id },
+          data: { aiSummary },
+        }).catch((err) => {
+          console.error('[workout-sessions] failed to persist aiSummary', err);
+        });
+      }
+
+      // Enrich notification body with AI line, capped to keep under FCM 256B.
+      const factualBody = payload.body;
+      const enrichedBody = aiSummary ? `${factualBody} · ${aiSummary}` : factualBody;
+      const boundedBody = enrichedBody.length > 200
+        ? `${enrichedBody.slice(0, 200)}…`
+        : enrichedBody;
 
       // Fire-and-forget: dispatchNotification is already fail-open. A broken
       // push subscription must not block the workout-session response.
@@ -252,9 +290,9 @@ export async function PATCH(request: NextRequest) {
         userId: trainerId,
         type: 'WORKOUT_COMPLETED',
         title: payload.title,
-        body: payload.body,
+        body: boundedBody,
         actionUrl: payload.actionUrl,
-        metadata: { sessionId: id, workoutId: updated.workoutId },
+        metadata: { sessionId: id, workoutId: updated.workoutId, aiSummary: aiSummary ?? null },
       });
     }
 
