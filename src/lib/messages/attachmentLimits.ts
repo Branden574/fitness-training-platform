@@ -71,7 +71,7 @@ export function mimeToExtension(mime: string): string {
 
 export type ValidateResult =
   | { ok: true }
-  | { ok: false; error: string };
+  | { ok: false; kind: 'unsupported' | 'empty' | 'too-large'; error: string };
 
 /** Cheap validation usable on both client and server. */
 export function validateAttachment(
@@ -81,11 +81,11 @@ export function validateAttachment(
 ): ValidateResult {
   const spec = INTENT_SPEC[intent];
   if (!spec.mimes.has(mime)) {
-    return { ok: false, error: `Unsupported file type for ${intent}` };
+    return { ok: false, kind: 'unsupported', error: `Unsupported file type for ${intent}` };
   }
-  if (size <= 0) return { ok: false, error: 'File is empty' };
+  if (size <= 0) return { ok: false, kind: 'empty', error: 'File is empty' };
   if (size > spec.maxBytes) {
-    return { ok: false, error: `File too large (max ${spec.maxLabel})` };
+    return { ok: false, kind: 'too-large', error: `File too large (max ${spec.maxLabel})` };
   }
   return { ok: true };
 }

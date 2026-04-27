@@ -72,11 +72,14 @@ export async function POST(request: NextRequest) {
 
   const mime = (file as Blob).type ?? '';
   const size = (file as Blob).size ?? 0;
-  const name = (file as { name?: string }).name ?? null;
+  const rawName = (file as { name?: string }).name ?? null;
+  // Truncate to keep DB rows + push previews bounded. 200 chars is generous
+  // for any realistic filename and well under any reasonable column width.
+  const name = rawName ? rawName.slice(0, 200) : null;
 
   const validation = validateAttachment(intent, mime, size);
   if (!validation.ok) {
-    const status = validation.error?.includes('too large') ? 413 : 400;
+    const status = validation.kind === 'too-large' ? 413 : 400;
     return NextResponse.json({ error: validation.error }, { status });
   }
 
