@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Send, User } from 'lucide-react';
-import { Avatar, Btn, Chip, AttachmentPicker, AttachmentBubble, PendingAttachmentChip } from '@/components/ui/mf';
+import { Avatar, Btn, Chip, AttachmentPicker, AttachmentBubble, PendingAttachmentChip, VoiceRecorder } from '@/components/ui/mf';
 import type { AttachmentBubbleAttachment } from '@/components/ui/mf';
 import { formatMessageDayDivider } from '@/lib/formatTime';
 
@@ -540,60 +540,81 @@ export default function TrainerInboxClient({
               <div ref={endRef} />
             </div>
             <div style={{ flexShrink: 0 }}>
-              {pending && (
-                <div style={{ padding: '0 12px' }}>
-                  <PendingAttachmentChip
-                    blob={pending.blob}
-                    mime={pending.mime}
-                    size={pending.size}
-                    name={pending.name}
-                    progress={uploadProgress}
-                    onRemove={() => {
-                      setPending(null);
-                      setUploadProgress(undefined);
+              {voiceMode ? (
+                <div style={{ padding: '8px 12px' }}>
+                  <VoiceRecorder
+                    onSend={(blob, durationSec) => {
+                      setPending({
+                        blob,
+                        mime: blob.type || 'audio/webm',
+                        size: blob.size,
+                        name: 'voice-note',
+                        intent: 'voice',
+                        durationSec,
+                      });
+                      setVoiceMode(false);
                     }}
+                    onCancel={() => setVoiceMode(false)}
                   />
                 </div>
+              ) : (
+                <>
+                  {pending && (
+                    <div style={{ padding: '0 12px' }}>
+                      <PendingAttachmentChip
+                        blob={pending.blob}
+                        mime={pending.mime}
+                        size={pending.size}
+                        name={pending.name}
+                        progress={uploadProgress}
+                        onRemove={() => {
+                          setPending(null);
+                          setUploadProgress(undefined);
+                        }}
+                      />
+                    </div>
+                  )}
+                  <form
+                    onSubmit={handleSend}
+                    style={{
+                      borderTop: '1px solid var(--mf-hairline)',
+                      padding: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <AttachmentPicker
+                      trigger="paperclip"
+                      onPicked={(intent, file) => {
+                        setPending({
+                          blob: file,
+                          mime: file.type,
+                          size: file.size,
+                          name: file.name,
+                          intent,
+                        });
+                      }}
+                      onVoiceRequest={() => setVoiceMode(true)}
+                    />
+                    <input
+                      className="mf-input"
+                      placeholder={`Reply to ${activeName ?? 'client'}…`}
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      disabled={sending}
+                    />
+                    <Btn
+                      variant="primary"
+                      icon={Send}
+                      type="submit"
+                      disabled={sending || (!draft.trim() && !pending)}
+                    >
+                      Send
+                    </Btn>
+                  </form>
+                </>
               )}
-              <form
-                onSubmit={handleSend}
-                style={{
-                  borderTop: '1px solid var(--mf-hairline)',
-                  padding: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <AttachmentPicker
-                  trigger="paperclip"
-                  onPicked={(intent, file) => {
-                    setPending({
-                      blob: file,
-                      mime: file.type,
-                      size: file.size,
-                      name: file.name,
-                      intent,
-                    });
-                  }}
-                  onVoiceRequest={() => setVoiceMode(true)}
-                />
-                <input
-                  className="mf-input"
-                  placeholder={`Reply to ${activeName ?? 'client'}…`}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  disabled={sending}
-                />
-                <Btn
-                  variant="primary"
-                  icon={Send}
-                  type="submit"
-                  disabled={sending || (!draft.trim() && !pending)}
-                >
-                  Send
-                </Btn>
-              </form>
             </div>
             {error && (
               <div

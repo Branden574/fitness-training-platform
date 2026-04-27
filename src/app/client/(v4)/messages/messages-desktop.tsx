@@ -12,6 +12,7 @@ import {
   AttachmentPicker,
   AttachmentBubble,
   PendingAttachmentChip,
+  VoiceRecorder,
 } from '@/components/ui/mf';
 import type { AttachmentBubbleAttachment } from '@/components/ui/mf';
 import { formatMessageDayDivider } from '@/lib/formatTime';
@@ -610,63 +611,84 @@ export default function MessagesDesktop({
                   {error}
                 </div>
               )}
-              {pending && (
-                <div style={{ marginBottom: 8 }}>
-                  <PendingAttachmentChip
-                    blob={pending.blob}
-                    mime={pending.mime}
-                    size={pending.size}
-                    name={pending.name}
-                    progress={uploadProgress}
-                    onRemove={() => {
-                      setPending(null);
-                      setUploadProgress(undefined);
+              {voiceMode ? (
+                <div style={{ padding: '8px 12px' }}>
+                  <VoiceRecorder
+                    onSend={(blob, durationSec) => {
+                      setPending({
+                        blob,
+                        mime: blob.type || 'audio/webm',
+                        size: blob.size,
+                        name: 'voice-note',
+                        intent: 'voice',
+                        durationSec,
+                      });
+                      setVoiceMode(false);
                     }}
+                    onCancel={() => setVoiceMode(false)}
                   />
                 </div>
+              ) : (
+                <>
+                  {pending && (
+                    <div style={{ marginBottom: 8 }}>
+                      <PendingAttachmentChip
+                        blob={pending.blob}
+                        mime={pending.mime}
+                        size={pending.size}
+                        name={pending.name}
+                        progress={uploadProgress}
+                        onRemove={() => {
+                          setPending(null);
+                          setUploadProgress(undefined);
+                        }}
+                      />
+                    </div>
+                  )}
+                  <form
+                    onSubmit={handleSend}
+                    className="mf-card flex items-center gap-2"
+                    style={{ padding: 8 }}
+                  >
+                    <AttachmentPicker
+                      trigger="plus"
+                      onPicked={(intent, file) => {
+                        setPending({
+                          blob: file,
+                          mime: file.type,
+                          size: file.size,
+                          name: file.name,
+                          intent,
+                        });
+                      }}
+                      onVoiceRequest={() => setVoiceMode(true)}
+                      triggerClassName="grid place-items-center mf-fg-mute"
+                    />
+                    <input
+                      className="flex-1"
+                      style={{
+                        background: 'transparent',
+                        outline: 'none',
+                        border: 'none',
+                        fontSize: 13,
+                        color: 'var(--mf-fg)',
+                      }}
+                      placeholder={`Message ${coachName.split(' ')[0]}…`}
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      disabled={sending}
+                    />
+                    <Btn
+                      type="submit"
+                      variant="primary"
+                      icon={Send}
+                      disabled={sending || (!draft.trim() && !pending)}
+                    >
+                      Send
+                    </Btn>
+                  </form>
+                </>
               )}
-              <form
-                onSubmit={handleSend}
-                className="mf-card flex items-center gap-2"
-                style={{ padding: 8 }}
-              >
-                <AttachmentPicker
-                  trigger="plus"
-                  onPicked={(intent, file) => {
-                    setPending({
-                      blob: file,
-                      mime: file.type,
-                      size: file.size,
-                      name: file.name,
-                      intent,
-                    });
-                  }}
-                  onVoiceRequest={() => setVoiceMode(true)}
-                  triggerClassName="grid place-items-center mf-fg-mute"
-                />
-                <input
-                  className="flex-1"
-                  style={{
-                    background: 'transparent',
-                    outline: 'none',
-                    border: 'none',
-                    fontSize: 13,
-                    color: 'var(--mf-fg)',
-                  }}
-                  placeholder={`Message ${coachName.split(' ')[0]}…`}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  disabled={sending}
-                />
-                <Btn
-                  type="submit"
-                  variant="primary"
-                  icon={Send}
-                  disabled={sending || (!draft.trim() && !pending)}
-                >
-                  Send
-                </Btn>
-              </form>
             </div>
           </div>
         </div>

@@ -12,6 +12,7 @@ import {
   AttachmentPicker,
   AttachmentBubble,
   PendingAttachmentChip,
+  VoiceRecorder,
 } from '@/components/ui/mf';
 import type { AttachmentBubbleAttachment } from '@/components/ui/mf';
 import { formatMessageDayDivider } from '@/lib/formatTime';
@@ -517,60 +518,81 @@ export default function InboxMobile({
 
           {/* Composer */}
           <div style={{ flexShrink: 0 }}>
-            {pending && (
-              <div style={{ padding: '0 10px' }}>
-                <PendingAttachmentChip
-                  blob={pending.blob}
-                  mime={pending.mime}
-                  size={pending.size}
-                  name={pending.name}
-                  progress={uploadProgress}
-                  onRemove={() => {
-                    setPending(null);
-                    setUploadProgress(undefined);
+            {voiceMode ? (
+              <div style={{ padding: '8px 10px' }}>
+                <VoiceRecorder
+                  onSend={(blob, durationSec) => {
+                    setPending({
+                      blob,
+                      mime: blob.type || 'audio/webm',
+                      size: blob.size,
+                      name: 'voice-note',
+                      intent: 'voice',
+                      durationSec,
+                    });
+                    setVoiceMode(false);
                   }}
+                  onCancel={() => setVoiceMode(false)}
                 />
               </div>
+            ) : (
+              <>
+                {pending && (
+                  <div style={{ padding: '0 10px' }}>
+                    <PendingAttachmentChip
+                      blob={pending.blob}
+                      mime={pending.mime}
+                      size={pending.size}
+                      name={pending.name}
+                      progress={uploadProgress}
+                      onRemove={() => {
+                        setPending(null);
+                        setUploadProgress(undefined);
+                      }}
+                    />
+                  </div>
+                )}
+                <form
+                  onSubmit={handleSend}
+                  style={{
+                    borderTop: '1px solid var(--mf-hairline)',
+                    padding: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <AttachmentPicker
+                    trigger="paperclip"
+                    onPicked={(intent, file) => {
+                      setPending({
+                        blob: file,
+                        mime: file.type,
+                        size: file.size,
+                        name: file.name,
+                        intent,
+                      });
+                    }}
+                    onVoiceRequest={() => setVoiceMode(true)}
+                  />
+                  <input
+                    className="mf-input"
+                    placeholder={`Reply…`}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    disabled={sending}
+                    style={{ flex: 1, fontSize: 13, height: 36 }}
+                  />
+                  <Btn
+                    variant="primary"
+                    icon={Send}
+                    type="submit"
+                    disabled={sending || (!draft.trim() && !pending)}
+                    aria-label="Send"
+                  />
+                </form>
+              </>
             )}
-            <form
-              onSubmit={handleSend}
-              style={{
-                borderTop: '1px solid var(--mf-hairline)',
-                padding: 10,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <AttachmentPicker
-                trigger="paperclip"
-                onPicked={(intent, file) => {
-                  setPending({
-                    blob: file,
-                    mime: file.type,
-                    size: file.size,
-                    name: file.name,
-                    intent,
-                  });
-                }}
-                onVoiceRequest={() => setVoiceMode(true)}
-              />
-              <input
-                className="mf-input"
-                placeholder={`Reply…`}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                disabled={sending}
-                style={{ flex: 1, fontSize: 13, height: 36 }}
-              />
-              <Btn
-                variant="primary"
-                icon={Send}
-                type="submit"
-                disabled={sending || (!draft.trim() && !pending)}
-                aria-label="Send"
-              />
-            </form>
           </div>
           {error && (
             <div
