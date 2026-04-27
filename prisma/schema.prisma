@@ -337,6 +337,7 @@ model WorkoutSession {
   completed        Boolean            @default(false)
   notes            String?
   rating           Int?
+  aiSummary        String?
   caloriesBurned   Int?
   createdAt        DateTime           @default(now())
   exerciseProgress ExerciseProgress[]
