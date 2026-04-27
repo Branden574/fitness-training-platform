@@ -64,6 +64,7 @@ model User {
   receivedMessages        Message[]               @relation("MessageReceiver")
   sentMessages            Message[]               @relation("MessageSender")
   notifications           Notification[]
+  weeklyDigests           WeeklyDigest[]          @relation("TrainerWeeklyDigest")
   pushSubscriptions       PushSubscription[]
   devicePushTokens        DevicePushToken[]
   notificationPreference  NotificationPreference?
@@ -624,6 +625,19 @@ model Notification {
   @@index([userId, readAt])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+model WeeklyDigest {
+  id            String   @id @default(cuid())
+  trainerId     String
+  weekStartIso  String
+  payload       Json
+  generatedAt   DateTime @default(now())
+  trainer       User     @relation("TrainerWeeklyDigest", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, weekStartIso])
+  @@index([trainerId, generatedAt])
+  @@map("weekly_digests")
 }
 
 // Per-user web-push (VAPID) subscription. One row per registered browser
