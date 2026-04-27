@@ -55,6 +55,29 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
+async function probeVideo(file: File): Promise<{ durationSec?: number; width?: number; height?: number }> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.muted = true;
+    v.src = url;
+    v.onloadedmetadata = () => {
+      const out = {
+        durationSec: Number.isFinite(v.duration) ? v.duration : undefined,
+        width: v.videoWidth || undefined,
+        height: v.videoHeight || undefined,
+      };
+      URL.revokeObjectURL(url);
+      resolve(out);
+    };
+    v.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({});
+    };
+  });
+}
+
 export default function TrainerInboxClient({
   selfId,
   rail,
@@ -586,13 +609,30 @@ export default function TrainerInboxClient({
                   >
                     <AttachmentPicker
                       trigger="paperclip"
-                      onPicked={(intent, file) => {
+                      onPicked={async (intent, file) => {
+                        // Mirror server-side INTENT_SPEC[intent].maxBytes here so we surface
+                        // "too large" UX before the upload round-trip. Server enforces the
+                        // same caps as defense-in-depth.
+                        const maxByIntent: Record<typeof intent, number> = {
+                          image: 10 * 1024 * 1024,
+                          video: 100 * 1024 * 1024,
+                          voice: 10 * 1024 * 1024,
+                          file: 10 * 1024 * 1024,
+                        };
+                        if (file.size > maxByIntent[intent]) {
+                          const mb = Math.round(maxByIntent[intent] / (1024 * 1024));
+                          setError(`File too large (max ${mb} MB)`);
+                          return;
+                        }
+                        let probe: { durationSec?: number; width?: number; height?: number } = {};
+                        if (intent === 'video') probe = await probeVideo(file);
                         setPending({
                           blob: file,
                           mime: file.type,
                           size: file.size,
                           name: file.name,
                           intent,
+                          ...probe,
                         });
                       }}
                       onVoiceRequest={() => setVoiceMode(true)}
