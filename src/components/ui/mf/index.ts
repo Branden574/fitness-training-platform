@@ -8,6 +8,9 @@ export type { StatusDotKind, StatusDotProps } from './StatusDot';
 export { default as AttachmentPicker } from './AttachmentPicker';
 export type { AttachmentPickerProps } from './AttachmentPicker';
 
+export { default as VoiceRecorder } from './VoiceRecorder';
+export type { VoiceRecorderProps } from './VoiceRecorder';
+
 export { default as MessagePhotoLightbox } from './MessagePhotoLightbox';
 export type { MessagePhotoLightboxProps } from './MessagePhotoLightbox';
 
