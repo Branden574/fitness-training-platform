@@ -59,7 +59,13 @@ interface SetLog {
 
 const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9] as const;
 
-export default function ActiveWorkoutClient({ initial }: { initial: InitialPayload }) {
+export default function ActiveWorkoutClient({
+  initial,
+  trainerId,
+}: {
+  initial: InitialPayload;
+  trainerId: string | null;
+}) {
   const router = useRouter();
   const celebrate = useCelebrate();
   // Prefer a locally-saved draft over the server's fresh scaffolding so a
@@ -124,6 +130,8 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
   const [formVideo, setFormVideo] = useState<FormVideo | null>(null);
   const [formVideoLoading, setFormVideoLoading] = useState(false);
   const [formVideoError, setFormVideoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoSending, setPhotoSending] = useState(false);
 
   const startedAtMs = useRef<number | null>(userStartedAtMs);
 
@@ -244,6 +252,47 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
         // Last set of last exercise — no rest needed
         setRestEndAtMs(null);
       }
+    }
+  }
+
+  async function handleAttachAndTell() {
+    const file = photoInputRef.current?.files?.[0];
+    if (!file) return;
+    // Mirror server INTENT_SPEC[image].maxBytes = 10 MB so we fail fast on the
+    // client instead of round-tripping a doomed upload.
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Photo too large (max 10 MB)');
+      return;
+    }
+    if (!completedSummary) return;
+    if (!trainerId) {
+      alert('No trainer assigned');
+      return;
+    }
+    setPhotoSending(true);
+    try {
+      const fd = new FormData();
+      fd.append('intent', 'image');
+      fd.append('receiverId', trainerId);
+      fd.append('file', file, file.name);
+      const res = await fetch('/api/messages/upload', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Upload failed');
+      const meta = (await res.json()) as { url: string; mime: string; size: number; name?: string | null };
+      const minutes = Math.max(1, Math.floor(completedSummary.durationMs / 60000));
+      const draft = `Just finished ${completedSummary.workoutTitle} — ${completedSummary.completedSetCount} of ${completedSummary.totalSetCount} sets in ${minutes} min 💪`;
+      const params = new URLSearchParams({
+        draft,
+        attachmentUrl: meta.url,
+        attachmentMime: meta.mime,
+        attachmentSize: String(meta.size),
+      });
+      if (meta.name) params.set('attachmentName', meta.name);
+      router.push(`/client/messages?${params.toString()}`);
+    } catch {
+      alert('Photo upload failed');
+    } finally {
+      setPhotoSending(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
     }
   }
 
@@ -425,8 +474,22 @@ export default function ActiveWorkoutClient({ initial }: { initial: InitialPaylo
               {completedSummary.completedSetCount} of {completedSummary.totalSetCount} sets •{' '}
               {Math.max(1, Math.floor(completedSummary.durationMs / 60000))} min
             </div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={() => void handleAttachAndTell()}
+            />
             <Btn
               variant="primary"
+              disabled={photoSending}
+              onClick={() => photoInputRef.current?.click()}
+            >
+              {photoSending ? 'Uploading…' : '📷 Add a photo + tell your coach'}
+            </Btn>
+            <Btn
+              variant="ghost"
               onClick={() => {
                 const minutes = Math.max(1, Math.floor(completedSummary.durationMs / 60000));
                 const draft = `Just finished ${completedSummary.workoutTitle} — ${completedSummary.completedSetCount} of ${completedSummary.totalSetCount} sets in ${minutes} min 💪`;

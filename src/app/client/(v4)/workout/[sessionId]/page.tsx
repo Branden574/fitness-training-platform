@@ -89,7 +89,7 @@ export default async function ActiveWorkoutPage({
 
   return (
     <>
-      <ActiveWorkoutClient initial={payload} />
+      <ActiveWorkoutClient initial={payload} trainerId={ctx.trainer?.id ?? null} />
       <ActiveWorkoutDesktop
         initial={payload}
         athleteInitials={ctx.initials}
