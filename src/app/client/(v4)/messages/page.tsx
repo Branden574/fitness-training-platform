@@ -64,6 +64,8 @@ export default async function ClientMessagesPage() {
       content: true,
       senderId: true,
       createdAt: true,
+      type: true,
+      attachment: true,
     },
   });
 
@@ -82,6 +84,18 @@ export default async function ClientMessagesPage() {
     content: m.content,
     fromMe: m.senderId === session.user.id,
     at: m.createdAt.toISOString(),
+    type: (m.type ?? 'TEXT') as 'TEXT' | 'IMAGE' | 'FILE' | 'VIDEO' | 'VOICE',
+    attachment: (m.attachment ?? null) as
+      | {
+          url: string;
+          mime: string;
+          size: number;
+          name?: string | null;
+          durationSec?: number;
+          width?: number;
+          height?: number;
+        }
+      | null,
   }));
 
   return (
