@@ -80,7 +80,24 @@ export default async function TrainerMessagesPage({
   // mobile only has one when ?with=<id>). If they're the same, fetch once. If only desktop has
   // one (mobile is list view), fetch desktop's.
   const threadForId = desktopActiveId; // superset of mobileActiveId
-  let thread: Array<{ id: string; content: string; fromMe: boolean; at: string }> = [];
+  let thread: Array<{
+    id: string;
+    content: string;
+    fromMe: boolean;
+    at: string;
+    type: 'TEXT' | 'IMAGE' | 'FILE' | 'VIDEO' | 'VOICE';
+    attachment:
+      | {
+          url: string;
+          mime: string;
+          size: number;
+          name?: string | null;
+          durationSec?: number;
+          width?: number;
+          height?: number;
+        }
+      | null;
+  }> = [];
   let activeName: string | null = null;
   let activeInitials = '';
   let activeImage: string | null = null;
@@ -100,13 +117,32 @@ export default async function TrainerMessagesPage({
       },
       orderBy: { createdAt: 'asc' },
       take: 200,
-      select: { id: true, content: true, senderId: true, createdAt: true },
+      select: {
+        id: true,
+        content: true,
+        senderId: true,
+        createdAt: true,
+        type: true,
+        attachment: true,
+      },
     });
     thread = msgs.map((m) => ({
       id: m.id,
       content: m.content,
       fromMe: m.senderId === session.user.id,
       at: m.createdAt.toISOString(),
+      type: (m.type ?? 'TEXT') as 'TEXT' | 'IMAGE' | 'FILE' | 'VIDEO' | 'VOICE',
+      attachment: (m.attachment ?? null) as
+        | {
+            url: string;
+            mime: string;
+            size: number;
+            name?: string | null;
+            durationSec?: number;
+            width?: number;
+            height?: number;
+          }
+        | null,
     }));
 
     // Mark trainer-incoming messages read for the active thread. Matches prior desktop
