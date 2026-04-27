@@ -5,6 +5,9 @@
 export { default as StatusDot } from './StatusDot';
 export type { StatusDotKind, StatusDotProps } from './StatusDot';
 
+export { default as AttachmentPicker } from './AttachmentPicker';
+export type { AttachmentPickerProps } from './AttachmentPicker';
+
 export { default as Avatar } from './Avatar';
 export type { AvatarProps } from './Avatar';
 
