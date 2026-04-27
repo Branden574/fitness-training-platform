@@ -120,6 +120,42 @@ async function safeSend(args: {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// Generic raw-email sender (used by surfaces that build their own
+// shell — e.g. the weekly trainer digest, which has its own layout).
+// Mirrors safeSend's fail-open contract.
+// ──────────────────────────────────────────────────────────────────
+export interface SendRawEmailInput {
+  toEmail: string;
+  toName: string | null;
+  subject: string;
+  html: string;
+  text: string;
+}
+
+export async function sendRawEmail(input: SendRawEmailInput): Promise<void> {
+  const resend = resendClient();
+  if (!resend) return;
+  try {
+    const to = input.toName?.trim()
+      ? `${input.toName.trim().replace(/["<>]/g, '').slice(0, 80)} <${input.toEmail}>`
+      : input.toEmail;
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: input.subject,
+      html: input.html,
+      text: input.text,
+      tags: [{ name: 'type', value: 'raw' }],
+    });
+    if (error) {
+      console.warn('[email:raw] send failed:', error);
+    }
+  } catch (e) {
+    console.warn('[email:raw] exception:', e);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
 // New message from coach/client
 // ──────────────────────────────────────────────────────────────────
 export async function sendNewMessageEmail(args: {
