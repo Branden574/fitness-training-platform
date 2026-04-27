@@ -92,6 +92,7 @@ export default async function ActiveWorkoutPage({
       <ActiveWorkoutClient initial={payload} trainerId={ctx.trainer?.id ?? null} />
       <ActiveWorkoutDesktop
         initial={payload}
+        trainerId={ctx.trainer?.id ?? null}
         athleteInitials={ctx.initials}
         athleteName={ctx.name ?? ctx.email}
         athletePhotoUrl={ctx.image}

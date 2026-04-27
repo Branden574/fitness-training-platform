@@ -69,11 +69,13 @@ const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9] as const;
 
 export default function ActiveWorkoutDesktop({
   initial,
+  trainerId,
   athleteInitials,
   athleteName,
   athletePhotoUrl,
 }: {
   initial: InitialPayload;
+  trainerId: string | null;
   athleteInitials?: string;
   athleteName?: string;
   athletePhotoUrl?: string | null;
@@ -137,6 +139,48 @@ export default function ActiveWorkoutDesktop({
 
   const startedAtMs = useRef<number | null>(userStartedAtMs);
   const pausedElapsedRef = useRef<number | null>(null);
+
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoSending, setPhotoSending] = useState(false);
+
+  async function handleAttachAndTell() {
+    const file = photoInputRef.current?.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Photo too large (max 10 MB)');
+      return;
+    }
+    if (!completedSummary) return;
+    if (!trainerId) {
+      alert('No trainer assigned');
+      return;
+    }
+    setPhotoSending(true);
+    try {
+      const fd = new FormData();
+      fd.append('intent', 'image');
+      fd.append('receiverId', trainerId);
+      fd.append('file', file, file.name);
+      const res = await fetch('/api/messages/upload', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Upload failed');
+      const meta = (await res.json()) as { url: string; mime: string; size: number; name?: string | null };
+      const minutes = Math.max(1, Math.floor(completedSummary.durationMs / 60000));
+      const draft = `Just finished ${completedSummary.workoutTitle} — ${completedSummary.completedSetCount} of ${completedSummary.totalSetCount} sets in ${minutes} min 💪`;
+      const params = new URLSearchParams({
+        draft,
+        attachmentUrl: meta.url,
+        attachmentMime: meta.mime,
+        attachmentSize: String(meta.size),
+      });
+      if (meta.name) params.set('attachmentName', meta.name);
+      router.push(`/client/messages?${params.toString()}`);
+    } catch {
+      alert('Photo upload failed');
+    } finally {
+      setPhotoSending(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  }
 
   useEffect(() => {
     startedAtMs.current = userStartedAtMs;
@@ -413,8 +457,22 @@ export default function ActiveWorkoutDesktop({
               {completedSummary.completedSetCount} of {completedSummary.totalSetCount} sets •{' '}
               {Math.max(1, Math.floor(completedSummary.durationMs / 60000))} min
             </div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={() => void handleAttachAndTell()}
+            />
             <Btn
               variant="primary"
+              disabled={photoSending}
+              onClick={() => photoInputRef.current?.click()}
+            >
+              {photoSending ? 'Uploading…' : '📷 Add a photo + tell your coach'}
+            </Btn>
+            <Btn
+              variant="ghost"
               onClick={() => {
                 const minutes = Math.max(1, Math.floor(completedSummary.durationMs / 60000));
                 const draft = `Just finished ${completedSummary.workoutTitle} — ${completedSummary.completedSetCount} of ${completedSummary.totalSetCount} sets in ${minutes} min 💪`;
