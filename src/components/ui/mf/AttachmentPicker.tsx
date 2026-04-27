@@ -43,13 +43,24 @@ export default function AttachmentPicker({
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [open]);
 
+  // Intent must follow the file's actual mime, not the picker row tapped.
+  // OS file dialogs often ignore `accept` filters (especially macOS) so a user
+  // can pick a JPEG via the "File" row; without this inference, the upload
+  // route receives intent=file + mime=image/jpeg and rejects.
+  function inferIntent(f: File): AttachmentIntent {
+    const t = f.type;
+    if (t.startsWith('image/')) return 'image';
+    if (t.startsWith('video/')) return 'video';
+    if (t.startsWith('audio/')) return 'voice';
+    return 'file';
+  }
+
   function handlePhotoOrVideo(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     e.target.value = ''; // reset so picking the same file twice works
     setOpen(false);
     if (!f) return;
-    const intent: AttachmentIntent = f.type.startsWith('video/') ? 'video' : 'image';
-    onPicked(intent, f);
+    onPicked(inferIntent(f), f);
   }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -57,7 +68,7 @@ export default function AttachmentPicker({
     e.target.value = '';
     setOpen(false);
     if (!f) return;
-    onPicked('file', f);
+    onPicked(inferIntent(f), f);
   }
 
   const TriggerIcon = trigger === 'plus' ? Plus : Paperclip;
