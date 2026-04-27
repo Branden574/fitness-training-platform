@@ -109,3 +109,9 @@ export type { ImageCropperModalProps } from './ImageCropperModal';
 
 export { default as PendingAttachmentChip } from './PendingAttachmentChip';
 export type { PendingAttachmentChipProps } from './PendingAttachmentChip';
+
+export { default as AttachmentBubble } from './AttachmentBubble';
+export type {
+  AttachmentBubbleProps,
+  AttachmentBubbleAttachment,
+} from './AttachmentBubble';
