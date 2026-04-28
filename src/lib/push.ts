@@ -16,7 +16,7 @@ function initVapid(): boolean {
   if (vapidInitialized) return true;
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? 'mailto:admin@martinezfitness559.com';
+  const subject = process.env.VAPID_SUBJECT ?? 'mailto:admin@replab.com';
   if (!publicKey || !privateKey) {
     return false;
   }

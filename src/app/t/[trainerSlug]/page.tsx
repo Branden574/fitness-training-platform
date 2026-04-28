@@ -68,8 +68,8 @@ export async function generateMetadata({
       },
     },
   });
-  if (!user) return { title: 'Trainer not found · Martinez/Fitness' };
-  const title = `${user.name ?? 'Trainer'} · Martinez/Fitness`;
+  if (!user) return { title: 'Trainer not found · RepLab' };
+  const title = `${user.name ?? 'Trainer'} · RepLab`;
   const description =
     user.trainer?.headline ??
     user.trainer?.bio?.slice(0, 160) ??

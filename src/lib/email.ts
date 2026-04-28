@@ -2,7 +2,7 @@ import 'server-only';
 
 import { Resend } from 'resend';
 
-const FROM = 'Martinez Fitness <noreply@noreplybrentmartinezfitness.com>';
+const FROM = 'RepLab <noreply@replab.com>';
 
 function resendClient(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -62,7 +62,7 @@ function renderShell({ eyebrow, title, bodyHtml, ctaLabel, ctaHref }: EmailShell
       <div style="margin-top:32px;padding-top:16px;border-top:1px solid #232327;
                   font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.1em;
                   color:#6E6E76;text-transform:uppercase;">
-        Martinez Fitness · martinezfitness559.com
+        RepLab · replab.com
       </div>
     </div>
   </body>

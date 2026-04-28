@@ -14,7 +14,7 @@ export const AGREEMENT_PLACEHOLDER_BANNER =
 export const AGREEMENT_MARKDOWN = `
 ## 1. Acceptance
 By clicking "I Agree," you ("Trainer") accept this Trainer Content Agreement
-with Martinez/Fitness ("Platform"). If you do not agree, do not publish a
+with RepLab ("Platform"). If you do not agree, do not publish a
 trainer profile on the Platform.
 
 ## 2. Content Responsibility

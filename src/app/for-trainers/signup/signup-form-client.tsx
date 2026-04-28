@@ -111,7 +111,7 @@ export default function SignupFormClient() {
           style={{ marginTop: 3 }}
         />
         <span className="mf-fg-dim">
-          I agree to the Martinez/Fitness{' '}
+          I agree to the RepLab{' '}
           <Link
             href="/legal/terms"
             target="_blank"

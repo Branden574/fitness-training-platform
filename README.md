@@ -58,7 +58,7 @@ Open [http://localhost:3000](http://localhost:3000).
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `NEXTAUTH_SECRET` | Random secret for NextAuth session signing |
-| `NEXTAUTH_URL` | Full URL of the app (e.g. `https://martinezfitness559.com`) |
+| `NEXTAUTH_URL` | Full URL of the app (e.g. `https://replab.com`) |
 | `RESEND_API_KEY` | API key for Resend email service |
 
 See `.env.example` for a full list.
@@ -86,7 +86,7 @@ fitness-training-platform/
 
 The app is deployed on [Railway](https://railway.app) with automatic deployments from the `main` branch.
 
-- **Production URL:** [martinezfitness559.com](https://martinezfitness559.com)
+- **Production URL:** [replab.com](https://replab.com)
 - **Health Check:** `/api/health`
 - **Database:** Railway PostgreSQL
 

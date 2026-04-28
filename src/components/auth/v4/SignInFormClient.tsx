@@ -16,7 +16,7 @@ const SIGN_IN_BOOT_MESSAGES: Array<[number, string, number]> = [
   [320, 'LOADING · ROSTER', 32],
   [320, 'SYNCING · PROGRAMS', 58],
   [280, 'SYNCING · NUTRITION', 78],
-  [260, 'READY · MARTINEZ FITNESS', 100],
+  [260, 'READY · REPLAB', 100],
 ];
 
 export default function SignInFormClient() {

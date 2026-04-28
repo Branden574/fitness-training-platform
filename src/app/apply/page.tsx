@@ -1,7 +1,7 @@
 import ApplyGenericClient from './apply-generic-client';
 
 export const metadata = {
-  title: 'Apply · Martinez/Fitness',
+  title: 'Apply · RepLab',
 };
 
 export default function ApplyPage() {
@@ -14,7 +14,7 @@ export default function ApplyPage() {
       >
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-            APPLY · MARTINEZ/FITNESS
+            APPLY · REPLAB
           </div>
           <h1
             className="mf-font-display"

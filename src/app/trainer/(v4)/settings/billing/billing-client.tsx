@@ -249,7 +249,7 @@ export default function BillingClient({ initial }: Props) {
           style={{ fontSize: 13, marginTop: 8, lineHeight: 1.5 }}
         >
           Connect your Stripe account so clients can pay for coaching through
-          the platform. Payouts go to your own bank. Martinez/Fitness takes a
+          the platform. Payouts go to your own bank. RepLab takes a
           small application fee on each charge.
         </div>
         <div

@@ -105,8 +105,8 @@ export default function ProgramsAnimations({ programs }: { programs: Program[] }
             </FadeUp>
             <FadeUp delay={0.2}>
               <p className="text-lg text-[#9ca3af] leading-relaxed">
-                Every program is designed by Brent Martinez and tailored to your specific goals,
-                schedule, and fitness level. Train in-person in Fresno or online from anywhere.
+                Every program is designed by your coach and tailored to your specific goals,
+                schedule, and fitness level. Train in-person or online from anywhere.
               </p>
             </FadeUp>
           </div>

@@ -47,7 +47,7 @@ export default async function ApplyDirectPage({
       >
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-            APPLY · MARTINEZ/FITNESS
+            APPLY · REPLAB
           </div>
           <h1
             className="mf-font-display"

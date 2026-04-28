@@ -25,7 +25,7 @@ function deriveLabel(screenKey: string): string {
 
 /**
  * Branded tab-switch loader — blur-out → scan-wipe + corner brackets + spinning
- * dumbbell mark + top progress rail → fade-in. Matches the Martinez Fitness
+ * dumbbell mark + top progress rail → fade-in. Matches the RepLab
  * animation handoff. ~520ms total.
  */
 export function TabTransition({ screenKey, label: labelProp, children }: Props) {

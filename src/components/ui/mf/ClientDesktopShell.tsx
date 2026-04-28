@@ -98,7 +98,7 @@ export default function ClientDesktopShell({
   const { trainer } = useAssignedTrainer();
   const brandDisplayName = trainer?.name
     ? trainer.name.toUpperCase()
-    : 'MARTINEZ/FIT';
+    : 'REPLAB';
   const brandSubLabel = trainer ? 'YOUR COACH' : 'ATHLETE · WEB';
 
   return (

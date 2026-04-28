@@ -118,11 +118,11 @@ export async function authenticateBiometric(reason?: string): Promise<boolean> {
   try {
     const mod = await import('@aparajita/capacitor-biometric-auth');
     await mod.BiometricAuth.authenticate({
-      reason: reason ?? 'Unlock Martinez Fitness',
+      reason: reason ?? 'Unlock RepLab',
       cancelTitle: 'Cancel',
       allowDeviceCredential: true,
       iosFallbackTitle: 'Use device passcode',
-      androidTitle: 'Unlock Martinez Fitness',
+      androidTitle: 'Unlock RepLab',
       androidSubtitle: 'Verify your identity to continue',
     });
     return true;

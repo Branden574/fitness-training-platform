@@ -1,13 +1,15 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service · Martinez/Fitness',
+  title: 'Terms of Service · RepLab',
   description:
-    'Terms governing use of the Martinez/Fitness platform, including trainer and client responsibilities, payments, and California governing law.',
+    'Terms governing use of the RepLab platform, including trainer and client responsibilities, payments, and California governing law.',
 };
 
 const EFFECTIVE_DATE = 'April 21, 2026';
-const CONTACT_EMAIL = 'martinezfitness559@gmail.com';
+// TODO(rebrand): replace with the real RepLab support email once the domain
+// is provisioned. Branden owns this — leave as a placeholder for now.
+const CONTACT_EMAIL = 'support@replab.com';
 
 export default function TermsOfServicePage() {
   return (
@@ -46,7 +48,7 @@ export default function TermsOfServicePage() {
 
         <Section title="1. The service">
           <p>
-            Martinez/Fitness is an online platform that connects independent
+            RepLab is an online platform that connects independent
             fitness trainers (&quot;Trainers&quot;) with prospective and current
             clients (&quot;Clients&quot;). We provide software, hosting,
             messaging, a program builder, progress tracking, and payment
@@ -206,7 +208,7 @@ export default function TermsOfServicePage() {
         <Section title="9. Our intellectual property">
           <p>
             The platform software, design, branding, and trademarks belong to
-            Martinez/Fitness. Except for the content you upload, nothing in
+            RepLab. Except for the content you upload, nothing in
             these Terms transfers any of our intellectual property to you.
           </p>
         </Section>
@@ -235,7 +237,7 @@ export default function TermsOfServicePage() {
 
         <Section title="12. Limitation of liability">
           <p>
-            To the maximum extent permitted by law, Martinez/Fitness and its
+            To the maximum extent permitted by law, RepLab and its
             officers, employees, and contractors will not be liable for any
             indirect, incidental, consequential, special, exemplary, or
             punitive damages, or for lost profits, revenue, goodwill, or data,

@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         toEmail: t.email,
         toName: t.name,
         payload,
-        appUrl: process.env.APP_URL ?? 'https://martinezfitness559.com',
+        appUrl: process.env.APP_URL ?? 'https://replab.com',
       });
 
       processed++;

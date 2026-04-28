@@ -112,7 +112,7 @@ export default function DesktopShell({
   headerRight,
   children,
   className,
-  brandName = 'MARTINEZ/FIT',
+  brandName = 'REPLAB',
   brandMeta,
   footer,
   searchPlaceholder = 'Search athletes, exercises…',

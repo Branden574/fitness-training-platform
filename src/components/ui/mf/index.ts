@@ -1,4 +1,4 @@
-// v4 · phase 0 barrel export for the Martinez Fitness "athletic performance" primitives.
+// v4 · phase 0 barrel export for the RepLab "athletic performance" primitives.
 // Every export here is a STUB implemented in phase 1. Do not import in production
 // screens until phase 1 is complete.
 

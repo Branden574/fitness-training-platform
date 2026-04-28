@@ -122,7 +122,7 @@ export default function AboutAnimations() {
               </FadeLeft>
               <FadeRight>
                 <div className="w-full md:w-72 aspect-[4/3] relative rounded-xl overflow-hidden shrink-0">
-                  <Image src="/images/hero-slide-2.jpg" alt="Brent Martinez Fitness Studio" fill className="object-cover" />
+                  <Image src="/images/hero-slide-2.jpg" alt="Training studio" fill className="object-cover" />
                 </div>
               </FadeRight>
             </div>

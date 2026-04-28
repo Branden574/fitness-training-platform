@@ -282,7 +282,7 @@ export default function FoodClient({
               {initial.planName}
             </div>
             <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 9 }}>
-              COACH {initial.trainerName?.toUpperCase() ?? 'MARTINEZ'}
+              COACH {initial.trainerName?.toUpperCase() ?? 'YOUR COACH'}
             </div>
           </div>
         </div>

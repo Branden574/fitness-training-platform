@@ -452,7 +452,7 @@ export default function FoodDesktop({
                     className="mf-font-mono mf-fg-mute"
                     style={{ fontSize: 10, marginTop: 2 }}
                   >
-                    COACH {initial.trainerName?.toUpperCase() ?? 'MARTINEZ'}
+                    COACH {initial.trainerName?.toUpperCase() ?? 'YOUR COACH'}
                   </div>
                 </div>
               </div>

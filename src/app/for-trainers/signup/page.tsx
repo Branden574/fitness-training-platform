@@ -1,9 +1,9 @@
 import SignupFormClient from './signup-form-client';
 
 export const metadata = {
-  title: 'Become a trainer · Martinez/Fitness',
+  title: 'Become a trainer · RepLab',
   description:
-    'List your practice on Martinez/Fitness. 14-day trial, no card required.',
+    'List your practice on RepLab. 14-day trial, no card required.',
 };
 
 export default function TrainerSignupPage() {

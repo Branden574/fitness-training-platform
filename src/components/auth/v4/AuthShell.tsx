@@ -64,7 +64,7 @@ export default function AuthShell({
                 letterSpacing: '-0.01em',
               }}
             >
-              MARTINEZ/FITNESS
+              REPLAB
             </span>
           </Link>
 

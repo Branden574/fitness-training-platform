@@ -685,12 +685,12 @@ export default function MarketingLanding() {
           <div>
             <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
               <BrandMark size={24} />
-              <span className="mf-font-display" style={{ fontSize: 16 }}>MARTINEZ/FITNESS</span>
+              <span className="mf-font-display" style={{ fontSize: 16 }}>REPLAB</span>
             </div>
             <div className="mf-fg-mute" style={{ fontSize: 12 }}>
               Fresno, CA · Est 2024
               <br />
-              martinezfitness559.com
+              replab.com
             </div>
           </div>
           <div>
@@ -731,7 +731,7 @@ export default function MarketingLanding() {
               letterSpacing: '0.1em',
             }}
           >
-            <div>© 2026 MARTINEZ FITNESS LLC</div>
+            <div>© 2026 REPLAB</div>
             <div>V4.2.0 · BUILD 1284</div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 /* global self, clients, caches, fetch */
 
-// Martinez Fitness service worker.
+// RepLab service worker.
 // Registered at /sw.js with scope '/' so it controls the whole app.
 // Three concerns:
 //   1. Web-push receive + notificationclick (Phase 3A).
@@ -9,7 +9,7 @@
 //      authenticated API GETs (cross-user leak risk). Navigation is
 //      NetworkFirst w/ 3s timeout; _next/static and images are CacheFirst.
 
-const FALLBACK_TITLE = 'Martinez Fitness';
+const FALLBACK_TITLE = 'RepLab';
 const FALLBACK_BODY = 'You have a new update.';
 
 const CACHE_VERSION = 'v1';

@@ -15,7 +15,7 @@ const DEFAULT_MESSAGES: Message[] = [
   [340, 'CALIBRATING · HRV MONITOR', 18],
   [340, 'LOADING · PROGRAM · WK 9/12', 42],
   [280, 'SYNCING · 127 EXERCISES', 68],
-  [260, 'READY · MARTINEZ FITNESS', 100],
+  [260, 'READY · REPLAB', 100],
 ];
 
 function prefersReducedMotion(): boolean {
@@ -180,7 +180,7 @@ export function BootLoader({ onDone, messages = DEFAULT_MESSAGES }: Props) {
               marginTop: 6,
             }}
           >
-            MARTINEZ FITNESS
+            REPLAB
           </div>
           <div
             style={{

@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
     // this, profile/cover/gallery images fall back to rendering alt text
     // and the RoundAvatar/TrainerCover components look broken.
     remotePatterns: [
-      { protocol: 'https', hostname: 'cdn.martinezfitness559.com' },
+      { protocol: 'https', hostname: 'cdn.replab.com' },
       // Fallback: default R2 public bucket domain on Cloudflare.
       { protocol: 'https', hostname: '**.r2.dev' },
     ],

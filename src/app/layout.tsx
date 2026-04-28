@@ -37,11 +37,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Brent Martinez Fitness - Transform Your Life",
-  description: "Professional personal training and nutrition coaching with Brent Martinez. Achieve your fitness goals with personalized workouts, meal plans, and expert guidance.",
+  title: "RepLab — Train with the best",
+  description: "RepLab connects you with hand-vetted trainers for personalized programming, nutrition coaching, and progress tracking. One platform, every coach.",
   appleWebApp: {
     capable: true,
-    title: 'Martinez/Fitness',
+    title: 'RepLab',
     statusBarStyle: 'black-translucent',
   },
 };

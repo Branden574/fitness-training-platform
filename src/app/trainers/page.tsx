@@ -4,9 +4,9 @@ import DirectoryClient from './directory-client';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Trainers · Martinez/Fitness',
+  title: 'Trainers · RepLab',
   description:
-    'Hand-vetted coaches on the Martinez/Fitness platform. Browse by specialty, location, and availability — then apply.',
+    'Hand-vetted coaches on RepLab. Browse by specialty, location, and availability — then apply.',
 };
 
 const POPULAR_SPECIALTIES = [
@@ -132,9 +132,9 @@ export default async function TrainersDirectoryPage() {
                   maxWidth: 560,
                 }}
               >
-                Every trainer on the platform is hand-vetted by the Martinez Fitness
-                team. Browse by specialty, location, and availability — then apply to
-                the ones you vibe with.
+                Every trainer on the platform is hand-vetted by the RepLab team.
+                Browse by specialty, location, and availability — then apply to the
+                ones you vibe with.
               </p>
             </div>
             <div

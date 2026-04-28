@@ -98,7 +98,7 @@ export default function PublicTopNav({ activeSection }: PublicTopNavProps) {
               className="mf-font-display"
               style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.01em' }}
             >
-              MARTINEZ/FITNESS
+              REPLAB
             </span>
           </Link>
           <nav

@@ -228,7 +228,7 @@ export default function DesignPage() {
             <span className="mf-accent">performance.</span>
           </div>
           <p className="mf-fg-dim" style={{ marginTop: 16, maxWidth: 560, lineHeight: 1.6 }}>
-            The visual system for Martinez Fitness. Dark by default, scoreboard-first typography,
+            The visual system for RepLab. Dark by default, scoreboard-first typography,
             one acidic accent. Every component below is used in production screens.
           </p>
         </div>

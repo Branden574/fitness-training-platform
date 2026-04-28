@@ -128,7 +128,7 @@ export async function sendNativePushToUser(
           android: {
             priority: 'high',
             notification: {
-              channelId: 'martinez-fitness-default',
+              channelId: 'replab-default',
             },
           },
           apns: {

@@ -1,13 +1,15 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy · Martinez/Fitness',
+  title: 'Privacy Policy · RepLab',
   description:
-    'How Martinez/Fitness collects, uses, and protects personal information, including California (CCPA/CPRA) rights.',
+    'How RepLab collects, uses, and protects personal information, including California (CCPA/CPRA) rights.',
 };
 
 const EFFECTIVE_DATE = 'April 21, 2026';
-const CONTACT_EMAIL = 'martinezfitness559@gmail.com';
+// TODO(rebrand): replace with the real RepLab support email once the domain
+// is provisioned. Branden owns this — leave as a placeholder for now.
+const CONTACT_EMAIL = 'support@replab.com';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -40,17 +42,17 @@ export default function PrivacyPolicyPage() {
         </h1>
         <p className="mf-fg-dim" style={{ marginTop: 12, fontSize: 13 }}>
           Effective {EFFECTIVE_DATE}. This policy explains what personal
-          information Martinez/Fitness collects, how we use it, who we share it
+          information RepLab collects, how we use it, who we share it
           with, and the rights you have over it — with specific disclosures for
           California residents.
         </p>
 
         <Section title="1. Who we are">
           <p>
-            Martinez/Fitness (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;)
+            RepLab (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;)
             operates an online platform that connects independent fitness
             trainers with clients. We run the platform at{' '}
-            <span className="mf-font-mono">martinezfitness559.com</span>. The
+            <span className="mf-font-mono">replab.com</span>. The
             platform is based in California.
           </p>
           <p>

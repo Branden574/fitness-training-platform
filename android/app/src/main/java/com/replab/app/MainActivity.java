@@ -1,4 +1,4 @@
-package com.martinezfitness.app;
+package com.replab.app;
 
 import com.getcapacitor.BridgeActivity;
 

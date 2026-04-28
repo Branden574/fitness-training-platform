@@ -41,7 +41,7 @@ export default function BiometricGate({ children }: { children: React.ReactNode 
   async function promptNow() {
     if (status === 'prompting') return;
     setStatus('prompting');
-    const ok = await authenticateBiometric('Unlock Martinez Fitness');
+    const ok = await authenticateBiometric('Unlock RepLab');
     if (ok) {
       markUnlocked();
       setStatus('unlocked');
@@ -109,7 +109,7 @@ export default function BiometricGate({ children }: { children: React.ReactNode 
             Verify to continue
           </div>
           <div className="mf-fg-dim" style={{ fontSize: 13, lineHeight: 1.5 }}>
-            Martinez Fitness is locked on this device. Use your biometrics or
+            RepLab is locked on this device. Use your biometrics or
             device passcode to unlock.
           </div>
           <button
