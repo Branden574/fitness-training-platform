@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'RepLab <noreply@replab.com>',
+      from: 'RepLab <noreply@replabusa.com>',
       to: clientEmail,
       subject: `🎉 ${invitation.inviter?.name ?? 'Your coach'} invited you to RepLab`,
       html: `

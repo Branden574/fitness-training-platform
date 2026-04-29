@@ -9,7 +9,7 @@ export const metadata = {
 const EFFECTIVE_DATE = 'April 21, 2026';
 // TODO(rebrand): replace with the real RepLab support email once the domain
 // is provisioned. Branden owns this — leave as a placeholder for now.
-const CONTACT_EMAIL = 'support@replab.com';
+const CONTACT_EMAIL = 'support@replabusa.com';
 
 export default function TermsOfServicePage() {
   return (

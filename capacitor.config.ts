@@ -18,15 +18,15 @@ const config: CapacitorConfig = {
   server: {
     // Live web app. Swap to http://localhost:3000 via CAPACITOR_DEV=1 for
     // in-simulator dev. cleartext is only allowed in dev so localhost works.
-    url: isDev ? 'http://localhost:3000' : 'https://replab.com',
+    url: isDev ? 'http://localhost:3000' : 'https://replabusa.com',
     cleartext: isDev,
     // Allowed external URLs the WebView is permitted to navigate to outside
     // the primary origin (Stripe checkout, YouTube embeds, trainer-pasted
     // form-video URLs). iOS/Android treat everything else as external and
     // open it in the system browser.
     allowNavigation: [
-      'replab.com',
-      '*.replab.com',
+      'replabusa.com',
+      '*.replabusa.com',
       'checkout.stripe.com',
       '*.stripe.com',
       'www.youtube.com',
