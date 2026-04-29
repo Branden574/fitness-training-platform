@@ -172,8 +172,42 @@ export default function NotificationPreferences() {
 
   const updatePref = (patch: Partial<Prefs>) => setPrefs((p) => (p ? { ...p, ...patch } : p));
 
+  const byTypeLeft = TYPE_ROWS.slice(0, 3);
+  const byTypeRight = TYPE_ROWS.slice(3);
+
   return (
     <section>
+      <style>{`
+        .mf-notif-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .mf-notif-grid {
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-areas:
+              "ch ch ch ch by by by by by by by by"
+              "qh qh qh qh qh qh qh td td td td td";
+            gap: 12px;
+          }
+          .mf-notif-channels { grid-area: ch; }
+          .mf-notif-bytype   { grid-area: by; }
+          .mf-notif-quiet    { grid-area: qh; }
+          .mf-notif-device   { grid-area: td; }
+        }
+        .mf-notif-bytype-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0 20px;
+        }
+        @media (min-width: 640px) {
+          .mf-notif-bytype-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+      `}</style>
+
       <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
         NOTIFICATION PREFERENCES
       </div>
@@ -191,130 +225,151 @@ export default function NotificationPreferences() {
         </div>
       )}
 
-      <div className="mf-card" style={{ padding: 16, marginBottom: 16 }}>
-        <Row
-          label="In-app bell"
-          hint="The bell icon in the top bar. Off means notifications never land."
-          value={prefs.inAppEnabled}
-          onChange={(v) => updatePref({ inAppEnabled: v })}
-        />
-        <Row
-          label="OS push"
-          hint="Phone lock screen + desktop notification tray. Requires browser permission."
-          value={prefs.pushEnabled}
-          onChange={(v) => updatePref({ pushEnabled: v })}
-          last
-        />
-      </div>
-
-      <div className="mf-card" style={{ padding: 16, marginBottom: 16 }}>
-        <div className="mf-eyebrow" style={{ marginBottom: 12 }}>
-          BY TYPE
-        </div>
-        {TYPE_ROWS.map((t, i) => (
+      <div className="mf-notif-grid">
+        <div className="mf-card mf-notif-channels" style={{ padding: 16 }}>
+          <div className="mf-eyebrow" style={{ marginBottom: 12 }}>
+            CHANNELS
+          </div>
           <Row
-            key={t.key}
-            label={t.label}
-            hint={t.hint}
-            value={prefs[t.key] as boolean}
-            onChange={(v) => updatePref({ [t.key]: v } as Partial<Prefs>)}
-            last={i === TYPE_ROWS.length - 1}
+            label="In-app bell"
+            hint="The bell icon in the top bar. Off means notifications never land."
+            value={prefs.inAppEnabled}
+            onChange={(v) => updatePref({ inAppEnabled: v })}
           />
-        ))}
-      </div>
+          <Row
+            label="OS push"
+            hint="Phone lock screen + desktop notification tray. Requires browser permission."
+            value={prefs.pushEnabled}
+            onChange={(v) => updatePref({ pushEnabled: v })}
+            last
+          />
+        </div>
 
-      <div className="mf-card" style={{ padding: 16, marginBottom: 16 }}>
-        <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-          QUIET HOURS
-        </div>
-        <div className="mf-fg-dim" style={{ fontSize: 12, marginBottom: 12 }}>
-          OS push is suppressed in this window. In-app notifications still land — you&apos;ll see them when you open the app.
-        </div>
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(2, 1fr)' }}>
-          <label>
-            <div
-              className="mf-font-mono mf-fg-dim"
-              style={{ fontSize: 10, letterSpacing: '.15em', marginBottom: 6 }}
-            >
-              START (0–23)
+        <div className="mf-card mf-notif-bytype" style={{ padding: 16 }}>
+          <div className="mf-eyebrow" style={{ marginBottom: 12 }}>
+            BY TYPE
+          </div>
+          <div className="mf-notif-bytype-grid">
+            <div>
+              {byTypeLeft.map((t, i) => (
+                <Row
+                  key={t.key}
+                  label={t.label}
+                  hint={t.hint}
+                  value={prefs[t.key] as boolean}
+                  onChange={(v) => updatePref({ [t.key]: v } as Partial<Prefs>)}
+                  last={i === byTypeLeft.length - 1}
+                />
+              ))}
             </div>
-            <input
-              type="number"
-              min={0}
-              max={23}
-              className="mf-input"
-              value={prefs.quietHoursStart ?? ''}
-              placeholder="off"
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                updatePref({ quietHoursStart: v === '' ? null : Math.max(0, Math.min(23, Number(v))) });
-              }}
-            />
-          </label>
-          <label>
-            <div
-              className="mf-font-mono mf-fg-dim"
-              style={{ fontSize: 10, letterSpacing: '.15em', marginBottom: 6 }}
-            >
-              END (0–23)
-            </div>
-            <input
-              type="number"
-              min={0}
-              max={23}
-              className="mf-input"
-              value={prefs.quietHoursEnd ?? ''}
-              placeholder="off"
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                updatePref({ quietHoursEnd: v === '' ? null : Math.max(0, Math.min(23, Number(v))) });
-              }}
-            />
-          </label>
-        </div>
-        <div
-          className="mf-font-mono mf-fg-mute"
-          style={{ fontSize: 10, marginTop: 10, letterSpacing: '.1em' }}
-        >
-          Leave both blank to disable. Example: start 22, end 6 = quiet 10pm–6am.
-        </div>
-      </div>
-
-      <div className="mf-card" style={{ padding: 16 }}>
-        <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-          THIS DEVICE
-        </div>
-        <div className="flex items-center gap-3">
-          {pushState === 'on' ? <Bell size={14} /> : <BellOff size={14} className="mf-fg-mute" />}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 500 }}>
-              {pushState === 'on'
-                ? 'Push is active on this device.'
-                : pushState === 'denied'
-                  ? 'Push is blocked in your browser.'
-                  : 'Push is off on this device.'}
-            </div>
-            <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 2 }}>
-              {pushState === 'denied'
-                ? 'Allow notifications in your browser or OS settings to enable this option.'
-                : 'Subscribing per-device — you can enable push on your laptop AND phone independently.'}
+            <div>
+              {byTypeRight.map((t, i) => (
+                <Row
+                  key={t.key}
+                  label={t.label}
+                  hint={t.hint}
+                  value={prefs[t.key] as boolean}
+                  onChange={(v) => updatePref({ [t.key]: v } as Partial<Prefs>)}
+                  last={i === byTypeRight.length - 1}
+                />
+              ))}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={togglePushSubscription}
-            disabled={pushBusy || pushState === 'denied' || !pushSupported()}
-            className={`mf-btn ${pushState === 'on' ? '' : 'mf-btn-primary'}`}
-            style={{ height: 36 }}
+        </div>
+
+        <div className="mf-card mf-notif-quiet" style={{ padding: 16 }}>
+          <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
+            QUIET HOURS
+          </div>
+          <div className="mf-fg-dim" style={{ fontSize: 12, marginBottom: 12 }}>
+            OS push is suppressed in this window. In-app notifications still land — you&apos;ll see them when you open the app.
+          </div>
+          <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <label>
+              <div
+                className="mf-font-mono mf-fg-dim"
+                style={{ fontSize: 10, letterSpacing: '.15em', marginBottom: 6 }}
+              >
+                START (0–23)
+              </div>
+              <input
+                type="number"
+                min={0}
+                max={23}
+                className="mf-input"
+                value={prefs.quietHoursStart ?? ''}
+                placeholder="off"
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  updatePref({ quietHoursStart: v === '' ? null : Math.max(0, Math.min(23, Number(v))) });
+                }}
+              />
+            </label>
+            <label>
+              <div
+                className="mf-font-mono mf-fg-dim"
+                style={{ fontSize: 10, letterSpacing: '.15em', marginBottom: 6 }}
+              >
+                END (0–23)
+              </div>
+              <input
+                type="number"
+                min={0}
+                max={23}
+                className="mf-input"
+                value={prefs.quietHoursEnd ?? ''}
+                placeholder="off"
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  updatePref({ quietHoursEnd: v === '' ? null : Math.max(0, Math.min(23, Number(v))) });
+                }}
+              />
+            </label>
+          </div>
+          <div
+            className="mf-font-mono mf-fg-mute"
+            style={{ fontSize: 10, marginTop: 10, letterSpacing: '.1em' }}
           >
-            {pushBusy ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : pushState === 'on' ? (
-              'Disable on this device'
-            ) : (
-              'Enable on this device'
-            )}
-          </button>
+            Leave both blank to disable. Example: start 22, end 6 = quiet 10pm–6am.
+          </div>
+        </div>
+
+        <div className="mf-card mf-notif-device" style={{ padding: 16 }}>
+          <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
+            THIS DEVICE
+          </div>
+          <div className="flex items-center gap-3">
+            {pushState === 'on' ? <Bell size={14} /> : <BellOff size={14} className="mf-fg-mute" />}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>
+                {pushState === 'on'
+                  ? 'Push is active on this device.'
+                  : pushState === 'denied'
+                    ? 'Push is blocked in your browser.'
+                    : 'Push is off on this device.'}
+              </div>
+              <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 2 }}>
+                {pushState === 'denied'
+                  ? 'Allow notifications in your browser or OS settings to enable this option.'
+                  : 'Subscribing per-device — you can enable push on your laptop AND phone independently.'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={togglePushSubscription}
+              disabled={pushBusy || pushState === 'denied' || !pushSupported()}
+              className={`mf-btn ${pushState === 'on' ? '' : 'mf-btn-primary'}`}
+              style={{ height: 36 }}
+            >
+              {pushBusy ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : pushState === 'on' ? (
+                'Disable on this device'
+              ) : (
+                'Enable on this device'
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -352,27 +407,52 @@ function Row({
   last?: boolean;
 }) {
   return (
-    <label
+    <div
       className="flex items-start gap-3"
       style={{
-        paddingBottom: last ? 0 : 12,
-        marginBottom: last ? 0 : 12,
+        padding: '10px 0',
         borderBottom: last ? 'none' : '1px solid var(--mf-hairline)',
-        cursor: 'pointer',
       }}
     >
-      <input
-        type="checkbox"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-        style={{ marginTop: 3, flexShrink: 0 }}
-      />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 2 }}>
+        <div style={{ fontSize: 12.5, lineHeight: 1.2 }}>{label}</div>
+        <div className="mf-fg-mute" style={{ fontSize: 10.5, marginTop: 2, lineHeight: 1.4 }}>
           {hint}
         </div>
       </div>
-    </label>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={value}
+        aria-label={`${value ? 'Disable' : 'Enable'} ${label}`}
+        onClick={() => onChange(!value)}
+        style={{
+          width: 30,
+          height: 17,
+          borderRadius: 10,
+          background: value ? 'var(--mf-accent, #FF4D1C)' : 'var(--mf-hairline-strong, #2E2E33)',
+          position: 'relative',
+          transition: 'background 0.2s ease',
+          flexShrink: 0,
+          marginTop: 2,
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+        }}
+      >
+        <span
+          style={{
+            position: 'absolute',
+            top: 2,
+            left: value ? 15 : 2,
+            width: 13,
+            height: 13,
+            borderRadius: 10,
+            background: '#fff',
+            transition: 'left 0.2s ease',
+          }}
+        />
+      </button>
+    </div>
   );
 }
