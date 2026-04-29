@@ -193,7 +193,7 @@ export default function SharingCardClient({
               </div>
             </div>
 
-            {dirty && (
+            {(dirty || statusSave === 'saved') && (
               <div
                 style={{
                   display: 'flex',
@@ -202,28 +202,43 @@ export default function SharingCardClient({
                   marginTop: 12,
                 }}
               >
-                <button
-                  type="button"
-                  onClick={saveStatus}
-                  disabled={statusSave === 'saving'}
-                  className="mf-btn"
-                  style={{
-                    height: 32,
-                    background: 'var(--mf-accent, #FF4D1C)',
-                    color: 'var(--mf-accent-ink, #0A0A0B)',
-                    borderColor: 'var(--mf-accent, #FF4D1C)',
-                    fontWeight: 600,
-                  }}
-                >
-                  {statusSave === 'saving'
-                    ? 'SAVING…'
-                    : statusSave === 'error'
-                    ? 'TRY AGAIN'
-                    : 'SAVE STATUS'}
-                </button>
-                <span className="mf-fg-mute" style={{ fontSize: 11 }}>
-                  Unsaved change to status.
-                </span>
+                {dirty ? (
+                  <button
+                    type="button"
+                    onClick={saveStatus}
+                    disabled={statusSave === 'saving'}
+                    className="mf-btn"
+                    style={{
+                      height: 32,
+                      background: 'var(--mf-accent, #FF4D1C)',
+                      color: 'var(--mf-accent-ink, #0A0A0B)',
+                      borderColor: 'var(--mf-accent, #FF4D1C)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {statusSave === 'saving'
+                      ? 'SAVING…'
+                      : statusSave === 'error'
+                      ? 'TRY AGAIN'
+                      : 'SAVE STATUS'}
+                  </button>
+                ) : (
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mf-mono), monospace',
+                      fontSize: 11,
+                      color: 'var(--mf-green, #2BD985)',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    ✓ STATUS SAVED
+                  </span>
+                )}
+                {dirty && (
+                  <span className="mf-fg-mute" style={{ fontSize: 11 }}>
+                    Unsaved change to status.
+                  </span>
+                )}
               </div>
             )}
           </div>
