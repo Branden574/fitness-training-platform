@@ -533,3 +533,39 @@ export async function sendApplicationAcknowledgedEmail(args: {
     }),
   });
 }
+
+// ──────────────────────────────────────────────────────────────────
+// Trainer reopened — sent to people who left their email on a
+// NOT_ACCEPTING trainer's apply page (kind=NOTIFY_WHEN_OPEN) when
+// the trainer flips back to ACCEPTING or WAITLIST. Idempotency is
+// enforced upstream by ContactSubmission.notifiedAt.
+// ──────────────────────────────────────────────────────────────────
+export async function sendTrainerReopenedEmail(args: {
+  toEmail: string;
+  trainerName: string | null;
+  trainerSlug: string;
+}): Promise<void> {
+  const trainerName = (args.trainerName ?? 'Your trainer').trim() || 'Your trainer';
+  const applyUrl = `${baseUrl()}/apply/${args.trainerSlug}`;
+
+  await safeSend({
+    to: args.toEmail,
+    subject: `${trainerName} just reopened on RepLab`,
+    tag: 'trainer_reopened',
+    html: renderShell({
+      eyebrow: 'TRAINER REOPENED',
+      title: `${trainerName} is taking new clients again.`,
+      bodyHtml: `
+        <p style="margin:0 0 16px 0;">
+          You asked to be notified when ${escapeHtml(trainerName)} reopened on RepLab.
+        </p>
+        <p style="margin:0 0 16px 0;">
+          Their apply page is live now — head over and submit your application before
+          spots fill up.
+        </p>
+      `,
+      ctaLabel: 'Apply now',
+      ctaHref: applyUrl,
+    }),
+  });
+}
