@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   TRAINER_STATUSES,
   TRAINER_STATUS_LABELS,
@@ -76,6 +76,15 @@ export default function SharingCardClient({
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
 
+  // Holds the active SAVED-flash timer so a rapid second save (or unmount)
+  // can clear the stale one before scheduling a new one.
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    };
+  }, []);
+
   const saveStatus = async () => {
     if (!dirty) return;
     setStatusSave('saving');
@@ -88,7 +97,8 @@ export default function SharingCardClient({
       if (!res.ok) throw new Error('save failed');
       setSavedStatus(pendingStatus);
       setStatusSave('saved');
-      setTimeout(() => setStatusSave('idle'), 2000);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => setStatusSave('idle'), 2000);
     } catch {
       setStatusSave('error');
     }
