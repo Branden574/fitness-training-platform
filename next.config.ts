@@ -59,6 +59,13 @@ const config: NextConfig = process.env.SENTRY_AUTH_TOKEN
       silent: true,
       org: 'branden-vincent-walker',
       project: 'javascript-nextjs',
+      // Tunnel Sentry traffic through our own origin so Brave Shields,
+      // uBlock, AdGuard, and Pi-hole don't block the SDK chunks. Sentry
+      // generates a rewrite at /monitoring/* → ingest.sentry.io/* so the
+      // browser only sees same-origin requests. Without this, ad-blocker
+      // users see a blank sign-in form because the Sentry chunk fails to
+      // hydrate (witnessed 2026-04-29 on Brave default Shields).
+      tunnelRoute: '/monitoring',
     })
   : nextConfig;
 
