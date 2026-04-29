@@ -39,6 +39,7 @@ export interface ProfileData {
   initials: string;
   slug: string;
   accepting: boolean;
+  clientStatus: 'ACCEPTING' | 'WAITLIST' | 'NOT_ACCEPTING';
   headline: string | null;
   bio: string | null;
   location: string | null;

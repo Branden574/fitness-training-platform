@@ -101,6 +101,7 @@ export default async function TrainerProfilePage({
       name: true,
       image: true,
       trainerAcceptingClients: true,
+      trainerClientStatus: true,
       trainer: {
         select: {
           bio: true,
@@ -166,7 +167,8 @@ export default async function TrainerProfilePage({
     name: user.name ?? 'Trainer',
     initials: initialsFrom(user.name),
     slug: trainerSlug,
-    accepting: user.trainerAcceptingClients,
+    accepting: user.trainerClientStatus === 'ACCEPTING',
+    clientStatus: user.trainerClientStatus,
     headline: user.trainer.headline,
     bio: user.trainer.bio,
     location: user.trainer.location,
