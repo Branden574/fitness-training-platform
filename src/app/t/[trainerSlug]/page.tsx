@@ -216,7 +216,7 @@ export default async function TrainerProfilePage({
         name={p.name}
         initials={p.initials}
         photoUrl={p.photoUrl}
-        accepting={p.accepting}
+        clientStatus={p.clientStatus}
         entryPrice={p.entryPrice}
         slug={p.slug}
       />

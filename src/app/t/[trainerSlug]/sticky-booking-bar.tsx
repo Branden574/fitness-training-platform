@@ -9,17 +9,29 @@ export default function StickyBookingBar({
   name,
   initials,
   photoUrl,
-  accepting,
+  clientStatus,
   entryPrice,
   slug,
 }: {
   name: string;
   initials: string;
   photoUrl: string | null;
-  accepting: boolean;
+  clientStatus: 'ACCEPTING' | 'WAITLIST' | 'NOT_ACCEPTING';
   entryPrice: string | null;
   slug: string;
 }) {
+  const statusLabel =
+    clientStatus === 'ACCEPTING'
+      ? 'Accepting'
+      : clientStatus === 'WAITLIST'
+      ? 'Waitlist'
+      : 'Not accepting';
+  const ctaLabel =
+    clientStatus === 'ACCEPTING'
+      ? 'Book'
+      : clientStatus === 'WAITLIST'
+      ? 'Join'
+      : 'Notify';
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -90,7 +102,7 @@ export default function StickyBookingBar({
             marginTop: 2,
           }}
         >
-          {accepting ? 'Accepting' : 'Waitlist'}
+          {statusLabel}
           {entryPrice ? ` · ${entryPrice}` : ''}
         </div>
       </div>
@@ -99,7 +111,7 @@ export default function StickyBookingBar({
         className="mf-btn mf-btn-primary"
         style={{ height: 40, padding: '0 16px', gap: 6 }}
       >
-        {accepting ? 'Book' : 'Join'}
+        {ctaLabel}
         <ArrowRight size={14} />
       </Link>
     </div>
