@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
       image: true,
       trainerSlug: true,
       trainerAcceptingClients: true,
+      trainerClientStatus: true,
       trainer: {
         select: {
           bio: true,

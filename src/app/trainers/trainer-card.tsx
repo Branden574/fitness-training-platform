@@ -11,6 +11,7 @@ export interface TrainerCardData {
   image: string | null;
   trainerSlug: string | null;
   trainerAcceptingClients: boolean;
+  trainerClientStatus?: 'ACCEPTING' | 'WAITLIST' | 'NOT_ACCEPTING';
   trainer: {
     bio: string | null;
     headline: string | null;
@@ -77,7 +78,14 @@ export default function TrainerCard({
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"
         />
         <div style={{ position: 'absolute', top: 18, right: 18 }}>
-          <StatusPill kind={trainer.trainerAcceptingClients ? 'accepting' : 'waitlist'} />
+          <StatusPill
+            kind={(() => {
+              const s =
+                trainer.trainerClientStatus ??
+                (trainer.trainerAcceptingClients ? 'ACCEPTING' : 'WAITLIST');
+              return s === 'ACCEPTING' ? 'accepting' : s === 'WAITLIST' ? 'waitlist' : 'closed';
+            })()}
+          />
         </div>
         <div style={{ position: 'absolute', left: 20, bottom: -28 }}>
           <RoundAvatar
