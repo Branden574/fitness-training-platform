@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
     // and the RoundAvatar/TrainerCover components look broken.
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn.replabusa.com' },
+      // Backward-compat for images uploaded under the Martinez Fitness era —
+      // the R2 bucket still serves on this hostname so old DB rows keep
+      // rendering. Remove once the bucket's custom-domain alias is gone
+      // (i.e., a long time from now, if ever).
+      { protocol: 'https', hostname: 'cdn.martinezfitness559.com' },
       // Fallback: default R2 public bucket domain on Cloudflare.
       { protocol: 'https', hostname: '**.r2.dev' },
     ],
