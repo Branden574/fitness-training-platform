@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ApplyDirectClient from './apply-direct-client';
+import NotifyMeForm from './notify-me-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,8 @@ export default async function ApplyDirectPage({
       name: true,
       image: true,
       trainerAcceptingClients: true,
+      trainerClientStatus: true,
+      trainerSlug: true,
       trainer: { select: { contactPhone: true } },
     },
   });
@@ -60,29 +63,39 @@ export default async function ApplyDirectPage({
           >
             Train with {trainer.name}.
           </h1>
-          {!trainer.trainerAcceptingClients && (
-            <div
-              className="mf-card"
-              style={{
-                marginTop: 16,
-                padding: 12,
-                borderColor: 'var(--mf-amber, #F5B544)',
-                color: 'var(--mf-amber, #F5B544)',
-              }}
-            >
-              WAITLIST ONLY · {trainer.name} is at capacity. Join below and
-              they&apos;ll reach out when a spot opens.
+          {trainer.trainerClientStatus === 'NOT_ACCEPTING' ? (
+            <div style={{ marginTop: 32 }}>
+              <NotifyMeForm
+                slug={trainer.trainerSlug ?? trainerSlug}
+                trainerName={trainer.name ?? 'This trainer'}
+              />
             </div>
+          ) : (
+            <>
+              {trainer.trainerClientStatus === 'WAITLIST' && (
+                <div
+                  className="mf-card"
+                  style={{
+                    marginTop: 16,
+                    padding: 12,
+                    borderColor: 'var(--mf-amber, #F5B544)',
+                    color: 'var(--mf-amber, #F5B544)',
+                  }}
+                >
+                  WAITLIST ONLY · {trainer.name} is at capacity. Join below and
+                  they&apos;ll reach out when a spot opens.
+                </div>
+              )}
+              <div style={{ marginTop: 32 }}>
+                <ApplyDirectClient
+                  trainerId={trainer.id}
+                  trainerName={trainer.name ?? 'Coach'}
+                  trainerPhone={trainer.trainer?.contactPhone ?? null}
+                  waitlist={trainer.trainerClientStatus === 'WAITLIST'}
+                />
+              </div>
+            </>
           )}
-
-          <div style={{ marginTop: 32 }}>
-            <ApplyDirectClient
-              trainerId={trainer.id}
-              trainerName={trainer.name ?? 'Coach'}
-              trainerPhone={trainer.trainer?.contactPhone ?? null}
-              waitlist={!trainer.trainerAcceptingClients}
-            />
-          </div>
         </div>
       </main>
     </>
