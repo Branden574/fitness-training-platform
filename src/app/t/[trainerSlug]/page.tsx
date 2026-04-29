@@ -12,7 +12,7 @@ import StatStrip from './stat-strip';
 import StickyBookingBar from './sticky-booking-bar';
 import TestimonialsSection from './testimonials-section';
 import TransformationsSection from './transformations-section';
-import WaitlistBanner from './waitlist-banner';
+import StatusBanner from './status-banner';
 import type {
   ProfileData,
   ProfilePillar,
@@ -198,7 +198,9 @@ export default async function TrainerProfilePage({
       <ProfileHeader p={p} />
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
-        {!p.accepting ? <WaitlistBanner slug={p.slug} /> : null}
+        {p.clientStatus !== 'ACCEPTING' ? (
+          <StatusBanner slug={p.slug} status={p.clientStatus} />
+        ) : null}
         <StatStrip p={p} />
         <AboutSection p={p} />
         <PillarsSection p={p} />
@@ -208,7 +210,7 @@ export default async function TrainerProfilePage({
         <TestimonialsSection testimonials={p.testimonials} />
       </div>
 
-      <ClosingCTA trainerFirstName={firstName} slug={p.slug} accepting={p.accepting} />
+      <ClosingCTA trainerFirstName={firstName} slug={p.slug} clientStatus={p.clientStatus} />
 
       <StickyBookingBar
         name={p.name}

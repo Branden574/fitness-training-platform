@@ -75,7 +75,15 @@ export default function ProfileHeader({ p }: { p: ProfileData }) {
               >
                 <span>TRAINER · L1 VERIFIED</span>
                 <span className="mf-fg-mute">·</span>
-                <StatusPill kind={p.accepting ? 'accepting' : 'waitlist'} />
+                <StatusPill
+                  kind={
+                    p.clientStatus === 'ACCEPTING'
+                      ? 'accepting'
+                      : p.clientStatus === 'WAITLIST'
+                      ? 'waitlist'
+                      : 'closed'
+                  }
+                />
               </div>
               <h1
                 className="mf-font-display"
@@ -195,7 +203,11 @@ export default function ProfileHeader({ p }: { p: ProfileData }) {
                 className="mf-btn mf-btn-primary"
                 style={{ height: 40, padding: '0 20px', gap: 8 }}
               >
-                {p.accepting ? 'Book Consultation' : 'Join Waitlist'}
+                {p.clientStatus === 'ACCEPTING'
+                  ? 'Book Consultation'
+                  : p.clientStatus === 'WAITLIST'
+                  ? 'Join Waitlist'
+                  : 'Get notified'}
                 <ArrowRight size={14} />
               </Link>
             </div>

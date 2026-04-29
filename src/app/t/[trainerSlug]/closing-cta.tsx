@@ -5,11 +5,11 @@ import Btn from '@/components/ui/mf/Btn';
 export default function ClosingCTA({
   trainerFirstName,
   slug,
-  accepting,
+  clientStatus,
 }: {
   trainerFirstName: string;
   slug: string;
-  accepting: boolean;
+  clientStatus: 'ACCEPTING' | 'WAITLIST' | 'NOT_ACCEPTING';
 }) {
   return (
     <section
@@ -73,7 +73,11 @@ export default function ClosingCTA({
             className="mf-btn mf-btn-primary"
             style={{ height: 48, padding: '0 24px', gap: 8 }}
           >
-            {accepting ? 'Book Consultation' : 'Join Waitlist'}
+            {clientStatus === 'ACCEPTING'
+              ? 'Book Consultation'
+              : clientStatus === 'WAITLIST'
+              ? 'Join Waitlist'
+              : 'Get notified'}
             <ArrowRight size={14} />
           </Link>
           <Btn icon={MessageSquare} style={{ height: 48, padding: '0 24px' }}>
