@@ -41,7 +41,6 @@ export async function POST(
     select: {
       id: true,
       trainerClientStatus: true,
-      trainerIsPublic: true,
     },
   });
   if (!trainer) {
