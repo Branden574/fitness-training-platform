@@ -19,11 +19,17 @@ export default async function TrainerSettingsPage() {
     select: {
       name: true,
       email: true,
+      image: true,
       trainerReferralCode: true,
       trainerClientStatus: true,
       trainerIsPublic: true,
+      trainer: { select: { photoUrl: true } },
     },
   });
+
+  // Prefer the dedicated trainer profile photo over the auth-level avatar,
+  // matching the preference order the trainer-card uses.
+  const avatarImage = me?.trainer?.photoUrl ?? me?.image ?? null;
 
   return (
     <DesktopShell
@@ -36,6 +42,7 @@ export default async function TrainerSettingsPage() {
         <IdentityStrip
           name={me?.name ?? ''}
           email={me?.email ?? session.user.email ?? ''}
+          image={avatarImage}
           code={me?.trainerReferralCode ?? null}
           status={me?.trainerClientStatus ?? 'ACCEPTING'}
           isPublic={Boolean(me?.trainerIsPublic)}

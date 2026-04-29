@@ -8,12 +8,14 @@ import SignOutButton from './sign-out-button';
 export function IdentityStrip({
   name,
   email,
+  image,
   code,
   status,
   isPublic,
 }: {
   name: string;
   email: string;
+  image: string | null;
   code: string | null;
   status: TrainerClientStatus;
   isPublic: boolean;
@@ -46,7 +48,7 @@ export function IdentityStrip({
         flexWrap: 'wrap',
       }}
     >
-      <Avatar initials={initials} size={56} />
+      <Avatar initials={initials} image={image} alt={name || email} size={56} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
