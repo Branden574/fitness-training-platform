@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Avatar } from '@/components/ui/mf';
 import type { TrainerClientStatus } from '@prisma/client';
 import { TRAINER_STATUS_LABELS } from '@/lib/trainerStatus';
+import SignOutButton from './sign-out-button';
 
 export function IdentityStrip({
   name,
@@ -108,13 +109,7 @@ export function IdentityStrip({
         >
           Change password
         </Link>
-        <Link
-          href="/api/auth/signout"
-          className="mf-btn"
-          style={{ height: 36, alignItems: 'center', display: 'inline-flex' }}
-        >
-          Sign out
-        </Link>
+        <SignOutButton />
       </div>
     </div>
   );
