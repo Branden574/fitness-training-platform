@@ -75,6 +75,35 @@ const TIERS: Array<{ value: string; label: string }> = [
   { value: 'contact', label: 'Contact' },
 ];
 
+// Section keys are also used by the checklist as click targets, so they're
+// stable identifiers — DO NOT rename without updating CompletionChecklist.
+type SectionKey =
+  | 'basics'
+  | 'social'
+  | 'about'
+  | 'facts'
+  | 'pillars'
+  | 'gallery'
+  | 'services'
+  | 'certs';
+
+interface NavItem {
+  key: SectionKey;
+  label: string;
+  summary: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { key: 'basics', label: 'Basics', summary: 'Photo · Cover · Headline · Location' },
+  { key: 'social', label: 'Social & Reply', summary: 'IG · TikTok · YouTube · Phone · Reply-to' },
+  { key: 'about', label: 'About', summary: 'Bio · Specialties · Experience' },
+  { key: 'facts', label: 'Quick Facts', summary: 'Sidebar bullets' },
+  { key: 'pillars', label: 'Approach Pillars', summary: 'Up to 6 cards' },
+  { key: 'gallery', label: 'Gallery', summary: 'Up to 30 images' },
+  { key: 'services', label: 'Services & Pricing', summary: 'Cards · tier · rate · modes' },
+  { key: 'certs', label: 'Credentials', summary: 'Certifications' },
+];
+
 export default function ProfileEditorClient() {
   return (
     <AgreementGate>
@@ -89,6 +118,7 @@ function ProfileForm() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [active, setActive] = useState<SectionKey>('basics');
   const photoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -445,7 +475,10 @@ function ProfileForm() {
   };
 
   const canPublish =
-    profile.photoUrl && profile.bio && profile.specialties.length > 0 && profile.location;
+    !!profile.photoUrl &&
+    !!profile.bio &&
+    profile.specialties.length > 0 &&
+    !!profile.location;
 
   const togglePublish = async () => {
     const res = await fetch('/api/trainers/me', {
@@ -458,12 +491,67 @@ function ProfileForm() {
     }
   };
 
+  // Completion items drive both the left rail's progress + the right rail's
+  // checklist. Each item knows which section it belongs to so clicking a
+  // checklist row jumps to the right pane.
+  const required: ChecklistItem[] = [
+    { key: 'photo', label: 'Public photo', done: !!profile.photoUrl, section: 'basics', required: true },
+    { key: 'bio', label: 'Bio', done: !!profile.bio && profile.bio.trim().length > 0, section: 'about', required: true },
+    { key: 'specialties', label: 'Specialties', done: profile.specialties.length > 0, section: 'about', required: true },
+    { key: 'location', label: 'Location', done: !!profile.location && profile.location.trim().length > 0, section: 'basics', required: true },
+  ];
+  const recommended: ChecklistItem[] = [
+    { key: 'cover', label: 'Cover image', done: !!profile.coverImageUrl, section: 'basics', required: false },
+    { key: 'headline', label: 'Headline', done: !!profile.headline && profile.headline.trim().length > 0, section: 'basics', required: false },
+    { key: 'quickFacts', label: 'At least one quick fact', done: profile.quickFacts.length > 0, section: 'facts', required: false },
+    { key: 'pillars', label: 'At least one approach pillar', done: profile.pillars.length > 0, section: 'pillars', required: false },
+    { key: 'services', label: 'At least one service', done: profile.services.length > 0, section: 'services', required: false },
+    { key: 'certifications', label: 'At least one certification', done: profile.certifications.length > 0, section: 'certs', required: false },
+    { key: 'gallery', label: 'At least one gallery image', done: profile.gallery.length > 0, section: 'gallery', required: false },
+  ];
+  const allItems = [...required, ...recommended];
+  const reqDone = required.filter((r) => r.done).length;
+  const reqTotal = required.length;
+  const totalDone = allItems.filter((i) => i.done).length;
+  const totalPct = Math.round((totalDone / allItems.length) * 100);
+
+  // Shared props bundle so every section component reads from one place.
+  const ctx: SectionCtx = {
+    profile,
+    update,
+    photoInputRef,
+    coverInputRef,
+    galleryInputRef,
+    coverUploading,
+    galleryUploading,
+    setCropper,
+    removeCover,
+    deleteGalleryEntry,
+    specialtyInput,
+    setSpecialtyInput,
+    specialtyHints,
+    addSpecialty,
+    removeSpecialty,
+    certInput,
+    setCertInput,
+    addCert,
+    removeCert,
+    addQuickFact,
+    updateQuickFact,
+    removeQuickFact,
+    addPillar,
+    updatePillar,
+    removePillar,
+    addService,
+    updateService,
+    removeService,
+  };
+
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      {/* Primary action row — pinned at the top so the "Profile saved"
-          banner is visible right after tapping Save. Old placement at the
-          bottom meant trainers saved and never saw the confirmation because
-          the banner lived above ~1500px of form. */}
+    <div className="mf-profile-editor">
+      {/* Top bar — pinned to the top of the page so Save / Publish / Back are
+          always reachable regardless of which section is active. The banner
+          stack sits beneath it so "Profile saved" is visible after tapping. */}
       <div
         style={{
           display: 'flex',
@@ -472,12 +560,68 @@ function ProfileForm() {
           flexWrap: 'wrap',
           position: 'sticky',
           top: 0,
-          zIndex: 2,
+          zIndex: 5,
           padding: '10px 0',
           background: 'var(--mf-bg)',
           borderBottom: '1px solid var(--mf-hairline)',
+          marginBottom: 16,
         }}
       >
+        <a
+          href="/trainer/settings"
+          className="mf-btn"
+          style={{
+            height: 40,
+            padding: '0 14px',
+            fontSize: 12,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}
+        >
+          ← Back to Settings
+        </a>
+        <button
+          type="button"
+          onClick={togglePublish}
+          disabled={!canPublish && !profile.trainerIsPublic}
+          className="mf-btn"
+          style={{
+            height: 40,
+            padding: '0 16px',
+            margin: '0 auto',
+            borderColor: profile.trainerIsPublic
+              ? 'var(--mf-green, #2BD985)'
+              : 'var(--mf-hairline-strong)',
+            color: profile.trainerIsPublic
+              ? 'var(--mf-green, #2BD985)'
+              : 'var(--mf-fg)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+          title={
+            !canPublish && !profile.trainerIsPublic
+              ? 'Fill photo + bio + specialties + location first'
+              : undefined
+          }
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: profile.trainerIsPublic
+                ? 'var(--mf-green, #2BD985)'
+                : 'var(--mf-fg-mute)',
+              display: 'inline-block',
+            }}
+          />
+          {profile.trainerIsPublic
+            ? 'Public — click to hide'
+            : 'Private — click to publish'}
+        </button>
         <button
           type="button"
           onClick={save}
@@ -487,37 +631,6 @@ function ProfileForm() {
         >
           {saving ? 'Saving…' : 'Save profile'}
         </button>
-        <button
-          type="button"
-          onClick={togglePublish}
-          disabled={!canPublish && !profile.trainerIsPublic}
-          className="mf-btn"
-          style={{ height: 40, padding: '0 16px' }}
-          title={
-            !canPublish && !profile.trainerIsPublic
-              ? 'Fill photo + bio + specialties + location first'
-              : undefined
-          }
-        >
-          {profile.trainerIsPublic
-            ? '● Public — click to hide'
-            : '○ Private — click to publish'}
-        </button>
-        <a
-          href="/trainer/settings"
-          className="mf-btn"
-          style={{
-            height: 40,
-            padding: '0 14px',
-            marginLeft: 'auto',
-            fontSize: 12,
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-          }}
-        >
-          ← Back to Settings
-        </a>
       </div>
 
       {message && (
@@ -529,6 +642,7 @@ function ProfileForm() {
             color: '#86efac',
             borderRadius: 4,
             fontSize: 12,
+            marginBottom: 16,
           }}
         >
           {message}
@@ -544,35 +658,502 @@ function ProfileForm() {
             color: '#fca5a5',
             borderRadius: 4,
             fontSize: 12,
+            marginBottom: 16,
           }}
         >
           {error}
         </div>
       )}
 
-      <div
-        className="xl:grid-cols-[minmax(0,720px)_320px]"
-        style={{ display: 'grid', gap: 24, alignItems: 'start' }}
-      >
-        <div
-          className="md:grid-cols-2"
-          style={{ display: 'grid', gap: 16, minWidth: 0 }}
+      {/* Mobile section picker — under sm we drop to a single column with a
+          select instead of the left rail. */}
+      <div className="mf-profile-mobile-nav" style={{ marginBottom: 12 }}>
+        <select
+          className="mf-input"
+          value={active}
+          onChange={(e) => setActive(e.target.value as SectionKey)}
+          aria-label="Jump to section"
         >
-          <Section id="section-photo" title="PUBLIC PHOTO">
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          {NAV_ITEMS.map((s) => (
+            <option key={s.key} value={s.key}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* 3-pane shell */}
+      <div className="mf-profile-shell">
+        {/* LEFT: section nav (≥md). Below md, hidden in favor of the select. */}
+        <aside className="mf-profile-nav" aria-label="Profile sections">
+          <div style={{ padding: '4px 4px 12px' }}>
+            <div className="mf-eyebrow" style={{ marginBottom: 6 }}>
+              SECTIONS
+            </div>
+            <div
+              className="mf-fg-dim mf-font-mono"
+              style={{ fontSize: 10, letterSpacing: '0.08em', marginBottom: 8 }}
+            >
+              {reqDone}/{reqTotal} REQUIRED · {profile.trainerIsPublic ? 'LIVE' : 'DRAFT'}
+            </div>
+            <div
+              style={{
+                width: '100%',
+                height: 4,
+                borderRadius: 999,
+                background: 'var(--mf-surface-3)',
+                overflow: 'hidden',
+                marginBottom: 4,
+              }}
+              aria-label={`Profile completion ${totalPct}%`}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${totalPct}%`,
+                  background: 'var(--mf-accent)',
+                  transition: 'width 200ms ease',
+                }}
+              />
+            </div>
+            <div
+              className="mf-fg-dim mf-font-mono"
+              style={{ fontSize: 9, letterSpacing: '0.08em' }}
+            >
+              {totalDone}/{allItems.length} TOTAL
+            </div>
+          </div>
+
+          <nav
+            style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '0 4px 8px' }}
+          >
+            {NAV_ITEMS.map((s) => {
+              const sel = active === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setActive(s.key)}
+                  className="focus-ring"
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '8px 10px',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    background: sel ? 'var(--mf-surface-3)' : 'transparent',
+                    color: sel ? 'var(--mf-fg)' : 'var(--mf-fg-dim)',
+                  }}
+                >
+                  {sel && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 6,
+                        bottom: 6,
+                        width: 4,
+                        background: 'var(--mf-accent)',
+                        borderRadius: 2,
+                      }}
+                    />
+                  )}
+                  <div style={{ fontSize: 13, lineHeight: 1.25 }}>{s.label}</div>
+                  <div
+                    className="mf-fg-mute mf-font-mono"
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: '0.06em',
+                      marginTop: 2,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {s.summary}
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* CENTER: only the active section renders. State lives at the parent
+            so unmounting the inactive panes does not destroy any inputs. */}
+        <div className="mf-profile-center">
+          {active === 'basics' && <BasicsSection ctx={ctx} />}
+          {active === 'social' && <SocialSection ctx={ctx} />}
+          {active === 'about' && <AboutSection ctx={ctx} />}
+          {active === 'facts' && <FactsSection ctx={ctx} />}
+          {active === 'pillars' && <PillarsSection ctx={ctx} />}
+          {active === 'gallery' && <GallerySection ctx={ctx} />}
+          {active === 'services' && <ServicesSection ctx={ctx} />}
+          {active === 'certs' && <CertsSection ctx={ctx} />}
+        </div>
+
+        {/* RIGHT: live preview + checklist + share + activity */}
+        <aside className="mf-profile-rail">
+          <div style={{ display: 'grid', gap: 16 }}>
+            <ProfilePreviewCard profile={profile} />
+            <CompletionChecklistCard
+              required={required}
+              recommended={recommended}
+              reqDone={reqDone}
+              reqTotal={reqTotal}
+              onJump={(s) => setActive(s)}
+            />
+            <ShareCard profile={profile} />
+            <ActivityCard />
+          </div>
+        </aside>
+      </div>
+
+      <ImageCropperModal
+        file={cropper?.file ?? null}
+        aspect={
+          cropper?.kind === 'cover' ? 3 : cropper?.kind === 'gallery' ? 1 : 4 / 5
+        }
+        shape={cropper?.kind === 'photo' ? 'round' : 'rect'}
+        title={
+          cropper?.kind === 'cover'
+            ? 'Crop cover image'
+            : cropper?.kind === 'gallery'
+              ? 'Crop gallery image'
+              : 'Crop profile photo'
+        }
+        outputMaxDim={cropper?.kind === 'cover' ? 2000 : 1200}
+        onClose={() => setCropper(null)}
+        onConfirm={(cropped) => {
+          const kind = cropper?.kind;
+          setCropper(null);
+          if (kind === 'photo') uploadPhoto(cropped);
+          else if (kind === 'cover') uploadCover(cropped);
+          else if (kind === 'gallery') uploadGalleryImage(cropped);
+        }}
+      />
+
+      {/* Inline media-query rules — match the same pattern used by the
+          settings dashboard. Keeps the responsive logic colocated with the
+          markup that needs it. */}
+      <style>{`
+        .mf-profile-editor { display: block; }
+        .mf-profile-shell {
+          display: grid;
+          gap: 16px;
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+        .mf-profile-nav { display: none; }
+        .mf-profile-rail { display: block; }
+        .mf-profile-mobile-nav { display: block; }
+        .mf-profile-center { min-width: 0; }
+
+        /* 12-col grid used inside section cards. Below md it falls back to
+           single column so every Field row stacks on phones. */
+        .mf-pf-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .mf-pf-span-3, .mf-pf-span-4, .mf-pf-span-5,
+        .mf-pf-span-6, .mf-pf-span-7, .mf-pf-span-8,
+        .mf-pf-span-12 { grid-column: span 1; }
+
+        @media (min-width: 640px) {
+          .mf-pf-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+          .mf-pf-span-3 { grid-column: span 3; }
+          .mf-pf-span-4 { grid-column: span 4; }
+          .mf-pf-span-5 { grid-column: span 5; }
+          .mf-pf-span-6 { grid-column: span 6; }
+          .mf-pf-span-7 { grid-column: span 7; }
+          .mf-pf-span-8 { grid-column: span 8; }
+          .mf-pf-span-12 { grid-column: span 12; }
+        }
+
+        /* md: show horizontal section tabs as a strip above the center pane */
+        @media (min-width: 768px) {
+          .mf-profile-mobile-nav { display: none; }
+          .mf-profile-nav {
+            display: block;
+            border: 1px solid var(--mf-hairline);
+            border-radius: 4px;
+            background: var(--mf-surface-1);
+            padding: 12px 8px;
+          }
+        }
+
+        /* lg: full left rail; right rail still wraps below */
+        @media (min-width: 1024px) {
+          .mf-profile-shell {
+            grid-template-columns: 200px minmax(0, 1fr);
+          }
+          .mf-profile-nav {
+            position: sticky;
+            top: 76px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            align-self: start;
+          }
+        }
+
+        /* xl: full 3-pane layout */
+        @media (min-width: 1280px) {
+          .mf-profile-shell {
+            grid-template-columns: 200px minmax(0, 1fr) 340px;
+          }
+          .mf-profile-rail {
+            position: sticky;
+            top: 76px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            align-self: start;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Section primitives
+// ──────────────────────────────────────────────────────────────────────────
+
+interface SectionCtx {
+  profile: TrainerProfile;
+  update: <K extends keyof TrainerProfile>(key: K, value: TrainerProfile[K]) => void;
+  photoInputRef: React.RefObject<HTMLInputElement | null>;
+  coverInputRef: React.RefObject<HTMLInputElement | null>;
+  galleryInputRef: React.RefObject<HTMLInputElement | null>;
+  coverUploading: boolean;
+  galleryUploading: boolean;
+  setCropper: (
+    c:
+      | { kind: 'photo'; file: File }
+      | { kind: 'cover'; file: File }
+      | { kind: 'gallery'; file: File }
+      | null,
+  ) => void;
+  removeCover: () => Promise<void>;
+  deleteGalleryEntry: (url: string) => Promise<void>;
+  specialtyInput: string;
+  setSpecialtyInput: (v: string) => void;
+  specialtyHints: string[];
+  addSpecialty: (raw: string) => void;
+  removeSpecialty: (tag: string) => void;
+  certInput: string;
+  setCertInput: (v: string) => void;
+  addCert: () => void;
+  removeCert: (i: number) => void;
+  addQuickFact: () => void;
+  updateQuickFact: (i: number, field: 'label' | 'value', v: string) => void;
+  removeQuickFact: (i: number) => void;
+  addPillar: () => void;
+  updatePillar: (i: number, field: keyof Pillar, v: string) => void;
+  removePillar: (i: number) => void;
+  addService: () => void;
+  updateService: (i: number, field: keyof Service, v: string | boolean) => void;
+  removeService: (i: number) => void;
+}
+
+function Card({
+  title,
+  sub,
+  right,
+  children,
+}: {
+  title: string;
+  sub?: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mf-card" style={{ padding: 18, marginBottom: 16 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div
-            style={{
-              width: 96,
-              height: 120,
-              borderRadius: 4,
-              background: 'var(--mf-surface-2, #0E0E10)',
-              border: '1px solid var(--mf-hairline, #1F1F22)',
-              backgroundImage: profile.photoUrl ? `url(${profile.photoUrl})` : 'none',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
-          <div>
+            className="mf-font-display"
+            style={{ fontSize: 15, lineHeight: 1.1, letterSpacing: '-0.01em' }}
+          >
+            {title}
+          </div>
+          {sub && (
+            <div
+              className="mf-fg-mute"
+              style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4 }}
+            >
+              {sub}
+            </div>
+          )}
+        </div>
+        {right ? <div style={{ flexShrink: 0 }}>{right}</div> : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FieldLabel({
+  children,
+  hint,
+}: {
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <>
+      <div
+        className="mf-fg-mute mf-font-mono"
+        style={{
+          fontSize: 9.5,
+          textTransform: 'uppercase',
+          letterSpacing: '0.12em',
+          marginBottom: 6,
+        }}
+      >
+        {children}
+      </div>
+      {hint && (
+        <div
+          className="mf-fg-mute"
+          style={{ fontSize: 10.5, marginTop: 6, lineHeight: 1.4 }}
+        >
+          {hint}
+        </div>
+      )}
+    </>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  span = 12,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  /** col span out of 12 at md:+; below md collapses to full width */
+  span?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={`mf-pf-field mf-pf-span-${span}`} style={{ display: 'block' }}>
+      <div
+        className="mf-fg-mute mf-font-mono"
+        style={{
+          fontSize: 9.5,
+          textTransform: 'uppercase',
+          letterSpacing: '0.12em',
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+      {children}
+      {hint && (
+        <div
+          className="mf-fg-mute"
+          style={{ fontSize: 10.5, marginTop: 6, lineHeight: 1.4 }}
+        >
+          {hint}
+        </div>
+      )}
+    </label>
+  );
+}
+
+/** A 12-col grid that collapses to single-column under md. */
+function Grid12({ children, gap = 12 }: { children: React.ReactNode; gap?: number }) {
+  return (
+    <div className="mf-pf-grid" style={{ gap }}>
+      {children}
+    </div>
+  );
+}
+
+/** `@`-prefixed input shared by IG, TikTok, YouTube. */
+function HandleInput({
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+  maxLength: number;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        background: 'var(--mf-surface-2)',
+        border: '1px solid var(--mf-hairline)',
+        borderRadius: 4,
+        padding: '0 10px',
+      }}
+    >
+      <span className="mf-fg-dim" style={{ fontSize: 13 }}>
+        @
+      </span>
+      <input
+        className="mf-input"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        maxLength={maxLength}
+        style={{
+          border: 'none',
+          background: 'transparent',
+          padding: '10px 0',
+          flex: 1,
+        }}
+      />
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// 1. BASICS — photo + cover + headline + location
+// ──────────────────────────────────────────────────────────────────────────
+
+function BasicsSection({ ctx }: { ctx: SectionCtx }) {
+  const { profile, update, photoInputRef, coverInputRef, coverUploading, setCropper, removeCover } = ctx;
+
+  return (
+    <>
+      <Card
+        title="Public photo & cover"
+        sub="Your portrait + the wide hero on your /apply page. Both crop on upload."
+      >
+        <Grid12>
+          {/* Portrait */}
+          <div className="mf-pf-span-4">
+            <FieldLabel>PORTRAIT · 4:5</FieldLabel>
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '4 / 5',
+                borderRadius: 4,
+                background: 'var(--mf-surface-2)',
+                border: '1px solid var(--mf-hairline)',
+                backgroundImage: profile.photoUrl ? `url(${profile.photoUrl})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+              aria-label={profile.photoUrl ? 'Profile photo' : 'No profile photo yet'}
+            />
             <input
               ref={photoInputRef}
               type="file"
@@ -584,41 +1165,39 @@ function ProfileForm() {
                 e.target.value = '';
               }}
             />
-            <button
-              type="button"
-              className="mf-btn"
-              onClick={() => photoInputRef.current?.click()}
-            >
-              {profile.photoUrl ? 'Replace photo' : 'Upload photo'}
-            </button>
-            <div
-              className="mf-fg-dim"
-              style={{ fontSize: 11, marginTop: 6 }}
-            >
-              JPEG, PNG, or WebP · Max 5 MB · 4:5 portrait looks best
+            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+              <button
+                type="button"
+                className="mf-btn"
+                onClick={() => photoInputRef.current?.click()}
+                style={{ flex: 1, height: 32, fontSize: 11 }}
+              >
+                {profile.photoUrl ? 'Replace' : 'Upload'}
+              </button>
+            </div>
+            <div className="mf-fg-mute" style={{ fontSize: 10, marginTop: 6, lineHeight: 1.4 }}>
+              JPEG / PNG / WebP · max 5 MB
             </div>
           </div>
-        </div>
-      </Section>
 
-      <Section id="section-cover" title="COVER IMAGE (optional)">
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <div
-            style={{
-              width: 220,
-              height: 120,
-              borderRadius: 6,
-              background: 'var(--mf-surface-2)',
-              border: '1px solid var(--mf-hairline)',
-              backgroundImage: profile.coverImageUrl
-                ? `url(${profile.coverImageUrl})`
-                : 'none',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              flexShrink: 0,
-            }}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Cover */}
+          <div className="mf-pf-span-8">
+            <FieldLabel>COVER · 3:1 LANDSCAPE</FieldLabel>
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '3 / 1',
+                borderRadius: 6,
+                background: 'var(--mf-surface-2)',
+                border: '1px solid var(--mf-hairline)',
+                backgroundImage: profile.coverImageUrl
+                  ? `url(${profile.coverImageUrl})`
+                  : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+              aria-label={profile.coverImageUrl ? 'Cover image' : 'No cover image yet'}
+            />
             <input
               ref={coverInputRef}
               type="file"
@@ -630,12 +1209,21 @@ function ProfileForm() {
                 e.target.value = '';
               }}
             />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 6,
+                marginTop: 8,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
               <button
                 type="button"
                 className="mf-btn"
                 onClick={() => coverInputRef.current?.click()}
                 disabled={coverUploading}
+                style={{ height: 32, fontSize: 11, padding: '0 12px' }}
               >
                 {coverUploading
                   ? 'Uploading…'
@@ -649,194 +1237,198 @@ function ProfileForm() {
                   className="mf-btn"
                   onClick={removeCover}
                   disabled={coverUploading}
+                  style={{ height: 32, fontSize: 11, padding: '0 12px' }}
                 >
                   Remove
                 </button>
               ) : null}
-            </div>
-            <div className="mf-fg-dim" style={{ fontSize: 11 }}>
-              JPEG, PNG, or WebP · Max 8 MB · wide landscape (3:1 or wider) looks best.
-              Leave blank to use the editorial gradient placeholder.
+              <div
+                className="mf-fg-mute"
+                style={{ fontSize: 10, marginLeft: 'auto', lineHeight: 1.4 }}
+              >
+                Wide landscape works best · max 8 MB
+              </div>
             </div>
           </div>
-        </div>
-      </Section>
+        </Grid12>
+      </Card>
 
-      <Section id="section-headline" span="half" title="HEADLINE (one sentence shown under your name)">
-        <input
-          className="mf-input"
-          placeholder="Strength coach helping busy professionals get lean."
-          value={profile.headline ?? ''}
-          onChange={(e) => update('headline', e.target.value)}
-          maxLength={200}
-        />
-      </Section>
+      <Card
+        title="Headline & location"
+        sub="The one sentence under your name + where you operate."
+      >
+        <Grid12>
+          <Field
+            label="Headline"
+            hint="One sentence shown under your name on /apply."
+            span={8}
+          >
+            <input
+              className="mf-input"
+              placeholder="Strength coach helping busy professionals get lean."
+              value={profile.headline ?? ''}
+              onChange={(e) => update('headline', e.target.value)}
+              maxLength={200}
+            />
+          </Field>
+          <Field label="Location" span={4}>
+            <input
+              className="mf-input"
+              placeholder="Fresno, CA · The Iron Office"
+              value={profile.location ?? ''}
+              onChange={(e) => update('location', e.target.value)}
+              maxLength={120}
+            />
+          </Field>
+        </Grid12>
+      </Card>
+    </>
+  );
+}
 
-      <Section id="section-location" span="half" title="LOCATION">
-        <input
-          className="mf-input"
-          placeholder="Fresno, CA · The Iron Office"
-          value={profile.location ?? ''}
-          onChange={(e) => update('location', e.target.value)}
-          maxLength={120}
-        />
-      </Section>
+// ──────────────────────────────────────────────────────────────────────────
+// 2. SOCIAL & REPLY — IG · TikTok · YouTube · Phone · Reply-to · Reply-from
+// ──────────────────────────────────────────────────────────────────────────
 
-      <Section span="half" title="INSTAGRAM">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'var(--mf-surface-2)',
-            border: '1px solid var(--mf-hairline)',
-            borderRadius: 4,
-            padding: '0 10px',
-          }}
-        >
-          <span className="mf-fg-dim" style={{ fontSize: 13 }}>@</span>
-          <input
-            className="mf-input"
-            placeholder="yourhandle"
+function SocialSection({ ctx }: { ctx: SectionCtx }) {
+  const { profile, update } = ctx;
+  return (
+    <Card
+      title="Social handles & contact"
+      sub="Linked from your profile. Phone shows as a one-tap SMS card on /apply."
+    >
+      <Grid12>
+        <Field label="Instagram" span={4}>
+          <HandleInput
             value={profile.instagramHandle ?? ''}
-            onChange={(e) =>
+            onChange={(v) =>
               update(
                 'instagramHandle',
-                e.target.value.replace(/^@/, '').replace(/[^A-Za-z0-9._]/g, ''),
+                v.replace(/^@/, '').replace(/[^A-Za-z0-9._]/g, ''),
               )
             }
-            maxLength={40}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              padding: '10px 0',
-              flex: 1,
-            }}
-          />
-        </div>
-      </Section>
-
-      <Section span="half" title="TIKTOK">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'var(--mf-surface-2)',
-            border: '1px solid var(--mf-hairline)',
-            borderRadius: 4,
-            padding: '0 10px',
-          }}
-        >
-          <span className="mf-fg-dim" style={{ fontSize: 13 }}>@</span>
-          <input
-            className="mf-input"
             placeholder="yourhandle"
+            maxLength={40}
+          />
+        </Field>
+        <Field label="TikTok" span={4}>
+          <HandleInput
             value={profile.tiktokHandle ?? ''}
-            onChange={(e) =>
+            onChange={(v) =>
               update(
                 'tiktokHandle',
-                e.target.value.replace(/^@/, '').replace(/[^A-Za-z0-9._-]/g, ''),
+                v.replace(/^@/, '').replace(/[^A-Za-z0-9._-]/g, ''),
               )
             }
+            placeholder="yourhandle"
             maxLength={40}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              padding: '10px 0',
-              flex: 1,
-            }}
           />
-        </div>
-      </Section>
-
-      <Section span="half" title="YOUTUBE">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'var(--mf-surface-2)',
-            border: '1px solid var(--mf-hairline)',
-            borderRadius: 4,
-            padding: '0 10px',
-          }}
-        >
-          <span className="mf-fg-dim" style={{ fontSize: 13 }}>@</span>
-          <input
-            className="mf-input"
-            placeholder="channelname"
+        </Field>
+        <Field label="YouTube" span={4}>
+          <HandleInput
             value={profile.youtubeHandle ?? ''}
-            onChange={(e) =>
+            onChange={(v) =>
               update(
                 'youtubeHandle',
-                e.target.value.replace(/^@/, '').replace(/[^A-Za-z0-9._-]/g, ''),
+                v.replace(/^@/, '').replace(/[^A-Za-z0-9._-]/g, ''),
               )
             }
+            placeholder="channelname"
             maxLength={60}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              padding: '10px 0',
-              flex: 1,
-            }}
           />
-        </div>
-      </Section>
+        </Field>
+        <Field
+          label="Contact phone"
+          hint="Leave blank to hide the FASTEST REPLY card on your /apply page."
+          span={6}
+        >
+          <input
+            type="tel"
+            className="mf-input"
+            placeholder="(559) 365-2946"
+            value={profile.contactPhone ?? ''}
+            onChange={(e) => update('contactPhone', e.target.value)}
+            maxLength={32}
+          />
+        </Field>
+        <Field
+          label="Reply-to email"
+          hint="When applicants fill /apply, hitting Reply on the notification email lands here. Leave blank to use your account email."
+          span={6}
+        >
+          <input
+            type="email"
+            className="mf-input"
+            placeholder="coach@yourdomain.com"
+            value={profile.replyFromEmail ?? ''}
+            onChange={(e) => update('replyFromEmail', e.target.value)}
+            maxLength={200}
+          />
+        </Field>
+        <Field
+          label="Reply-from name"
+          hint="Sender name shown on automated replies."
+          span={12}
+        >
+          <input
+            type="text"
+            className="mf-input"
+            placeholder="Coach John · Example Fitness"
+            value={profile.replyFromName ?? ''}
+            onChange={(e) => update('replyFromName', e.target.value)}
+            maxLength={120}
+          />
+        </Field>
+      </Grid12>
+    </Card>
+  );
+}
 
-      <Section span="half" title="CONTACT PHONE (shown on your apply page)">
-        <input
-          type="tel"
-          className="mf-input"
-          placeholder="(559) 365-2946"
-          value={profile.contactPhone ?? ''}
-          onChange={(e) => update('contactPhone', e.target.value)}
-          maxLength={32}
-        />
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
-          Leave blank to hide the FASTEST REPLY card. Applicants see this
-          number as a one-tap SMS link on your /apply page.
-        </div>
-      </Section>
+// ──────────────────────────────────────────────────────────────────────────
+// 3. ABOUT — bio + specialties + experience
+// ──────────────────────────────────────────────────────────────────────────
 
-      <Section span="half" title="REPLY-TO EMAIL (optional)">
-        <input
-          type="email"
-          className="mf-input"
-          placeholder="coach@yourdomain.com"
-          value={profile.replyFromEmail ?? ''}
-          onChange={(e) => update('replyFromEmail', e.target.value)}
-          maxLength={200}
-        />
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
-          When a new applicant fills your /apply form, your notification
-          email has Reply-To set to this address so hitting Reply sends to
-          you directly. Leave blank to use your account email.
-        </div>
-      </Section>
+function AboutSection({ ctx }: { ctx: SectionCtx }) {
+  const {
+    profile,
+    update,
+    specialtyInput,
+    setSpecialtyInput,
+    specialtyHints,
+    addSpecialty,
+    removeSpecialty,
+  } = ctx;
+  const bioLen = (profile.bio ?? '').length;
 
-      <Section span="half" title="REPLY-FROM NAME (optional)">
-        <input
-          type="text"
-          className="mf-input"
-          placeholder="Coach John · Example Fitness"
-          value={profile.replyFromName ?? ''}
-          onChange={(e) => update('replyFromName', e.target.value)}
-          maxLength={120}
-        />
-      </Section>
-
-      <Section id="section-bio" title="BIO (max 500 chars)">
+  return (
+    <>
+      <Card
+        title="Bio"
+        sub="Up to 500 characters. Plain text, no formatting."
+        right={
+          <div className="mf-fg-mute mf-font-mono" style={{ fontSize: 10 }}>
+            {bioLen}/500
+          </div>
+        }
+      >
         <textarea
           className="mf-input"
-          rows={4}
+          rows={6}
           value={profile.bio ?? ''}
           onChange={(e) => update('bio', e.target.value)}
           maxLength={500}
         />
-      </Section>
+      </Card>
 
-      <Section id="section-specialties" title="SPECIALTIES (up to 5)">
+      <Card
+        title="Specialties"
+        sub="Up to 5 — these become filter tags in the public directory."
+        right={
+          <div className="mf-fg-mute mf-font-mono" style={{ fontSize: 10 }}>
+            {profile.specialties.length}/5
+          </div>
+        }
+      >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
           {profile.specialties.map((s) => (
             <span
@@ -863,6 +1455,7 @@ function ProfileForm() {
                   cursor: 'pointer',
                   fontWeight: 700,
                 }}
+                aria-label={`Remove ${s}`}
               >
                 ×
               </button>
@@ -911,51 +1504,95 @@ function ProfileForm() {
               ))}
           </div>
         )}
-      </Section>
+      </Card>
 
-      <Section span="half" title="EXPERIENCE (YEARS)">
-        <input
-          type="number"
-          className="mf-input"
-          min={0}
-          max={80}
-          value={profile.experience}
-          onChange={(e) =>
-            update('experience', Math.max(0, Math.min(80, Number(e.target.value) || 0)))
-          }
-        />
-      </Section>
+      <Card title="Experience">
+        <Grid12>
+          <Field label="Years training" span={6}>
+            <input
+              type="number"
+              className="mf-input"
+              min={0}
+              max={80}
+              value={profile.experience}
+              onChange={(e) =>
+                update(
+                  'experience',
+                  Math.max(0, Math.min(80, Number(e.target.value) || 0)),
+                )
+              }
+            />
+          </Field>
+          <Field
+            label="Clients trained · lifetime"
+            hint="Marketing copy number shown on your profile stat strip. Leave blank to hide that tile."
+            span={6}
+          >
+            <input
+              type="number"
+              className="mf-input"
+              min={0}
+              max={100000}
+              placeholder="e.g. 212"
+              value={profile.clientsTrained ?? ''}
+              onChange={(e) =>
+                update(
+                  'clientsTrained',
+                  e.target.value === ''
+                    ? null
+                    : Math.max(0, Math.min(100000, Number(e.target.value) || 0)),
+                )
+              }
+            />
+          </Field>
+        </Grid12>
+      </Card>
+    </>
+  );
+}
 
-      <Section span="half" title="CLIENTS TRAINED (lifetime, optional)">
-        <input
-          type="number"
-          className="mf-input"
-          min={0}
-          max={100000}
-          placeholder="e.g. 212"
-          value={profile.clientsTrained ?? ''}
-          onChange={(e) =>
-            update(
-              'clientsTrained',
-              e.target.value === '' ? null : Math.max(0, Math.min(100000, Number(e.target.value) || 0)),
-            )
-          }
-        />
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginTop: 6 }}>
-          Marketing copy number shown on your profile stat strip. Leave blank to hide that tile.
+// ──────────────────────────────────────────────────────────────────────────
+// 4. QUICK FACTS — sidebar bullet rows
+// ──────────────────────────────────────────────────────────────────────────
+
+function FactsSection({ ctx }: { ctx: SectionCtx }) {
+  const { profile, addQuickFact, updateQuickFact, removeQuickFact } = ctx;
+  return (
+    <Card
+      title="Quick facts"
+      sub="Sidebar bullets on your profile. One uppercase heading + one detail per row."
+      right={
+        <button
+          type="button"
+          className="mf-btn"
+          onClick={addQuickFact}
+          disabled={profile.quickFacts.length >= 12}
+          style={{ height: 32, fontSize: 11, padding: '0 12px' }}
+        >
+          + Add fact
+        </button>
+      }
+    >
+      {profile.quickFacts.length === 0 ? (
+        <div
+          className="mf-fg-mute"
+          style={{
+            padding: 24,
+            border: '1px dashed var(--mf-hairline)',
+            borderRadius: 4,
+            textAlign: 'center',
+            fontSize: 12,
+          }}
+        >
+          No quick facts yet — add one above to show as a sidebar bullet.
         </div>
-      </Section>
-
-      <Section id="section-quick-facts" title="QUICK FACTS · sidebar bullet points">
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
-          Short facts that show in the sidebar of your profile — one small
-          heading plus a detail per row. Example: <b>EXPERIENCE</b> · 10+ years.
-        </div>
-        <div style={{ display: 'grid', gap: 6 }}>
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
           {profile.quickFacts.map((f, i) => (
             <div
               key={i}
-              style={{ display: 'grid', gridTemplateColumns: '140px 1fr auto', gap: 6 }}
+              className="mf-pf-fact-row"
+              style={{ display: 'grid', gap: 6 }}
             >
               <input
                 className="mf-input"
@@ -975,7 +1612,7 @@ function ProfileForm() {
                 type="button"
                 className="mf-btn"
                 onClick={() => removeQuickFact(i)}
-                style={{ height: 40, width: 40, padding: 0 }}
+                style={{ height: 36, width: 36, padding: 0 }}
                 aria-label="Remove fact"
               >
                 ×
@@ -983,457 +1620,612 @@ function ProfileForm() {
             </div>
           ))}
         </div>
-        <button
-          type="button"
-          className="mf-btn"
-          onClick={addQuickFact}
-          disabled={profile.quickFacts.length >= 12}
-          style={{ marginTop: 8 }}
-        >
-          + Add fact
-        </button>
-      </Section>
+      )}
+      <style>{`
+        .mf-pf-fact-row { grid-template-columns: 1fr; }
+        @media (min-width: 640px) {
+          .mf-pf-fact-row { grid-template-columns: 160px 1fr 36px; }
+        }
+      `}</style>
+    </Card>
+  );
+}
 
-      <Section id="section-pillars" title="APPROACH PILLARS · up to 6 cards on your profile">
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
-          The core things you focus on with clients. Each card has a title,
-          a small icon, and a short description.
-        </div>
-        <div style={{ display: 'grid', gap: 10 }}>
-          {profile.pillars.map((p, i) => (
-            <div
-              key={i}
-              className="mf-card"
-              style={{ padding: 12, display: 'grid', gap: 6 }}
-            >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px auto', gap: 6 }}>
-                <input
-                  className="mf-input"
-                  placeholder="Title (e.g. Progressive Overload)"
-                  value={p.title}
-                  onChange={(e) => updatePillar(i, 'title', e.target.value)}
-                  maxLength={60}
-                />
-                <select
-                  className="mf-input"
-                  value={p.icon}
-                  onChange={(e) => updatePillar(i, 'icon', e.target.value)}
-                  aria-label="Icon shown on this card"
-                  title="Icon shown on this card"
-                >
-                  {PILLAR_ICONS.map((ic) => (
-                    <option key={ic.value} value={ic.value}>
-                      Icon · {ic.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="mf-btn"
-                  onClick={() => removePillar(i)}
-                  style={{ height: 40, width: 40, padding: 0 }}
-                  aria-label="Remove pillar"
-                >
-                  ×
-                </button>
-              </div>
-              <textarea
-                className="mf-input"
-                rows={2}
-                placeholder="Short description (what this means in practice)"
-                value={p.description}
-                onChange={(e) => updatePillar(i, 'description', e.target.value)}
-                maxLength={280}
-              />
-            </div>
-          ))}
-        </div>
+// ──────────────────────────────────────────────────────────────────────────
+// 5. APPROACH PILLARS — 2-col grid of pillar cards
+// ──────────────────────────────────────────────────────────────────────────
+
+function PillarsSection({ ctx }: { ctx: SectionCtx }) {
+  const { profile, addPillar, updatePillar, removePillar } = ctx;
+  const canAdd = profile.pillars.length < 6;
+  return (
+    <Card
+      title="Approach pillars"
+      sub="Up to 6 cards. Each one gets a title, an icon, and a short description of what it means in practice."
+      right={
         <button
           type="button"
           className="mf-btn"
           onClick={addPillar}
-          disabled={profile.pillars.length >= 6}
-          style={{ marginTop: 8 }}
+          disabled={!canAdd}
+          style={{ height: 32, fontSize: 11, padding: '0 12px' }}
         >
           + Add pillar
         </button>
-      </Section>
-
-      <Section id="section-gallery" title={`GALLERY (${profile.gallery.length}/30)`}>
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 12 }}>
-          Upload photos of your training sessions, facility, competitions,
-          or athletes. Each image saves to your gallery instantly.
-        </div>
-
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          style={{ display: 'none' }}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) setCropper({ kind: 'gallery', file: f });
-            e.target.value = '';
-          }}
-        />
-
-        {profile.gallery.length > 0 ? (
+      }
+    >
+      <div className="mf-pf-pillars" style={{ display: 'grid', gap: 12 }}>
+        {profile.pillars.map((p, i) => (
           <div
+            key={i}
             style={{
+              background: 'var(--mf-surface-2)',
+              border: '1px solid var(--mf-hairline)',
+              borderRadius: 6,
+              padding: 12,
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
               gap: 8,
-              marginBottom: 12,
             }}
           >
-            {profile.gallery.map((g, i) => {
-              const isUrl = /^https?:\/\//i.test(g) || g.startsWith('/');
-              return (
-                <div
-                  key={`${g}-${i}`}
-                  style={{
-                    position: 'relative',
-                    aspectRatio: '1 / 1',
-                    borderRadius: 6,
-                    overflow: 'hidden',
-                    background: 'var(--mf-surface-3)',
-                    backgroundImage: isUrl ? `url(${g})` : 'none',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    border: '1px solid var(--mf-hairline)',
-                  }}
-                >
-                  {!isUrl ? (
-                    <div
-                      className="mf-font-mono mf-fg-mute"
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        padding: 8,
-                        fontSize: 10,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {g}
-                    </div>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => deleteGalleryEntry(g)}
-                    aria-label="Remove image"
-                    style={{
-                      position: 'absolute',
-                      top: 6,
-                      right: 6,
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      background: 'rgba(10,10,11,0.75)',
-                      color: 'var(--mf-fg)',
-                      border: '1px solid var(--mf-hairline-strong)',
-                      cursor: 'pointer',
-                      display: 'grid',
-                      placeItems: 'center',
-                      fontSize: 16,
-                      lineHeight: 1,
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
-        <button
-          type="button"
-          className="mf-btn"
-          onClick={() => galleryInputRef.current?.click()}
-          disabled={galleryUploading || profile.gallery.length >= 30}
-        >
-          {galleryUploading
-            ? 'Uploading…'
-            : profile.gallery.length >= 30
-              ? 'Gallery full'
-              : '+ Upload image'}
-        </button>
-      </Section>
-
-      <Section id="section-services" title="SERVICES & PRICING · up to 8 cards">
-        <div className="mf-fg-dim" style={{ fontSize: 11, marginBottom: 10 }}>
-          Each card is one thing clients can buy from you — for example
-          &ldquo;1:1 Online Coaching · $249 per month · Apply.&rdquo;
-        </div>
-        <div style={{ display: 'grid', gap: 10 }}>
-          {profile.services.map((s, i) => (
             <div
-              key={i}
-              className="mf-card"
-              style={{ padding: 12, display: 'grid', gap: 6 }}
+              className="mf-pf-pillar-head"
+              style={{ display: 'grid', gap: 6 }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}>
-                <input
-                  className="mf-input"
-                  placeholder="Service name (e.g. 1:1 Online Coaching)"
-                  value={s.title}
-                  onChange={(e) => updateService(i, 'title', e.target.value)}
-                  maxLength={60}
-                />
-                <button
-                  type="button"
-                  className="mf-btn"
-                  onClick={() => removeService(i)}
-                  style={{ height: 40, width: 40, padding: 0 }}
-                  aria-label="Remove service"
-                >
-                  ×
-                </button>
-              </div>
-              <textarea
+              <input
                 className="mf-input"
-                rows={2}
-                placeholder="Short description of what's included"
-                value={s.description}
-                onChange={(e) => updateService(i, 'description', e.target.value)}
-                maxLength={280}
+                placeholder="Title (e.g. Progressive Overload)"
+                value={p.title}
+                onChange={(e) => updatePillar(i, 'title', e.target.value)}
+                maxLength={60}
               />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-                <input
-                  className="mf-input"
-                  placeholder="Price (e.g. $249)"
-                  value={s.price}
-                  onChange={(e) => updateService(i, 'price', e.target.value)}
-                  maxLength={24}
-                />
-                <input
-                  className="mf-input"
-                  placeholder="How often (e.g. per month)"
-                  title="How often they pay this — per month, per session, one-time, etc. Leave blank for flat pricing."
-                  value={s.per}
-                  onChange={(e) => updateService(i, 'per', e.target.value)}
-                  maxLength={24}
-                />
-                <input
-                  className="mf-input"
-                  placeholder="Button text (e.g. Apply)"
-                  title="The text on the button clients tap to start this service"
-                  value={s.cta}
-                  onChange={(e) => updateService(i, 'cta', e.target.value)}
-                  maxLength={24}
-                />
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                <input
-                  type="checkbox"
-                  checked={s.featured}
-                  onChange={(e) => updateService(i, 'featured', e.target.checked)}
-                />
-                Highlight this one as &ldquo;Most popular&rdquo; (adds an accent border)
-              </label>
-            </div>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="mf-btn"
-          onClick={addService}
-          disabled={profile.services.length >= 8}
-          style={{ marginTop: 8 }}
-        >
-          + Add service
-        </button>
-      </Section>
-
-      <Section id="section-certifications" title="CERTIFICATIONS">
-        <div style={{ display: 'grid', gap: 6, marginBottom: 8 }}>
-          {profile.certifications.map((c, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 10px',
-                background: 'var(--mf-surface-2)',
-                border: '1px solid var(--mf-hairline)',
-                borderRadius: 4,
-                fontSize: 13,
-              }}
-            >
-              <span style={{ flex: 1 }}>{c}</span>
+              <select
+                className="mf-input"
+                value={p.icon}
+                onChange={(e) => updatePillar(i, 'icon', e.target.value)}
+                aria-label="Icon shown on this card"
+                title="Icon shown on this card"
+              >
+                {PILLAR_ICONS.map((ic) => (
+                  <option key={ic.value} value={ic.value}>
+                    Icon · {ic.label}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
-                onClick={() => removeCert(i)}
-                className="mf-fg-dim"
+                className="mf-btn"
+                onClick={() => removePillar(i)}
+                style={{ height: 36, width: 36, padding: 0 }}
+                aria-label="Remove pillar"
+              >
+                ×
+              </button>
+            </div>
+            <textarea
+              className="mf-input"
+              rows={3}
+              placeholder="Short description (what this means in practice)"
+              value={p.description}
+              onChange={(e) => updatePillar(i, 'description', e.target.value)}
+              maxLength={280}
+            />
+          </div>
+        ))}
+        {canAdd && (
+          <button
+            type="button"
+            onClick={addPillar}
+            className="focus-ring"
+            style={{
+              border: '2px dashed var(--mf-hairline)',
+              borderRadius: 6,
+              padding: 24,
+              background: 'transparent',
+              color: 'var(--mf-fg-mute)',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              minHeight: 140,
+              fontSize: 12,
+            }}
+            aria-label="Add pillar"
+          >
+            <span style={{ fontSize: 22, lineHeight: 1 }}>+</span>
+            Add pillar
+          </button>
+        )}
+      </div>
+      <style>{`
+        .mf-pf-pillars { grid-template-columns: 1fr; }
+        .mf-pf-pillar-head { grid-template-columns: 1fr 36px; }
+        .mf-pf-pillar-head > select { grid-column: 1 / -1; }
+        @media (min-width: 640px) {
+          .mf-pf-pillar-head { grid-template-columns: 1fr 140px 36px; }
+          .mf-pf-pillar-head > select { grid-column: auto; }
+        }
+        @media (min-width: 900px) {
+          .mf-pf-pillars { grid-template-columns: 1fr 1fr; }
+        }
+      `}</style>
+    </Card>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// 6. GALLERY — square thumbnails + dashed Upload tile
+// ──────────────────────────────────────────────────────────────────────────
+
+function GallerySection({ ctx }: { ctx: SectionCtx }) {
+  const { profile, galleryInputRef, galleryUploading, setCropper, deleteGalleryEntry } = ctx;
+  const canAdd = profile.gallery.length < 30;
+  return (
+    <Card
+      title="Gallery"
+      sub="Photos of training sessions, your facility, competitions, athletes. Each saves to your gallery instantly."
+      right={
+        <div className="mf-fg-mute mf-font-mono" style={{ fontSize: 10 }}>
+          {profile.gallery.length}/30
+        </div>
+      }
+    >
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) setCropper({ kind: 'gallery', file: f });
+          e.target.value = '';
+        }}
+      />
+      <div
+        className="mf-pf-gallery"
+        style={{ display: 'grid', gap: 8, marginBottom: 10 }}
+      >
+        {profile.gallery.map((g, i) => {
+          const isUrl = /^https?:\/\//i.test(g) || g.startsWith('/');
+          return (
+            <div
+              key={`${g}-${i}`}
+              style={{
+                position: 'relative',
+                aspectRatio: '1 / 1',
+                borderRadius: 6,
+                overflow: 'hidden',
+                background: 'var(--mf-surface-3)',
+                backgroundImage: isUrl ? `url(${g})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: '1px solid var(--mf-hairline)',
+              }}
+            >
+              {!isUrl ? (
+                <div
+                  className="mf-font-mono mf-fg-mute"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    padding: 8,
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {g}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => deleteGalleryEntry(g)}
+                aria-label="Remove image"
                 style={{
-                  background: 'transparent',
-                  border: 'none',
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: 'rgba(10,10,11,0.75)',
+                  color: 'var(--mf-fg)',
+                  border: '1px solid var(--mf-hairline-strong)',
                   cursor: 'pointer',
+                  display: 'grid',
+                  placeItems: 'center',
                   fontSize: 16,
+                  lineHeight: 1,
                 }}
               >
                 ×
               </button>
             </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <input
-            className="mf-input"
-            placeholder="NSCA-CPT"
-            value={certInput}
-            onChange={(e) => setCertInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addCert();
-              }
+          );
+        })}
+        {canAdd && (
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={galleryUploading}
+            className="focus-ring"
+            style={{
+              aspectRatio: '1 / 1',
+              border: '2px dashed var(--mf-hairline)',
+              borderRadius: 6,
+              background: 'transparent',
+              color: 'var(--mf-fg-mute)',
+              cursor: galleryUploading ? 'wait' : 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
             }}
-            maxLength={120}
-          />
-          <button type="button" className="mf-btn" onClick={addCert}>
-            Add
-          </button>
-        </div>
-      </Section>
-
-      <Section span="half" title="PRICE TIER">
-        <div style={{ display: 'flex', gap: 6 }}>
-          {TIERS.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              onClick={() => update('priceTier', t.value)}
+            aria-label="Upload image"
+          >
+            <span style={{ fontSize: 22, lineHeight: 1 }}>+</span>
+            <span
+              className="mf-font-mono"
               style={{
-                height: 40,
-                padding: '0 16px',
-                background:
-                  profile.priceTier === t.value
-                    ? 'var(--mf-accent)'
-                    : 'transparent',
-                color: profile.priceTier === t.value ? '#0A0A0B' : 'var(--mf-fg)',
-                border: '1px solid var(--mf-hairline)',
-                borderRadius: 4,
-                cursor: 'pointer',
-                fontSize: 13,
+                fontSize: 9,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
               }}
             >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      <Section span="half" title="HOURLY RATE (USD)">
-        <input
-          type="number"
-          className="mf-input"
-          min={0}
-          max={10000}
-          placeholder="Leave blank for 'Contact for pricing'"
-          value={profile.hourlyRate ?? ''}
-          onChange={(e) =>
-            update('hourlyRate', e.target.value === '' ? null : Number(e.target.value))
-          }
-        />
-      </Section>
-
-      <Section span="half" title="SERVICE MODES">
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-            <input
-              type="checkbox"
-              checked={profile.acceptsInPerson}
-              onChange={(e) => update('acceptsInPerson', e.target.checked)}
-            />
-            In-person training
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-            <input
-              type="checkbox"
-              checked={profile.acceptsOnline}
-              onChange={(e) => update('acceptsOnline', e.target.checked)}
-            />
-            Online / remote
-          </label>
-        </div>
-      </Section>
-        </div>
-
-        <aside
-          className="hidden xl:block"
-          style={{ position: 'sticky', top: 80, alignSelf: 'start' }}
-        >
-          <div style={{ display: 'grid', gap: 16 }}>
-            <ProfilePreviewCard profile={profile} />
-            <CompletionChecklistCard profile={profile} />
-            <ShareCard profile={profile} />
-            <ActivityCard />
-          </div>
-        </aside>
+              {galleryUploading ? 'Uploading…' : 'Upload'}
+            </span>
+          </button>
+        )}
       </div>
-
-      <ImageCropperModal
-        file={cropper?.file ?? null}
-        aspect={
-          cropper?.kind === 'cover' ? 3 : cropper?.kind === 'gallery' ? 1 : 4 / 5
+      <div className="mf-fg-mute" style={{ fontSize: 11, lineHeight: 1.4 }}>
+        Click × to remove · auto-cropped 1:1
+      </div>
+      <style>{`
+        .mf-pf-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @media (min-width: 640px) {
+          .mf-pf-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
-        shape={cropper?.kind === 'photo' ? 'round' : 'rect'}
-        title={
-          cropper?.kind === 'cover'
-            ? 'Crop cover image'
-            : cropper?.kind === 'gallery'
-              ? 'Crop gallery image'
-              : 'Crop profile photo'
+        @media (min-width: 900px) {
+          .mf-pf-gallery { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
-        outputMaxDim={cropper?.kind === 'cover' ? 2000 : 1200}
-        onClose={() => setCropper(null)}
-        onConfirm={(cropped) => {
-          const kind = cropper?.kind;
-          setCropper(null);
-          if (kind === 'photo') uploadPhoto(cropped);
-          else if (kind === 'cover') uploadCover(cropped);
-          else if (kind === 'gallery') uploadGalleryImage(cropped);
-        }}
-      />
-
-      {/* Save + publish live in the sticky header at the top of this view
-          so the "Profile saved" banner is always in view after tapping. */}
-    </div>
+      `}</style>
+    </Card>
   );
 }
 
-function Section({
-  id,
-  title,
-  span = 'full',
-  children,
-}: {
-  id?: string;
-  title: string;
-  span?: 'half' | 'full';
-  children: React.ReactNode;
-}) {
-  // At md:+ the form column is a 2-col grid. Half-width sections pair up;
-  // full-width sections (default) span both columns like today. Below md:
-  // no col-span classes apply and the grid falls back to single-column,
-  // preserving the pre-restructure stacking behavior.
-  const colClass = span === 'half' ? 'md:col-span-1' : 'md:col-span-2';
+// ──────────────────────────────────────────────────────────────────────────
+// 7. SERVICES — service rows + tier/rate/modes
+// ──────────────────────────────────────────────────────────────────────────
+
+function ServicesSection({ ctx }: { ctx: SectionCtx }) {
+  const { profile, update, addService, updateService, removeService } = ctx;
+
   return (
-    <div
-      id={id}
-      className={`mf-card ${colClass}`}
-      style={{ padding: 16, scrollMarginTop: 96 }}
+    <>
+      <Card
+        title="Services & pricing"
+        sub="Up to 8 cards — each is one thing clients can buy from you (e.g. 1:1 Online Coaching · $249 / month · Apply)."
+        right={
+          <button
+            type="button"
+            className="mf-btn"
+            onClick={addService}
+            disabled={profile.services.length >= 8}
+            style={{ height: 32, fontSize: 11, padding: '0 12px' }}
+          >
+            + Add service
+          </button>
+        }
+      >
+        {profile.services.length === 0 ? (
+          <div
+            className="mf-fg-mute"
+            style={{
+              padding: 24,
+              border: '1px dashed var(--mf-hairline)',
+              borderRadius: 4,
+              textAlign: 'center',
+              fontSize: 12,
+            }}
+          >
+            No services yet — add one to show on your profile.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {profile.services.map((s, i) => (
+              <div
+                key={i}
+                style={{
+                  background: 'var(--mf-surface-2)',
+                  border: `1px solid ${s.featured ? 'var(--mf-accent)' : 'var(--mf-hairline)'}`,
+                  borderRadius: 6,
+                  padding: 12,
+                  display: 'grid',
+                  gap: 8,
+                }}
+              >
+                <Grid12>
+                  <div className="mf-pf-span-7">
+                    <input
+                      className="mf-input"
+                      placeholder="Service name (e.g. 1:1 Online Coaching)"
+                      value={s.title}
+                      onChange={(e) => updateService(i, 'title', e.target.value)}
+                      maxLength={60}
+                    />
+                  </div>
+                  <div
+                    className="mf-pf-span-5"
+                    style={{
+                      display: 'flex',
+                      gap: 6,
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                    }}
+                  >
+                    {s.featured && (
+                      <span
+                        className="mf-font-mono"
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: 9,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          background: 'var(--mf-accent)',
+                          color: '#0A0A0B',
+                          borderRadius: 999,
+                        }}
+                      >
+                        FEATURED
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="mf-btn"
+                      onClick={() => removeService(i)}
+                      style={{ height: 36, width: 36, padding: 0 }}
+                      aria-label="Remove service"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </Grid12>
+                <textarea
+                  className="mf-input"
+                  rows={2}
+                  placeholder="Short description of what's included"
+                  value={s.description}
+                  onChange={(e) => updateService(i, 'description', e.target.value)}
+                  maxLength={280}
+                />
+                <Grid12>
+                  <div className="mf-pf-span-3">
+                    <input
+                      className="mf-input"
+                      placeholder="Price (e.g. $249)"
+                      value={s.price}
+                      onChange={(e) => updateService(i, 'price', e.target.value)}
+                      maxLength={24}
+                    />
+                  </div>
+                  <div className="mf-pf-span-3">
+                    <input
+                      className="mf-input"
+                      placeholder="How often (e.g. per month)"
+                      title="How often they pay this — per month, per session, one-time, etc. Leave blank for flat pricing."
+                      value={s.per}
+                      onChange={(e) => updateService(i, 'per', e.target.value)}
+                      maxLength={24}
+                    />
+                  </div>
+                  <div className="mf-pf-span-3">
+                    <input
+                      className="mf-input"
+                      placeholder="Button text (e.g. Apply)"
+                      title="The text on the button clients tap to start this service"
+                      value={s.cta}
+                      onChange={(e) => updateService(i, 'cta', e.target.value)}
+                      maxLength={24}
+                    />
+                  </div>
+                  <label
+                    className="mf-pf-span-3"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 12,
+                      color: 'var(--mf-fg-dim)',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={s.featured}
+                      onChange={(e) => updateService(i, 'featured', e.target.checked)}
+                    />
+                    Most popular
+                  </label>
+                </Grid12>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card title="Tier, rate & service modes">
+        <Grid12>
+          <Field label="Price tier" span={5}>
+            <div
+              style={{
+                display: 'flex',
+                padding: 4,
+                borderRadius: 4,
+                background: 'var(--mf-surface-2)',
+                border: '1px solid var(--mf-hairline-strong)',
+                gap: 4,
+              }}
+            >
+              {TIERS.map((t) => {
+                const sel = profile.priceTier === t.value;
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => update('priceTier', t.value)}
+                    className="mf-font-mono"
+                    style={{
+                      flex: 1,
+                      padding: '6px 0',
+                      borderRadius: 3,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      background: sel ? 'var(--mf-accent)' : 'transparent',
+                      color: sel ? '#0A0A0B' : 'var(--mf-fg-dim)',
+                      fontWeight: sel ? 600 : 400,
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+          <Field label="Hourly rate · USD" span={4}>
+            <input
+              type="number"
+              className="mf-input"
+              min={0}
+              max={10000}
+              placeholder="Leave blank for 'Contact for pricing'"
+              value={profile.hourlyRate ?? ''}
+              onChange={(e) =>
+                update('hourlyRate', e.target.value === '' ? null : Number(e.target.value))
+              }
+            />
+          </Field>
+          <Field label="Service modes" span={3}>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 12,
+                  color: 'var(--mf-fg-dim)',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={profile.acceptsInPerson}
+                  onChange={(e) => update('acceptsInPerson', e.target.checked)}
+                />
+                In-person
+              </label>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 12,
+                  color: 'var(--mf-fg-dim)',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={profile.acceptsOnline}
+                  onChange={(e) => update('acceptsOnline', e.target.checked)}
+                />
+                Online / remote
+              </label>
+            </div>
+          </Field>
+        </Grid12>
+      </Card>
+    </>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// 8. CREDENTIALS — certifications list
+// ──────────────────────────────────────────────────────────────────────────
+
+function CertsSection({ ctx }: { ctx: SectionCtx }) {
+  const { profile, certInput, setCertInput, addCert, removeCert } = ctx;
+  return (
+    <Card
+      title="Certifications"
+      sub="Add credentials and licenses — these surface on the public profile."
     >
-      <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-        {title}
+      <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
+        {profile.certifications.map((c, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 12px',
+              background: 'var(--mf-surface-2)',
+              border: '1px solid var(--mf-hairline)',
+              borderRadius: 4,
+              fontSize: 13,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              className="mf-fg-mute"
+              style={{ fontSize: 14, lineHeight: 1 }}
+            >
+              ▣
+            </span>
+            <span style={{ flex: 1 }}>{c}</span>
+            <button
+              type="button"
+              onClick={() => removeCert(i)}
+              className="mf-fg-dim"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 16,
+              }}
+              aria-label={`Remove ${c}`}
+            >
+              ×
+            </button>
+          </div>
+        ))}
       </div>
-      {children}
-    </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input
+          className="mf-input"
+          placeholder="NSCA-CPT"
+          value={certInput}
+          onChange={(e) => setCertInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addCert();
+            }
+          }}
+          maxLength={120}
+        />
+        <button
+          type="button"
+          className="mf-btn"
+          onClick={addCert}
+          disabled={profile.certifications.length >= 20}
+          style={{ height: 40, padding: '0 16px' }}
+        >
+          Add
+        </button>
+      </div>
+    </Card>
   );
 }
 
@@ -1445,35 +2237,24 @@ interface ChecklistItem {
   key: string;
   label: string;
   done: boolean;
-  /** id of the <Section> to smooth-scroll to when the row is clicked. */
-  sectionId: string;
+  /** key of the section to switch to when the row is clicked. */
+  section: SectionKey;
+  required: boolean;
 }
 
-function CompletionChecklistCard({ profile }: { profile: TrainerProfile }) {
-  const required: ChecklistItem[] = [
-    { key: 'photo', label: 'Public photo', done: !!profile.photoUrl, sectionId: 'section-photo' },
-    { key: 'bio', label: 'Bio', done: !!profile.bio && profile.bio.trim().length > 0, sectionId: 'section-bio' },
-    { key: 'specialties', label: 'Specialties', done: profile.specialties.length > 0, sectionId: 'section-specialties' },
-    { key: 'location', label: 'Location', done: !!profile.location && profile.location.trim().length > 0, sectionId: 'section-location' },
-  ];
-
-  const recommended: ChecklistItem[] = [
-    { key: 'cover', label: 'Cover image', done: !!profile.coverImageUrl, sectionId: 'section-cover' },
-    { key: 'headline', label: 'Headline', done: !!profile.headline && profile.headline.trim().length > 0, sectionId: 'section-headline' },
-    { key: 'quickFacts', label: 'At least one quick fact', done: profile.quickFacts.length > 0, sectionId: 'section-quick-facts' },
-    { key: 'pillars', label: 'At least one approach pillar', done: profile.pillars.length > 0, sectionId: 'section-pillars' },
-    { key: 'services', label: 'At least one service', done: profile.services.length > 0, sectionId: 'section-services' },
-    { key: 'certifications', label: 'At least one certification', done: profile.certifications.length > 0, sectionId: 'section-certifications' },
-    { key: 'gallery', label: 'At least one gallery image', done: profile.gallery.length > 0, sectionId: 'section-gallery' },
-  ];
-
-  const requiredDone = required.filter((r) => r.done).length;
-
-  function jumpTo(sectionId: string) {
-    const el = document.getElementById(sectionId);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
+function CompletionChecklistCard({
+  required,
+  recommended,
+  reqDone,
+  reqTotal,
+  onJump,
+}: {
+  required: ChecklistItem[];
+  recommended: ChecklistItem[];
+  reqDone: number;
+  reqTotal: number;
+  onJump: (section: SectionKey) => void;
+}) {
   return (
     <div className="mf-card" style={{ padding: 14 }}>
       <div
@@ -1487,7 +2268,7 @@ function CompletionChecklistCard({ profile }: { profile: TrainerProfile }) {
       >
         <span>Checklist</span>
         <span className="mf-fg-dim mf-font-mono" style={{ fontSize: 10 }}>
-          {requiredDone} / {required.length} required
+          {reqDone} / {reqTotal} required
         </span>
       </div>
 
@@ -1499,19 +2280,25 @@ function CompletionChecklistCard({ profile }: { profile: TrainerProfile }) {
       </div>
       <div style={{ display: 'grid', gap: 2, marginBottom: 12 }}>
         {required.map((item) => (
-          <ChecklistRow key={item.key} item={item} onJump={jumpTo} />
+          <ChecklistRow key={item.key} item={item} onJump={onJump} />
         ))}
       </div>
 
       <div
         className="mf-fg-dim mf-font-mono"
-        style={{ fontSize: 9, letterSpacing: '0.08em', marginBottom: 6 }}
+        style={{
+          fontSize: 9,
+          letterSpacing: '0.08em',
+          marginBottom: 6,
+          paddingTop: 8,
+          borderTop: '1px solid var(--mf-hairline)',
+        }}
       >
         RECOMMENDED
       </div>
       <div style={{ display: 'grid', gap: 2 }}>
         {recommended.map((item) => (
-          <ChecklistRow key={item.key} item={item} onJump={jumpTo} />
+          <ChecklistRow key={item.key} item={item} onJump={onJump} />
         ))}
       </div>
     </div>
@@ -1523,12 +2310,12 @@ function ChecklistRow({
   onJump,
 }: {
   item: ChecklistItem;
-  onJump: (sectionId: string) => void;
+  onJump: (section: SectionKey) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onJump(item.sectionId)}
+      onClick={() => onJump(item.section)}
       className="focus-ring"
       style={{
         display: 'flex',
@@ -1549,13 +2336,26 @@ function ChecklistRow({
         aria-hidden="true"
         style={{
           width: 14,
+          height: 14,
           display: 'inline-flex',
           justifyContent: 'center',
-          color: item.done ? '#86efac' : 'var(--mf-fg-mute)',
-          fontSize: 12,
+          alignItems: 'center',
+          flexShrink: 0,
         }}
       >
-        {item.done ? '✓' : '–'}
+        {item.done ? (
+          <span style={{ color: '#86efac', fontSize: 12, lineHeight: 1 }}>✓</span>
+        ) : (
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              border: '1px solid var(--mf-hairline-strong)',
+              display: 'inline-block',
+            }}
+          />
+        )}
       </span>
       <span style={{ flex: 1 }}>{item.label}</span>
     </button>
@@ -1566,43 +2366,83 @@ function ProfilePreviewCard({ profile }: { profile: TrainerProfile }) {
   const headline = profile.headline?.trim() || null;
   const location = profile.location?.trim() || null;
   const specialties = profile.specialties.slice(0, 3);
-  const quickFacts = profile.quickFacts.filter((f) => f.label.trim() && f.value.trim()).slice(0, 3);
-  const pillarTitles = profile.pillars.map((p) => p.title.trim()).filter(Boolean).slice(0, 3);
-  const services = profile.services.slice(0, 2);
+  const quickFacts = profile.quickFacts
+    .filter((f) => f.label.trim() && f.value.trim())
+    .slice(0, 3);
+  const services = profile.services.slice(0, 3);
 
   const placeholderStyle: React.CSSProperties = {
     fontStyle: 'italic',
     color: 'var(--mf-fg-mute)',
   };
 
+  const publicHref = profile.trainerSlug ? `/t/${profile.trainerSlug}` : null;
+
   return (
-    // maxHeight + overflow act as a belt-and-braces cap — data is already
-    // sliced (3 specialties / 3 quick facts / 3 pillars / 2 services) so
-    // the card tops out in normal use, but an unusually long headline or
-    // quick-fact value could still overshoot; hide rather than let the
-    // rail grow past the viewport.
-    <div className="mf-card" style={{ padding: 14, maxHeight: 520, overflow: 'hidden' }}>
-      <div className="mf-eyebrow" style={{ marginBottom: 10 }}>
-        Live preview
+    <div className="mf-card" style={{ padding: 14, overflow: 'hidden' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 10,
+        }}
+      >
+        <div className="mf-eyebrow">Live preview</div>
+        {publicHref ? (
+          <a
+            href={publicHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mf-font-mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: '0.08em',
+              color: 'var(--mf-accent)',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+            }}
+          >
+            Open ↗
+          </a>
+        ) : null}
       </div>
 
-      {/* Header row — photo + headline + location */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
+      <div
+        style={{
+          borderRadius: 6,
+          overflow: 'hidden',
+          border: '1px solid var(--mf-hairline-strong)',
+          background: 'var(--mf-bg)',
+        }}
+      >
+        {/* Cover strip */}
         <div
           style={{
-            width: 60,
-            height: 75,
-            flexShrink: 0,
-            borderRadius: 4,
-            background: 'var(--mf-surface-2)',
-            border: '1px solid var(--mf-hairline)',
-            backgroundImage: profile.photoUrl ? `url(${profile.photoUrl})` : 'none',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            height: 64,
+            background: profile.coverImageUrl
+              ? `center / cover no-repeat url(${profile.coverImageUrl})`
+              : 'linear-gradient(135deg, var(--mf-surface-2), var(--mf-surface-3))',
           }}
-          aria-label={profile.photoUrl ? 'Profile photo' : 'No profile photo yet'}
+          aria-hidden="true"
         />
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ padding: '0 12px 12px' }}>
+          {/* Avatar overlap */}
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              marginTop: -28,
+              borderRadius: '50%',
+              border: '2px solid var(--mf-bg)',
+              background: 'var(--mf-surface-2)',
+              backgroundImage: profile.photoUrl ? `url(${profile.photoUrl})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              marginBottom: 8,
+            }}
+            aria-label={profile.photoUrl ? 'Profile photo' : 'No profile photo yet'}
+          />
           <div
             className="mf-font-display"
             style={{
@@ -1614,78 +2454,96 @@ function ProfilePreviewCard({ profile }: { profile: TrainerProfile }) {
             {headline ?? 'Add a headline'}
           </div>
           <div
-            className="mf-fg-dim"
-            style={{ fontSize: 11, marginTop: 4, ...(location ? null : placeholderStyle) }}
+            className="mf-fg-mute mf-font-mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginTop: 4,
+              ...(location ? null : placeholderStyle),
+            }}
           >
             {location ?? 'Add a location'}
           </div>
+
+          {/* Specialty chips */}
+          <div style={{ marginTop: 8 }}>
+            {specialties.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {specialties.map((s) => (
+                  <SpecialtyChip key={s}>{s}</SpecialtyChip>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 11, ...placeholderStyle }}>Add a specialty</div>
+            )}
+          </div>
+
+          {/* Quick facts */}
+          <PreviewBlock label="Quick facts">
+            {quickFacts.length > 0 ? (
+              <div style={{ display: 'grid', gap: 2 }}>
+                {quickFacts.map((f, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      fontSize: 10.5,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <span className="mf-fg-mute mf-font-mono">{f.label}</span>
+                    <span className="mf-fg" style={{ textAlign: 'right' }}>
+                      {f.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 11, ...placeholderStyle }}>Add a quick fact</div>
+            )}
+          </PreviewBlock>
+
+          {/* Services */}
+          <PreviewBlock label="Services" last>
+            {services.length > 0 ? (
+              <div style={{ display: 'grid', gap: 2 }}>
+                {services.map((s, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      fontSize: 10.5,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <span
+                      className="mf-fg-dim"
+                      style={{
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {s.title.trim() || 'Untitled'}
+                    </span>
+                    {s.price.trim() ? (
+                      <span className="mf-font-mono mf-tnum">{s.price}</span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 11, ...placeholderStyle }}>Add a service</div>
+            )}
+          </PreviewBlock>
         </div>
       </div>
-
-      {/* Specialty chips */}
-      <div style={{ marginBottom: 10 }}>
-        {specialties.length > 0 ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {specialties.map((s) => (
-              <SpecialtyChip key={s}>{s}</SpecialtyChip>
-            ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 11, ...placeholderStyle }}>Add a specialty</div>
-        )}
-      </div>
-
-      {/* Quick facts */}
-      <PreviewBlock label="Quick facts">
-        {quickFacts.length > 0 ? (
-          <div style={{ display: 'grid', gap: 3 }}>
-            {quickFacts.map((f, i) => (
-              <div key={i} className="mf-font-mono" style={{ fontSize: 10, lineHeight: 1.4 }}>
-                <span className="mf-fg-dim">{f.label}</span>
-                <span className="mf-fg-mute"> · </span>
-                <span>{f.value}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 11, ...placeholderStyle }}>Add a quick fact</div>
-        )}
-      </PreviewBlock>
-
-      {/* Pillars */}
-      <PreviewBlock label="Pillars">
-        {pillarTitles.length > 0 ? (
-          <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, lineHeight: 1.5 }}>
-            {pillarTitles.map((t, i) => (
-              <li key={i}>{t}</li>
-            ))}
-          </ul>
-        ) : (
-          <div style={{ fontSize: 11, ...placeholderStyle }}>Add an approach pillar</div>
-        )}
-      </PreviewBlock>
-
-      {/* Services */}
-      <PreviewBlock label="Services" last>
-        {services.length > 0 ? (
-          <div style={{ display: 'grid', gap: 4 }}>
-            {services.map((s, i) => (
-              <div key={i} style={{ fontSize: 11, lineHeight: 1.4 }}>
-                <span>{s.title.trim() || 'Untitled'}</span>
-                {s.price.trim() ? (
-                  <span className="mf-fg-dim">
-                    {' — '}
-                    {s.price}
-                    {s.per.trim() ? ` ${s.per}` : ''}
-                  </span>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 11, ...placeholderStyle }}>Add a service</div>
-        )}
-      </PreviewBlock>
     </div>
   );
 }
@@ -1702,16 +2560,22 @@ function PreviewBlock({
   return (
     <div
       style={{
+        marginTop: 10,
         paddingTop: 8,
-        paddingBottom: last ? 0 : 8,
+        paddingBottom: last ? 0 : 0,
         borderTop: '1px solid var(--mf-hairline)',
       }}
     >
       <div
-        className="mf-fg-dim mf-font-mono"
-        style={{ fontSize: 9, letterSpacing: '0.08em', marginBottom: 4 }}
+        className="mf-fg-mute mf-font-mono"
+        style={{
+          fontSize: 8,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          marginBottom: 4,
+        }}
       >
-        {label.toUpperCase()}
+        {label}
       </div>
       {children}
     </div>
@@ -1751,37 +2615,33 @@ function ShareCard({ profile }: { profile: TrainerProfile }) {
 
       {canShare ? (
         <>
-          <div
-            className="mf-font-mono"
+          <input
+            readOnly
+            className="mf-input mf-font-mono"
+            value={publicUrl ?? ''}
             style={{
               fontSize: 10,
-              lineHeight: 1.4,
-              padding: '8px 10px',
-              background: 'var(--mf-surface-2)',
-              border: '1px solid var(--mf-hairline)',
-              borderRadius: 4,
-              wordBreak: 'break-all',
-              marginBottom: 10,
+              height: 32,
+              padding: '0 10px',
+              marginBottom: 8,
             }}
-          >
-            {publicUrl}
-          </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             <button
               type="button"
               className="mf-btn focus-ring"
               onClick={copy}
-              style={{ flex: 1, height: 32, fontSize: 11 }}
+              style={{ height: 32, fontSize: 11 }}
             >
               {copied ? 'Copied ✓' : 'Copy link'}
             </button>
             <a
-              href={publicUrl!}
+              href={publicUrl ?? '#'}
               target="_blank"
               rel="noopener noreferrer"
               className="mf-btn focus-ring"
               style={{
-                flex: 1,
                 height: 32,
                 fontSize: 11,
                 textDecoration: 'none',
@@ -1790,7 +2650,7 @@ function ShareCard({ profile }: { profile: TrainerProfile }) {
                 justifyContent: 'center',
               }}
             >
-              View live profile
+              View live
             </a>
           </div>
         </>
@@ -1847,16 +2707,47 @@ function ActivityCard() {
       </div>
 
       <div
-        className="mf-font-display mf-tnum"
-        style={{ fontSize: 32, lineHeight: 1, marginBottom: 4 }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 12,
+          marginBottom: 10,
+        }}
       >
-        {countDisplay}
-      </div>
-      <div
-        className="mf-font-mono mf-fg-dim"
-        style={{ fontSize: 10, letterSpacing: '0.08em', marginBottom: 12 }}
-      >
-        APPLICATIONS THIS WEEK
+        <div>
+          <div
+            className="mf-fg-mute mf-font-mono"
+            style={{ fontSize: 9, letterSpacing: '0.08em', marginBottom: 2 }}
+          >
+            APPLICATIONS · 7D
+          </div>
+          <div
+            className="mf-font-display mf-tnum"
+            style={{ fontSize: 22, lineHeight: 1 }}
+          >
+            {countDisplay}
+          </div>
+        </div>
+        <div>
+          <div
+            className="mf-fg-mute mf-font-mono"
+            style={{ fontSize: 9, letterSpacing: '0.08em', marginBottom: 2 }}
+          >
+            PROFILE VIEWS
+          </div>
+          <div
+            className="mf-font-display mf-tnum mf-fg-mute"
+            style={{ fontSize: 22, lineHeight: 1 }}
+          >
+            —
+          </div>
+          <div
+            className="mf-fg-mute mf-font-mono"
+            style={{ fontSize: 9, letterSpacing: '0.08em', marginTop: 2 }}
+          >
+            COMING SOON
+          </div>
+        </div>
       </div>
 
       <a
@@ -1870,23 +2761,10 @@ function ActivityCard() {
           height: 32,
           fontSize: 11,
           textDecoration: 'none',
-          marginBottom: 10,
         }}
       >
         View inbox
       </a>
-
-      <div
-        className="mf-fg-mute"
-        style={{
-          fontSize: 10,
-          fontStyle: 'italic',
-          borderTop: '1px solid var(--mf-hairline)',
-          paddingTop: 8,
-        }}
-      >
-        Profile views · Coming soon
-      </div>
     </div>
   );
 }
