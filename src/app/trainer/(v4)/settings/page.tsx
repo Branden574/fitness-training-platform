@@ -1,23 +1,29 @@
-import Link from 'next/link';
-import { ChevronRight, User, Lock, Image as ImageIcon, MessageSquare, Sparkles } from 'lucide-react';
+// src/app/trainer/(v4)/settings/page.tsx
 import { requireTrainerSession } from '@/lib/trainer-data';
+import { prisma } from '@/lib/prisma';
 import { DesktopShell } from '@/components/ui/mf';
-import SharingPanelClient from './sharing-panel-client';
+import { IdentityStrip } from './identity-strip';
+import SharingCardClient from './sharing-card-client';
 import NotificationPreferences from '@/components/notifications/NotificationPreferences';
-import BiometricToggle from '@/components/auth/BiometricToggle';
+import { AccountList } from './account-list';
+import { ReferralPerformance } from './referral-performance';
+import { ComingSoonCard } from './coming-soon-card';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TrainerSettingsPage() {
   const session = await requireTrainerSession();
 
-  const rows: Array<{ label: string; href?: string; Icon: typeof User }> = [
-    { label: `Signed in as ${session.user.email}`, Icon: User },
-    { label: 'Change password', href: '/auth/change-password', Icon: Lock },
-    { label: 'Edit public profile', href: '/trainer/settings/profile', Icon: ImageIcon },
-    { label: 'Manage testimonials', href: '/trainer/settings/testimonials', Icon: MessageSquare },
-    { label: 'Manage transformations', href: '/trainer/settings/transformations', Icon: Sparkles },
-  ];
+  const me = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      name: true,
+      email: true,
+      trainerReferralCode: true,
+      trainerClientStatus: true,
+      trainerIsPublic: true,
+    },
+  });
 
   return (
     <DesktopShell
@@ -26,58 +32,63 @@ export default async function TrainerSettingsPage() {
       title="Settings"
       breadcrumbs="TRAINER / SETTINGS"
     >
-      <div style={{ padding: 24, maxWidth: 720 }}>
-        <div className="mf-eyebrow" style={{ marginBottom: 8 }}>ACCOUNT</div>
-        <div className="mf-card" style={{ overflow: 'hidden' }}>
-          {rows.map((row, i) => {
-            const Icon = row.Icon;
-            const content = (
-              <>
-                <Icon size={16} className="mf-fg-mute" />
-                <span style={{ flex: 1, fontSize: 14 }}>{row.label}</span>
-                {row.href ? <ChevronRight size={14} className="mf-fg-mute" /> : null}
-              </>
-            );
-            const style = {
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '14px 16px',
-              borderBottom: i < rows.length - 1 ? '1px solid var(--mf-hairline)' : 'none',
-            };
-            if (row.href) {
-              return (
-                <Link key={row.label} href={row.href} style={style}>
-                  {content}
-                </Link>
-              );
-            }
-            return (
-              <div key={row.label} style={style}>
-                {content}
-              </div>
-            );
-          })}
-        </div>
-
-        <SharingPanelClient />
-
-        <BiometricToggle />
-
-        <div style={{ marginTop: 32 }}>
-          <NotificationPreferences />
-        </div>
+      <div style={{ padding: 24, maxWidth: 1320, margin: '0 auto' }}>
+        <IdentityStrip
+          name={me?.name ?? ''}
+          email={me?.email ?? session.user.email ?? ''}
+          code={me?.trainerReferralCode ?? null}
+          status={me?.trainerClientStatus ?? 'ACCEPTING'}
+          isPublic={Boolean(me?.trainerIsPublic)}
+        />
 
         <div
-          className="mf-card"
-          style={{ padding: 24, marginTop: 24, borderStyle: 'dashed' }}
+          className="mf-settings-grid"
+          style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr' }}
         >
-          <div className="mf-eyebrow" style={{ marginBottom: 8 }}>COMING</div>
-          <div className="mf-fg-dim" style={{ fontSize: 13, lineHeight: 1.5 }}>
-            Coach-side preferences (default session times, availability, auto-reply templates)
-            land in a future phase. For now, essentials live above.
+          {/* LEFT 8/12: Sharing + Notifications */}
+          <div style={{ display: 'grid', gap: 20 }}>
+            <SharingCardClient />
+            <section>
+              <div
+                className="mf-eyebrow"
+                style={{
+                  marginBottom: 8,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>NOTIFICATION PREFERENCES</span>
+                <span
+                  className="mf-fg-mute"
+                  style={{
+                    fontFamily: 'var(--font-mf-mono), monospace',
+                    fontSize: 10,
+                  }}
+                >
+                  CHANGES SAVE AUTOMATICALLY
+                </span>
+              </div>
+              <NotificationPreferences />
+            </section>
+          </div>
+
+          {/* RIGHT 4/12: Account + Referral KPIs + Coming soon */}
+          <div style={{ display: 'grid', gap: 20 }}>
+            <AccountList />
+            <ReferralPerformance trainerId={session.user.id} />
+            <ComingSoonCard />
           </div>
         </div>
+
+        {/* Inline media-query: 8/4 grid at ≥1024px */}
+        <style>{`
+          @media (min-width: 1024px) {
+            .mf-settings-grid {
+              grid-template-columns: 8fr 4fr !important;
+              align-items: start;
+            }
+          }
+        `}</style>
       </div>
     </DesktopShell>
   );
