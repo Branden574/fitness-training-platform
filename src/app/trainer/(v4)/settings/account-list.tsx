@@ -1,7 +1,7 @@
 // src/app/trainer/(v4)/settings/account-list.tsx
 import Link from 'next/link';
 import { ChevronRight, Lock, User, MessageSquare, TrendingUp } from 'lucide-react';
-import BiometricToggle from '@/components/auth/BiometricToggle';
+import BiometricRow from './biometric-row';
 
 type StaticRow = {
   href: string;
@@ -52,15 +52,14 @@ export function AccountList() {
             </Link>
           );
         })}
+        {/*
+          Inline biometric row inside the Account card. Self-renders null on
+          unsupported devices, so when biometrics are unavailable the card
+          ends cleanly at the last static row above (no orphan top border to
+          worry about because BiometricRow is unmounted entirely).
+        */}
+        <BiometricRow />
       </div>
-      {/*
-        BiometricToggle renders its own mf-card frame and returns null on
-        non-native or non-supporting devices, so it cleanly nests as a sibling
-        below the Account card without doubling up on chrome. The Claude-Design
-        bundle had biometric inline, but the existing component already owns its
-        own row UI; matching it would mean reimplementing biometric logic.
-      */}
-      <BiometricToggle />
     </section>
   );
 }
