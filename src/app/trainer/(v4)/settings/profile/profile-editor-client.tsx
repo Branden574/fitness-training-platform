@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Shield } from 'lucide-react';
 import { AgreementGate } from '@/components/trainer/AgreementGate';
 import { SpecialtyChip } from '@/components/ui/mf';
 import ImageCropperModal from '@/components/ui/mf/ImageCropperModal';
@@ -1080,17 +1081,32 @@ function Grid12({ children, gap = 12 }: { children: React.ReactNode; gap?: numbe
   );
 }
 
-/** `@`-prefixed input shared by IG, TikTok, YouTube. */
-function HandleInput({
+/**
+ * Input with a fixed leading glyph rendered inside the input frame.
+ * Used for `@` (social handles) and `$` (money fields).
+ */
+function PrefixInput({
+  prefix,
   value,
   onChange,
   placeholder,
   maxLength,
+  type,
+  min,
+  max,
+  inputMode,
+  title,
 }: {
-  value: string;
+  prefix: string;
+  value: string | number;
   onChange: (next: string) => void;
-  placeholder: string;
-  maxLength: number;
+  placeholder?: string;
+  maxLength?: number;
+  type?: 'text' | 'number';
+  min?: number;
+  max?: number;
+  inputMode?: 'text' | 'numeric' | 'decimal';
+  title?: string;
 }) {
   return (
     <div
@@ -1104,11 +1120,16 @@ function HandleInput({
         padding: '0 10px',
       }}
     >
-      <span className="mf-fg-dim" style={{ fontSize: 13 }}>
-        @
+      <span className="mf-fg-dim" style={{ fontSize: 13, flexShrink: 0 }}>
+        {prefix}
       </span>
       <input
         className="mf-input"
+        type={type ?? 'text'}
+        inputMode={inputMode}
+        min={min}
+        max={max}
+        title={title}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -1118,9 +1139,33 @@ function HandleInput({
           background: 'transparent',
           padding: '10px 0',
           flex: 1,
+          minWidth: 0,
         }}
       />
     </div>
+  );
+}
+
+/** `@`-prefixed input shared by IG, TikTok, YouTube. */
+function HandleInput({
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+  maxLength: number;
+}) {
+  return (
+    <PrefixInput
+      prefix="@"
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      maxLength={maxLength}
+    />
   );
 }
 
@@ -2004,11 +2049,16 @@ function ServicesSection({ ctx }: { ctx: SectionCtx }) {
                 />
                 <Grid12>
                   <div className="mf-pf-span-3">
-                    <input
-                      className="mf-input"
-                      placeholder="Price (e.g. $249)"
-                      value={s.price}
-                      onChange={(e) => updateService(i, 'price', e.target.value)}
+                    <PrefixInput
+                      prefix="$"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      placeholder="249"
+                      value={/^\d+$/.test(s.price) ? s.price : ''}
+                      onChange={(next) =>
+                        updateService(i, 'price', next.replace(/[^0-9]/g, '').slice(0, 24))
+                      }
                       maxLength={24}
                     />
                   </div>
@@ -2096,15 +2146,16 @@ function ServicesSection({ ctx }: { ctx: SectionCtx }) {
             </div>
           </Field>
           <Field label="Hourly rate · USD" span={4}>
-            <input
+            <PrefixInput
+              prefix="$"
               type="number"
-              className="mf-input"
+              inputMode="numeric"
               min={0}
               max={10000}
               placeholder="Leave blank for 'Contact for pricing'"
               value={profile.hourlyRate ?? ''}
-              onChange={(e) =>
-                update('hourlyRate', e.target.value === '' ? null : Number(e.target.value))
+              onChange={(next) =>
+                update('hourlyRate', next === '' ? null : Number(next))
               }
             />
           </Field>
@@ -2176,13 +2227,11 @@ function CertsSection({ ctx }: { ctx: SectionCtx }) {
               fontSize: 13,
             }}
           >
-            <span
+            <Shield
               aria-hidden="true"
+              size={13}
               className="mf-fg-mute"
-              style={{ fontSize: 14, lineHeight: 1 }}
-            >
-              ▣
-            </span>
+            />
             <span style={{ flex: 1 }}>{c}</span>
             <button
               type="button"
