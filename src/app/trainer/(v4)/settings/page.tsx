@@ -45,31 +45,12 @@ export default async function TrainerSettingsPage() {
           className="mf-settings-grid"
           style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr' }}
         >
-          {/* LEFT 8/12: Sharing + Notifications */}
+          {/* LEFT 8/12: Sharing + Notifications.
+              NotificationPreferences renders its own NOTIFICATION PREFERENCES
+              eyebrow internally — don't wrap it in another one. */}
           <div style={{ display: 'grid', gap: 20 }}>
             <SharingCardClient />
-            <section>
-              <div
-                className="mf-eyebrow"
-                style={{
-                  marginBottom: 8,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <span>NOTIFICATION PREFERENCES</span>
-                <span
-                  className="mf-fg-mute"
-                  style={{
-                    fontFamily: 'var(--font-mf-mono), monospace',
-                    fontSize: 10,
-                  }}
-                >
-                  CHANGES SAVE AUTOMATICALLY
-                </span>
-              </div>
-              <NotificationPreferences />
-            </section>
+            <NotificationPreferences />
           </div>
 
           {/* RIGHT 4/12: Account + Referral KPIs + Coming soon */}
