@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,12 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
+
+  // Rate limit: 3 notify-me submissions per 15 minutes per IP, mirroring
+  // the existing convention on /api/contact for public ContactSubmission writes.
+  const ip = getClientIp(req);
+  const rl = await checkRateLimitAsync(`notify-me:${ip}`, { maxRequests: 3, windowSeconds: 900 });
+  if (!rl.allowed) return rateLimitResponse(rl.resetIn);
 
   let json: unknown;
   try {
