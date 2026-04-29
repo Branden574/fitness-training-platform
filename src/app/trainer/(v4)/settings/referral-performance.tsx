@@ -4,6 +4,7 @@ import { Sparkline } from '@/components/ui/mf';
 
 async function loadKpis(trainerId: string) {
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const since12w = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000);
   const [apps, accepted, weekly] = await Promise.all([
     prisma.contactSubmission.count({
       where: {
@@ -21,7 +22,7 @@ async function loadKpis(trainerId: string) {
       },
     }),
     prisma.contactSubmission.findMany({
-      where: { trainerId, kind: 'APPLICATION' },
+      where: { trainerId, kind: 'APPLICATION', createdAt: { gte: since12w } },
       select: { createdAt: true },
       orderBy: { createdAt: 'asc' },
     }),
