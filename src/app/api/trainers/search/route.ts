@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
       image: true,
       trainerSlug: true,
       trainerAcceptingClients: true,
+      trainerClientStatus: true,
       trainer: { select: { contactPhone: true } },
     },
     take: 10,
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
       photoUrl: t.image,
       initials: initialsOf(t.name),
       acceptingClients: t.trainerAcceptingClients,
+      clientStatus: t.trainerClientStatus,
       contactPhone: t.trainer?.contactPhone ?? null,
     })),
   });

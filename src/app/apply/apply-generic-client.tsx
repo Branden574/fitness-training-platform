@@ -10,7 +10,8 @@ interface SearchResult {
   slug: string;
   photoUrl: string | null;
   initials: string;
-  acceptingClients: boolean;
+  acceptingClients: boolean;          // legacy — kept as fallback
+  clientStatus?: 'ACCEPTING' | 'WAITLIST' | 'NOT_ACCEPTING';
   contactPhone: string | null;
 }
 
@@ -150,14 +151,21 @@ export default function ApplyGenericClient() {
                   {r.initials}
                 </div>
                 <div style={{ flex: 1 }}>{r.name}</div>
-                {r.acceptingClients && (
-                  <span
-                    className="mf-fg-dim"
-                    style={{ fontSize: 10 }}
-                  >
-                    ● accepting
-                  </span>
-                )}
+                {(() => {
+                  const status: 'ACCEPTING' | 'WAITLIST' | 'NOT_ACCEPTING' =
+                    r.clientStatus ?? (r.acceptingClients ? 'ACCEPTING' : 'WAITLIST');
+                  const text =
+                    status === 'ACCEPTING'
+                      ? '● accepting'
+                      : status === 'WAITLIST'
+                      ? '· waitlist'
+                      : '· closed';
+                  return (
+                    <span className="mf-fg-dim" style={{ fontSize: 10 }}>
+                      {text}
+                    </span>
+                  );
+                })()}
               </button>
             ))}
           </div>
