@@ -7,7 +7,24 @@ import {
   Heatmap,
   LineChart,
 } from '@/components/ui/mf';
+import {
+  formatHeightInches,
+  formatWeightLb,
+  humanizePrimaryGoal,
+  humanizeTrainingExperience,
+} from '@/lib/intake';
 import CoachNotesClient from './coach-notes-client';
+
+export interface IntakeSnapshot {
+  heightInches: number | null;
+  weightLb: number | null;
+  primaryGoal: string | null;
+  fitnessLevel: string | null;
+  fitnessGoals: string | null;
+  injuries: string | null;
+  limitations: string | null;
+  daysPerWeek: number | null;
+}
 
 export interface ClientDetailDesktopProps {
   clientId: string;
@@ -18,6 +35,8 @@ export interface ClientDetailDesktopProps {
   fitnessLevel: string | null;
   age: number | null;
   weight: number | null;
+  height: number | null;
+  intake: IntakeSnapshot | null;
   fullInitials: string;
   adherencePct: number;
   streakDays: number;
@@ -53,6 +72,8 @@ export default function ClientDetailDesktop({
   fitnessLevel,
   age,
   weight,
+  height,
+  intake,
   fullInitials,
   adherencePct,
   streakDays,
@@ -117,10 +138,14 @@ export default function ClientDetailDesktop({
               >
                 {displayName}
               </div>
-              <div className="mf-font-mono mf-fg-mute" style={{ fontSize: 11, marginTop: 4 }}>
-                {fitnessLevel ?? '—'} ·{' '}
-                {age ? `${age}Y` : '—'} ·{' '}
-                {weight ? `${weight} LB` : '—'}
+              <div
+                className="mf-font-mono mf-fg-mute"
+                style={{ fontSize: 11, marginTop: 4, letterSpacing: '0.05em' }}
+              >
+                {formatHeightInches(height)} ·{' '}
+                {formatWeightLb(weight)} ·{' '}
+                {humanizeTrainingExperience(intake?.fitnessLevel ?? fitnessLevel).toUpperCase()} ·{' '}
+                {intake?.daysPerWeek != null ? `${intake.daysPerWeek} DAYS/WK` : '—'}
               </div>
             </div>
             <div className="flex gap-4">
@@ -131,6 +156,59 @@ export default function ClientDetailDesktop({
               <HeroStat label="PRS / 90D" value={`${prCount}`} />
             </div>
           </div>
+
+          {/* From application — intake snapshot */}
+          {intake && (
+            intake.primaryGoal ||
+            intake.fitnessGoals ||
+            intake.injuries ||
+            intake.limitations
+          ) ? (
+            <div
+              className="mf-card"
+              style={{ padding: 16, marginBottom: 16 }}
+            >
+              <div
+                className="mf-eyebrow"
+                style={{ marginBottom: 12 }}
+              >
+                FROM APPLICATION
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: '12px 24px',
+                }}
+              >
+                <IntakeBlock
+                  label="GOAL"
+                  body={
+                    <>
+                      <span className="mf-fg">
+                        {humanizePrimaryGoal(intake.primaryGoal)}
+                      </span>
+                      {intake.fitnessGoals ? (
+                        <span className="mf-fg-dim">
+                          {' · '}&ldquo;{intake.fitnessGoals}&rdquo;
+                        </span>
+                      ) : null}
+                    </>
+                  }
+                />
+                <IntakeBlock
+                  label="INJURIES"
+                  body={intake.injuries ?? '—'}
+                  dim={!intake.injuries}
+                />
+                <IntakeBlock
+                  label="LIMITATIONS"
+                  body={intake.limitations ?? '—'}
+                  dim={!intake.limitations}
+                />
+              </div>
+            </div>
+          ) : null}
 
           {/* Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
@@ -267,6 +345,30 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between" style={{ fontSize: 12, marginBottom: 4 }}>
       <span className="mf-fg-dim">{label}</span>
       <span className="mf-font-mono mf-tnum">{value}</span>
+    </div>
+  );
+}
+
+function IntakeBlock({
+  label,
+  body,
+  dim,
+}: {
+  label: string;
+  body: React.ReactNode;
+  dim?: boolean;
+}) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div className="mf-eyebrow" style={{ marginBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        className={dim ? 'mf-fg-dim' : 'mf-fg'}
+        style={{ fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}
+      >
+        {body}
+      </div>
     </div>
   );
 }

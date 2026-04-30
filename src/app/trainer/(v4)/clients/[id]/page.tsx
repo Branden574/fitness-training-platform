@@ -55,6 +55,25 @@ export default async function ClientDetailPage({
   });
   if (!client) notFound();
 
+  // Pull the most recent application snapshot for this client so the trainer
+  // can see what the client said when they applied — height, weight, primary
+  // goal, training experience, days/week, injuries, limitations. Older clients
+  // who registered before the expanded intake shipped won't have one.
+  const intake = await prisma.contactSubmission.findFirst({
+    where: { email: client.email },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      heightInches: true,
+      weightLb: true,
+      primaryGoal: true,
+      fitnessLevel: true,
+      fitnessGoals: true,
+      injuries: true,
+      limitations: true,
+      daysPerWeek: true,
+    },
+  });
+
   const twelveAgo = new Date(Date.now() - TWELVE_WEEKS_MS);
   const todayStart = startOfDay();
   const tomorrowStart = new Date(todayStart.getTime() + 86400000);
@@ -312,7 +331,9 @@ export default async function ClientDetailPage({
         createdAt={client.createdAt}
         fitnessLevel={client.clientProfile?.fitnessLevel ?? null}
         age={client.clientProfile?.age ?? null}
-        weight={client.clientProfile?.weight ?? null}
+        weight={client.clientProfile?.weight ?? intake?.weightLb ?? null}
+        height={client.clientProfile?.height ?? intake?.heightInches ?? null}
+        intake={intake}
         fullInitials={fullInitials}
         adherencePct={adherencePct}
         streakDays={streakDays}
