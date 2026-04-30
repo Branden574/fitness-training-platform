@@ -86,6 +86,17 @@ export default function SignUpFormClient() {
       setError('Password must be at least 8 characters.');
       return;
     }
+    if (
+      !/[a-z]/.test(password) ||
+      !/[A-Z]/.test(password) ||
+      !/\d/.test(password) ||
+      !/[@$!%*?&]/.test(password)
+    ) {
+      setError(
+        'Password needs an uppercase letter, lowercase letter, number, and special character (@ $ ! % * ? &).'
+      );
+      return;
+    }
     if (!terms) {
       setError('Please accept the terms to continue.');
       return;
@@ -228,6 +239,12 @@ export default function SignUpFormClient() {
           autoComplete="new-password"
           placeholder="At least 8 characters"
         />
+        <div
+          className="mf-fg-dim"
+          style={{ marginTop: 6, fontSize: 11, lineHeight: 1.4 }}
+        >
+          8+ chars with uppercase, lowercase, number, and one of @ $ ! % * ? &
+        </div>
       </label>
 
       <label
