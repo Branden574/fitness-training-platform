@@ -720,6 +720,18 @@ model ContactSubmission {
   currentActivity String?
   injuries        String?
   availability    String?
+  // ---- Expanded intake (2026-04-30) ----
+  // Total inches (e.g. 70 = 5'10"). Form converts ft+in to total before POST.
+  heightInches    Int?
+  // Pounds, decimals allowed.
+  weightLb        Float?
+  // Plain string convention: LOSE_FAT | BUILD_MUSCLE | GET_STRONGER |
+  // SPORT_SPECIFIC | GENERAL_HEALTH | OTHER. Promote to enum later if needed.
+  primaryGoal     String?
+  // Free-text physical limitations (separate from `injuries`).
+  limitations     String?
+  // 1..7 — soft validation in API + form, no Prisma constraint.
+  daysPerWeek     Int?
   status          ContactStatus @default(NEW)
   trainerId       String?
   trainer         User?         @relation("TrainerApplications", fields: [trainerId], references: [id], onDelete: SetNull)
