@@ -49,6 +49,16 @@ model User {
   lastLogin               DateTime?
   loginCount              Int                     @default(0)
   adminNotes              String?
+  // ---- Client offboarding (2026-04-30) ----
+  // Set when the trainer/admin archives the client. Null for active accounts.
+  // Hard-delete cron purges accounts where archivedAt < (now - 30 days).
+  archivedAt          DateTime?
+  // FK to the User (TRAINER or ADMIN role) who initiated the archive.
+  // Audit-only; no Prisma relation defined for v1.
+  archivedByUserId    String?
+  // Optional free-text reason captured at archive time. Capped at 500 chars
+  // by the API Zod schema; no DB constraint.
+  archivedReason      String?
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
   trainerId               String?
