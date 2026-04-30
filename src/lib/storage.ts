@@ -3,6 +3,8 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 
 // Thin wrapper around Cloudflare R2 so every upload route speaks the same
@@ -185,3 +187,29 @@ export function isR2PublicUrl(url: string): boolean {
   }
 }
 
+/**
+ * Delete every object whose key starts with `prefix`. Used by client offboarding
+ * to wipe a user's photos under `users/{userId}/`.
+ */
+export async function deleteR2Prefix(prefix: string): Promise<void> {
+  const { client, config } = getClient();
+  let token: string | undefined;
+  do {
+    const list = await client.send(
+      new ListObjectsV2Command({
+        Bucket: config.bucket,
+        Prefix: prefix,
+        ContinuationToken: token,
+      }),
+    );
+    if (list.Contents && list.Contents.length > 0) {
+      await client.send(
+        new DeleteObjectsCommand({
+          Bucket: config.bucket,
+          Delete: { Objects: list.Contents.map((o) => ({ Key: o.Key! })) },
+        }),
+      );
+    }
+    token = list.IsTruncated ? list.NextContinuationToken : undefined;
+  } while (token);
+}
