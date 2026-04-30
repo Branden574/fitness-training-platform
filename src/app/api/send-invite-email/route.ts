@@ -189,8 +189,17 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Error sending invite email:', error);
+    // Surface the underlying error message so the UI can tell the trainer
+    // (and us, debugging) what actually failed. The raw error object stays
+    // in server logs.
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: message },
       { status: 500 }
     );
   }
