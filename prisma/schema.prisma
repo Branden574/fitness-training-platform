@@ -870,6 +870,7 @@ enum ContactStatus {
   CONTACTED
   INVITED
   COMPLETED
+  DECLINED
 }
 
 enum TrainerClientStatus {

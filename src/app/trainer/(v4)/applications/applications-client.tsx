@@ -1,10 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Mail, Phone, BellOff, Inbox, UserPlus, Check, Loader2 } from 'lucide-react';
+import { Mail, Phone, BellOff, Inbox, UserPlus, UserX, Check, Loader2 } from 'lucide-react';
 
 type Kind = 'APPLICATION' | 'NOTIFY_WHEN_OPEN';
-type Status = 'NEW' | 'IN_PROGRESS' | 'CONTACTED' | 'INVITED' | 'COMPLETED';
+type Status = 'NEW' | 'IN_PROGRESS' | 'CONTACTED' | 'INVITED' | 'COMPLETED' | 'DECLINED';
 
 export interface SerializedSubmission {
   id: string;
@@ -19,13 +19,14 @@ export interface SerializedSubmission {
   createdAt: string;
 }
 
-const STATUSES: Status[] = ['NEW', 'IN_PROGRESS', 'CONTACTED', 'INVITED', 'COMPLETED'];
+const STATUSES: Status[] = ['NEW', 'IN_PROGRESS', 'CONTACTED', 'INVITED', 'COMPLETED', 'DECLINED'];
 const STATUS_LABEL: Record<Status, string> = {
   NEW: 'New',
   IN_PROGRESS: 'In progress',
   CONTACTED: 'Contacted',
   INVITED: 'Invited',
   COMPLETED: 'Completed',
+  DECLINED: 'Declined',
 };
 
 function relativeTime(iso: string): string {
@@ -415,52 +416,114 @@ export default function ApplicationsClient({
               {selected.kind === 'APPLICATION' && (() => {
                 const inviteState = invites[selected.id];
                 const alreadyInvited = selected.status === 'INVITED' || !!inviteState;
-                if (!alreadyInvited) {
+                if (!alreadyInvited && selected.status !== 'DECLINED') {
                   return (
                     <div style={{ marginBottom: 20 }}>
-                      <button
-                        type="button"
-                        onClick={() => acceptAndInvite(selected)}
-                        disabled={inviteBusy !== 'idle'}
-                        className="mf-btn"
-                        style={{
-                          height: 40,
-                          padding: '0 16px',
-                          background: 'var(--mf-accent, #FF4D1C)',
-                          color: 'var(--mf-accent-ink, #0A0A0B)',
-                          borderColor: 'var(--mf-accent, #FF4D1C)',
-                          fontWeight: 600,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 8,
-                        }}
-                      >
-                        {inviteBusy === 'creating' ? (
-                          <>
-                            <Loader2 size={14} aria-hidden style={{ animation: 'spin 1s linear infinite' }} />
-                            Creating invitation…
-                          </>
-                        ) : inviteBusy === 'sending' ? (
-                          <>
-                            <Loader2 size={14} aria-hidden style={{ animation: 'spin 1s linear infinite' }} />
-                            Sending email…
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus size={14} aria-hidden />
-                            Accept &amp; send invite
-                          </>
-                        )}
-                      </button>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => acceptAndInvite(selected)}
+                          disabled={inviteBusy !== 'idle'}
+                          className="mf-btn"
+                          style={{
+                            height: 40,
+                            padding: '0 16px',
+                            background: 'var(--mf-accent, #FF4D1C)',
+                            color: 'var(--mf-accent-ink, #0A0A0B)',
+                            borderColor: 'var(--mf-accent, #FF4D1C)',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          {inviteBusy === 'creating' ? (
+                            <>
+                              <Loader2 size={14} aria-hidden style={{ animation: 'spin 1s linear infinite' }} />
+                              Creating invitation…
+                            </>
+                          ) : inviteBusy === 'sending' ? (
+                            <>
+                              <Loader2 size={14} aria-hidden style={{ animation: 'spin 1s linear infinite' }} />
+                              Sending email…
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus size={14} aria-hidden />
+                              Accept &amp; send invite
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateStatus(selected.id, 'DECLINED')}
+                          disabled={inviteBusy !== 'idle'}
+                          className="mf-btn"
+                          style={{
+                            height: 40,
+                            padding: '0 16px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          <UserX size={14} aria-hidden />
+                          Decline
+                        </button>
+                      </div>
                       <div className="mf-fg-mute" style={{ fontSize: 11, marginTop: 6 }}>
-                        Creates a 6-character code, marks this submission as INVITED, and
-                        emails {selected.email} the invite link.
+                        Accept creates a 6-character code, marks INVITED, and emails {selected.email} the invite link.
+                        Decline marks this row as DECLINED — no email is sent. You can email manually via the link above.
                       </div>
                       {inviteError && (
                         <div role="alert" style={{ fontSize: 12, color: '#fca5a5', marginTop: 6 }}>
                           {inviteError}
                         </div>
                       )}
+                    </div>
+                  );
+                }
+                if (selected.status === 'DECLINED') {
+                  return (
+                    <div
+                      className="mf-card"
+                      style={{
+                        padding: 14,
+                        marginBottom: 20,
+                        background: 'rgba(255,77,94,0.06)',
+                        borderColor: 'rgba(255,77,94,0.30)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--mf-red, #FF4D5E)' }}>
+                          <UserX size={14} aria-hidden />
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mf-mono), monospace',
+                              fontSize: 10,
+                              letterSpacing: '0.1em',
+                            }}
+                          >
+                            DECLINED
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateStatus(selected.id, 'NEW')}
+                          className="mf-btn"
+                          style={{ height: 32, padding: '0 12px', fontSize: 12 }}
+                        >
+                          Reopen
+                        </button>
+                      </div>
                     </div>
                   );
                 }

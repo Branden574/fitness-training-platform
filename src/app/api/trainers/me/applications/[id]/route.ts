@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const Body = z.object({
-  status: z.enum(['NEW', 'IN_PROGRESS', 'CONTACTED', 'INVITED', 'COMPLETED']),
+  status: z.enum(['NEW', 'IN_PROGRESS', 'CONTACTED', 'INVITED', 'COMPLETED', 'DECLINED']),
 });
 
 export async function PATCH(

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Mail, Check, UserPlus } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
 
-type Status = 'NEW' | 'IN_PROGRESS' | 'CONTACTED' | 'INVITED' | 'COMPLETED';
+type Status = 'NEW' | 'IN_PROGRESS' | 'CONTACTED' | 'INVITED' | 'COMPLETED' | 'DECLINED';
 
 export default function SubmissionActionsClient({
   submissionId,
