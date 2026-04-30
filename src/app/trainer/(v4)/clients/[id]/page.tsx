@@ -329,6 +329,7 @@ export default async function ClientDetailPage({
         clientEmail={client.email}
         clientImage={client.image ?? null}
         createdAt={client.createdAt}
+        archivedAt={client.archivedAt ? client.archivedAt.toISOString() : null}
         fitnessLevel={client.clientProfile?.fitnessLevel ?? null}
         age={client.clientProfile?.age ?? null}
         weight={client.clientProfile?.weight ?? intake?.weightLb ?? null}
@@ -358,6 +359,7 @@ export default async function ClientDetailPage({
         clientName={client.name}
         clientEmail={client.email}
         clientImage={client.image ?? null}
+        archivedAt={client.archivedAt ? client.archivedAt.toISOString() : null}
         fullInitials={fullInitials}
         fitnessLevel={client.clientProfile?.fitnessLevel ?? null}
         programWeek={programWeek}

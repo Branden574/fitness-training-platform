@@ -14,6 +14,7 @@ import {
   humanizeTrainingExperience,
 } from '@/lib/intake';
 import CoachNotesClient from './coach-notes-client';
+import ArchiveZoneClient from './archive-zone-client';
 
 export interface IntakeSnapshot {
   heightInches: number | null;
@@ -32,6 +33,7 @@ export interface ClientDetailDesktopProps {
   clientEmail: string;
   clientImage: string | null;
   createdAt: Date;
+  archivedAt: string | null;
   fitnessLevel: string | null;
   age: number | null;
   weight: number | null;
@@ -69,6 +71,7 @@ export default function ClientDetailDesktop({
   clientEmail,
   clientImage,
   createdAt,
+  archivedAt,
   fitnessLevel,
   age,
   weight,
@@ -315,6 +318,11 @@ export default function ClientDetailDesktop({
               initial={initialNotes}
             />
           </div>
+          <ArchiveZoneClient
+            clientId={clientId}
+            clientName={clientName ?? clientEmail}
+            archivedAt={archivedAt}
+          />
         </div>
       </DesktopShell>
     </div>

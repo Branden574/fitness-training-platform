@@ -13,6 +13,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { Avatar, Chip, Bar, TrainerMobileTabs } from '@/components/ui/mf';
+import ArchiveZoneClient from './archive-zone-client';
 
 export interface MobileRecentPR {
   exercise: string;
@@ -53,6 +54,7 @@ export interface ClientDetailMobileProps {
   todaySession: MobileTodaySession | null;
   recentPRs: MobileRecentPR[];
   prsInBlock: number;
+  archivedAt: string | null;
 }
 
 const TABS = ['OVERVIEW', 'WORKOUTS', 'FOOD', 'PROGRESS', 'NOTES'] as const;
@@ -84,6 +86,7 @@ export default function ClientDetailMobile({
   todaySession,
   recentPRs,
   prsInBlock,
+  archivedAt,
 }: ClientDetailMobileProps) {
   const [tab, setTab] = useState<TabKey>('OVERVIEW');
   const displayName = clientName ?? clientEmail;
@@ -575,6 +578,12 @@ export default function ClientDetailMobile({
             >
               COMPLETED WEEKS · {programWeeksCompleted}
             </div>
+
+            <ArchiveZoneClient
+              clientId={clientId}
+              clientName={clientName ?? clientEmail}
+              archivedAt={archivedAt}
+            />
           </div>
         </div>
 
