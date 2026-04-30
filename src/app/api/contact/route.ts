@@ -94,17 +94,20 @@ export async function POST(request: Request) {
           email: true,
           name: true,
           role: true,
-          trainerIsPublic: true,
-          trainerAcceptingClients: true,
+          trainerClientStatus: true,
+          trainerAcceptingClients: true, // legacy — still selected during cohabitation
           trainerSlug: true,
           trainer: {
             select: { replyFromEmail: true, replyFromName: true },
           },
         },
       });
-      if (trainer && trainer.role === 'TRAINER' && trainer.trainerIsPublic) {
+      // No trainerIsPublic gate here. Per project memory, trainerIsPublic gates
+      // directory/search surfaces only — a private trainer sharing their direct
+      // apply link still owns that submission and should be notified.
+      if (trainer && trainer.role === 'TRAINER') {
         assignedTrainerId = validatedData.trainerId;
-        if (!trainer.trainerAcceptingClients) waitlist = true;
+        if (trainer.trainerClientStatus !== 'ACCEPTING') waitlist = true;
         trainerForEmail = {
           email: trainer.email,
           name: trainer.name,
