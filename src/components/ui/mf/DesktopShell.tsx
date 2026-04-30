@@ -22,6 +22,7 @@ import {
   LogOut,
   Menu,
   X,
+  Inbox,
   type LucideIcon,
 } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -62,6 +63,7 @@ const TRAINER_NAV: DesktopShellNavItem[] = [
   { k: 'exercises',    l: 'Exercise Library', i: Dumbbell,      href: '/trainer/exercises' },
   { k: 'nutrition',    l: 'Nutrition',        i: Apple,         href: '/trainer/nutrition' },
   { k: 'messages',     l: 'Inbox',            i: MessageSquare, href: '/trainer/messages' },
+  { k: 'applications', l: 'Applications',     i: Inbox,         href: '/trainer/applications' },
   { k: 'schedule',     l: 'Schedule',         i: Calendar,      href: '/trainer/schedule' },
   { k: 'settings',     l: 'Settings',         i: Settings,      href: '/trainer/settings' },
 ];
