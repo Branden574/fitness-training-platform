@@ -6,10 +6,12 @@ import { checkRateLimitAsync, getClientIp, rateLimitResponse } from '@/lib/rate-
 import { ensureTrainerIdentity } from '@/lib/trainerIdentity';
 
 const schema = z.object({
-  name: z.string().min(2).max(120),
-  email: z.string().email().max(200),
-  password: z.string().min(10).max(200),
-  agreesToTerms: z.literal(true),
+  name: z.string().min(2, 'Name must be at least 2 characters.').max(120, 'Name is too long.'),
+  email: z.string().email('Please enter a valid email address.').max(200, 'Email is too long.'),
+  password: z.string().min(10, 'Password must be at least 10 characters.').max(200, 'Password is too long.'),
+  agreesToTerms: z.literal(true, {
+    message: 'Please agree to the platform terms before continuing.',
+  }),
 });
 
 export async function POST(request: NextRequest) {
@@ -31,7 +33,10 @@ export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Check your fields and try again.' },
+      {
+        error: parsed.error.issues[0]?.message ?? 'Check your fields and try again.',
+        issues: parsed.error.issues,
+      },
       { status: 400 },
     );
   }

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import AuthShell from '@/components/auth/v4/AuthShell';
 import SignUpFormClient from '@/components/auth/v4/SignUpFormClient';
 
@@ -12,7 +13,11 @@ export default function SignUpPage() {
       title="Claim your spot."
       footer="INVITE-ONLY · CODE REQUIRED"
     >
-      <SignUpFormClient />
+      {/* Suspense boundary required because SignUpFormClient reads ?code=
+          via useSearchParams; otherwise the page can't be statically prerendered. */}
+      <Suspense fallback={null}>
+        <SignUpFormClient />
+      </Suspense>
     </AuthShell>
   );
 }

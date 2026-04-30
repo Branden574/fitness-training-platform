@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { Btn } from '@/components/ui/mf';
@@ -15,8 +15,12 @@ type CodeState =
 
 export default function SignUpFormClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Invite emails link to /auth/signup?code=ABCDEF so the field is prefilled
+  // and the user only needs to type their email + password.
+  const initialCode = (searchParams.get('code') ?? '').toUpperCase();
 
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode);
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');

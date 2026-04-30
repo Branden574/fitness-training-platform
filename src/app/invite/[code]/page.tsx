@@ -66,8 +66,21 @@ const InviteAcceptancePage = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      setRegistering(false);
+      return;
+    }
+
+    if (
+      !/[a-z]/.test(formData.password) ||
+      !/[A-Z]/.test(formData.password) ||
+      !/\d/.test(formData.password) ||
+      !/[@$!%*?&]/.test(formData.password)
+    ) {
+      setError(
+        'Password needs an uppercase letter, lowercase letter, number, and special character (@ $ ! % * ? &).'
+      );
       setRegistering(false);
       return;
     }
@@ -281,6 +294,9 @@ const InviteAcceptancePage = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                8+ chars with uppercase, lowercase, number, and one of @ $ ! % * ? &amp;
+              </p>
             </motion.div>
 
             <motion.div

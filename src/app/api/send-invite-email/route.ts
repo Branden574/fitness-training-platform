@@ -69,7 +69,11 @@ export async function POST(request: NextRequest) {
 
     // Get the base URL for the invite link
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const inviteLink = `${baseUrl}/invite/${encodeURIComponent(inviteCode)}`;
+    // Point at the well-built /auth/signup form (prefilled with the code via
+    // query string). The older /invite/[code] page still works for any link
+    // already in inboxes — but new emails funnel into the form that surfaces
+    // password rules upfront and renders the same RepLab visual identity.
+    const inviteLink = `${baseUrl}/auth/signup?code=${encodeURIComponent(inviteCode)}`;
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
