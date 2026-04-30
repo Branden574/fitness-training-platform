@@ -9,7 +9,10 @@ const registerSchema = z.object({
   email: z.string().email('Invalid email format'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)'),
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])/,
+      'Password must contain an uppercase letter, lowercase letter, number, and a symbol (e.g. ! @ # $ % & * ? - _ )',
+    ),
   invitationCode: z.string().min(1, 'Invitation code is required'),
 });
 

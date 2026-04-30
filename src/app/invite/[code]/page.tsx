@@ -76,10 +76,10 @@ const InviteAcceptancePage = () => {
       !/[a-z]/.test(formData.password) ||
       !/[A-Z]/.test(formData.password) ||
       !/\d/.test(formData.password) ||
-      !/[@$!%*?&]/.test(formData.password)
+      !/[^A-Za-z0-9\s]/.test(formData.password)
     ) {
       setError(
-        'Password needs an uppercase letter, lowercase letter, number, and special character (@ $ ! % * ? &).'
+        'Password needs an uppercase letter, lowercase letter, number, and a symbol (e.g. ! @ # $ % & * ? - _ ).'
       );
       setRegistering(false);
       return;
@@ -295,7 +295,7 @@ const InviteAcceptancePage = () => {
                 </button>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                8+ chars with uppercase, lowercase, number, and one of @ $ ! % * ? &amp;
+                8+ chars with uppercase, lowercase, number, and a symbol
               </p>
             </motion.div>
 

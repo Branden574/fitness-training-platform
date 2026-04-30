@@ -94,10 +94,10 @@ export default function SignUpFormClient() {
       !/[a-z]/.test(password) ||
       !/[A-Z]/.test(password) ||
       !/\d/.test(password) ||
-      !/[@$!%*?&]/.test(password)
+      !/[^A-Za-z0-9\s]/.test(password)
     ) {
       setError(
-        'Password needs an uppercase letter, lowercase letter, number, and special character (@ $ ! % * ? &).'
+        'Password needs an uppercase letter, lowercase letter, number, and a symbol (e.g. ! @ # $ % & * ? - _ ).'
       );
       return;
     }
@@ -247,7 +247,7 @@ export default function SignUpFormClient() {
           className="mf-fg-dim"
           style={{ marginTop: 6, fontSize: 11, lineHeight: 1.4 }}
         >
-          8+ chars with uppercase, lowercase, number, and one of @ $ ! % * ? &
+          8+ chars with uppercase, lowercase, number, and a symbol
         </div>
       </label>
 
