@@ -728,7 +728,9 @@ model ContactSubmission {
   // Plain string convention: LOSE_FAT | BUILD_MUSCLE | GET_STRONGER |
   // SPORT_SPECIFIC | GENERAL_HEALTH | OTHER. Promote to enum later if needed.
   primaryGoal     String?
-  // Free-text physical limitations (separate from `injuries`).
+  // Free-text physical limitations distinct from `injuries`: covers ongoing
+  // movement constraints (e.g. bad knees on stairs, mobility issues, equipment
+  // or schedule constraints) rather than past or current injury history.
   limitations     String?
   // 1..7 — soft validation in API + form, no Prisma constraint.
   daysPerWeek     Int?
