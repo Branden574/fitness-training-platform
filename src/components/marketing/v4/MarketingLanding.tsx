@@ -696,28 +696,27 @@ export default function MarketingLanding() {
           <div>
             <div className="mf-eyebrow" style={{ marginBottom: 12 }}>PLATFORM</div>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li><Link href="/programs">For Trainers</Link></li>
-              <li><Link href="/programs">For Athletes</Link></li>
+              <li><Link href="/?as=trainer#role-split">For Trainers</Link></li>
+              <li><Link href="/?as=client#role-split">For Athletes</Link></li>
               <li><a href="#pricing">Pricing</a></li>
-              <li><Link href="/programs">Changelog</Link></li>
+              <li><span className="mf-fg-mute">Changelog</span></li>
             </ul>
           </div>
           <div>
             <div className="mf-eyebrow" style={{ marginBottom: 12 }}>COMPANY</div>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li><Link href="/about">About Brent</Link></li>
-              <li><Link href="/contact">Careers</Link></li>
-              <li><Link href="/contact">Contact</Link></li>
-              <li><Link href="/contact">Press</Link></li>
+              <li><Link href="/about">About RepLab</Link></li>
+              <li><Link href="/apply">Contact</Link></li>
+              <li><span className="mf-fg-mute">Press</span></li>
             </ul>
           </div>
           <div>
             <div className="mf-eyebrow" style={{ marginBottom: 12 }}>LEGAL</div>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li>Terms</li>
-              <li>Privacy</li>
-              <li>Refunds</li>
-              <li>Status</li>
+              <li><Link href="/legal/terms">Terms</Link></li>
+              <li><Link href="/legal/privacy">Privacy</Link></li>
+              <li><span className="mf-fg-mute">Refunds</span></li>
+              <li><span className="mf-fg-mute">Status</span></li>
             </ul>
           </div>
         </div>
