@@ -17,6 +17,8 @@ export interface SerializedSubmission {
   waitlist: boolean;
   notifiedAt: string | null;
   createdAt: string;
+  /** Pre-populated from the matching Invitation row when status=INVITED. */
+  inviteCode: string | null;
 }
 
 const STATUSES: Status[] = ['NEW', 'IN_PROGRESS', 'CONTACTED', 'INVITED', 'COMPLETED', 'DECLINED'];
@@ -53,10 +55,22 @@ export default function ApplicationsClient({
   const [selectedId, setSelectedId] = useState<string | null>(initial[0]?.id ?? null);
 
   // Per-submission invite state. Keyed by submission id so a navigation
-  // between submissions doesn't lose the just-issued code.
+  // between submissions doesn't lose the just-issued code. Seeded from the
+  // server-rendered initial data so invitations issued in past sessions
+  // still show their code + Resend button after a page reload.
   const [invites, setInvites] = useState<
     Record<string, { code: string | null; emailSent: boolean }>
-  >({});
+  >(() => {
+    const seed: Record<string, { code: string | null; emailSent: boolean }> = {};
+    for (const s of initial) {
+      if (s.inviteCode) {
+        // emailSent: false by default — we don't track delivery state in DB.
+        // Trainer can re-fire if needed; that's the whole point of seeding.
+        seed[s.id] = { code: s.inviteCode, emailSent: false };
+      }
+    }
+    return seed;
+  });
   const [inviteBusy, setInviteBusy] = useState<'idle' | 'creating' | 'sending'>('idle');
   const [inviteError, setInviteError] = useState<string | null>(null);
 
