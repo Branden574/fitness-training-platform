@@ -128,8 +128,11 @@ export default function ApplicationsClient({
       if (send.ok) {
         setInvites((prev) => ({ ...prev, [s.id]: { code, emailSent: true } }));
       } else {
-        // Invitation exists but email send failed; let the trainer retry.
-        setInviteError('Invite created. Email failed to send — try Resend.');
+        // Invitation exists but email send failed; surface the server's
+        // detail string so the trainer (or whoever's debugging) can see why.
+        const body = await send.json().catch(() => ({}));
+        const detail = body?.details ?? body?.error ?? `HTTP ${send.status}`;
+        setInviteError(`Email failed: ${detail}`);
       }
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Invite failed');
@@ -149,7 +152,11 @@ export default function ApplicationsClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientName: s.name, inviteCode: code }),
       });
-      if (!send.ok) throw new Error('Email send failed');
+      if (!send.ok) {
+        const body = await send.json().catch(() => ({}));
+        const detail = body?.details ?? body?.error ?? `HTTP ${send.status}`;
+        throw new Error(detail);
+      }
       setInvites((prev) => ({ ...prev, [s.id]: { code, emailSent: true } }));
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Resend failed');
