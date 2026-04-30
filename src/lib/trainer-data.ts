@@ -96,6 +96,9 @@ export async function getRoster(trainerUserId: string): Promise<RosterClient[]> 
     where: {
       trainerId: trainerUserId,
       role: 'CLIENT',
+      // Exclude archived clients — they belong in the Archived tab, not the
+      // active roster.
+      archivedAt: null,
     },
     select: {
       id: true,
@@ -179,4 +182,37 @@ export async function getTrainerRosterStats(trainerUserId: string) {
     avgAdherence,
     prsThisWeek,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Archived clients
+// ---------------------------------------------------------------------------
+
+export interface ArchivedClient {
+  id: string;
+  name: string | null;
+  email: string;
+  archivedAt: Date;
+  archivedReason: string | null;
+}
+
+export async function getArchivedClients(trainerId: string): Promise<ArchivedClient[]> {
+  const rows = await prisma.user.findMany({
+    where: {
+      role: 'CLIENT',
+      trainerId,
+      archivedAt: { not: null },
+    },
+    orderBy: { archivedAt: 'desc' },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      archivedAt: true,
+      archivedReason: true,
+    },
+  });
+  // Prisma's `archivedAt: { not: null }` filter does not narrow the type, so
+  // assert non-null here. Safe by query construction.
+  return rows as ArchivedClient[];
 }
