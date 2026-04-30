@@ -50,10 +50,12 @@ export function ApplyForm({
     try {
       const ft = parseInt(heightFt, 10);
       const inch = parseInt(heightIn, 10);
-      const totalInches =
-        Number.isFinite(ft) || Number.isFinite(inch)
-          ? (Number.isFinite(ft) ? ft : 0) * 12 + (Number.isFinite(inch) ? inch : 0)
-          : undefined;
+      // Require feet to be present. A bare inches value (e.g. user typed
+      // "11" in the in field but left ft blank) is almost always a typo,
+      // so we drop both rather than store 0'11" as someone's height.
+      const totalInches = Number.isFinite(ft)
+        ? ft * 12 + (Number.isFinite(inch) ? inch : 0)
+        : undefined;
       const weight = parseFloat(weightLb);
       const days = parseInt(daysPerWeek, 10);
 
