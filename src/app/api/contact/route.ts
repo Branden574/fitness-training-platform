@@ -34,6 +34,27 @@ const contactSchema = z.object({
   currentActivity: z.string().optional(),
   injuries: z.string().optional(),
   availability: z.string().optional(),
+
+  // ---- Expanded intake (2026-04-30) ----
+  heightInches: z.number().int().min(36).max(96).optional(),
+  weightLb: z.number().min(40).max(800).optional(),
+  primaryGoal: z
+    .enum([
+      'LOSE_FAT',
+      'BUILD_MUSCLE',
+      'GET_STRONGER',
+      'SPORT_SPECIFIC',
+      'GENERAL_HEALTH',
+      'OTHER',
+    ])
+    .optional(),
+  // trainingExperience is the API/form field name. It is persisted into the
+  // existing ContactSubmission.fitnessLevel column — no new column needed.
+  trainingExperience: z
+    .enum(['NONE', 'SOME', 'INTERMEDIATE', 'ADVANCED'])
+    .optional(),
+  limitations: z.string().max(500).optional(),
+  daysPerWeek: z.number().int().min(1).max(7).optional(),
 });
 
 function composeMessage(
@@ -131,7 +152,13 @@ export async function POST(request: Request) {
         phone: validatedData.phone || null,
         message: composedMessage,
         age: validatedData.age || null,
-        fitnessLevel: validatedData.fitnessLevel || null,
+        heightInches: validatedData.heightInches ?? null,
+        weightLb: validatedData.weightLb ?? null,
+        primaryGoal: validatedData.primaryGoal ?? null,
+        limitations: validatedData.limitations ?? null,
+        daysPerWeek: validatedData.daysPerWeek ?? null,
+        // Expanded intake — fitnessLevel takes the trainingExperience value.
+        fitnessLevel: validatedData.trainingExperience ?? validatedData.fitnessLevel ?? null,
         fitnessGoals: validatedData.fitnessGoals || null,
         currentActivity: validatedData.currentActivity || null,
         injuries: validatedData.injuries || null,
