@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Mail, Phone, BellOff, Inbox } from 'lucide-react';
+import { Mail, Phone, BellOff, Inbox, UserPlus, Check, Loader2 } from 'lucide-react';
 
 type Kind = 'APPLICATION' | 'NOTIFY_WHEN_OPEN';
 type Status = 'NEW' | 'IN_PROGRESS' | 'CONTACTED' | 'INVITED' | 'COMPLETED';
@@ -51,6 +51,14 @@ export default function ApplicationsClient({
   const [statusFilter, setStatusFilter] = useState<'ALL' | Status>('ALL');
   const [selectedId, setSelectedId] = useState<string | null>(initial[0]?.id ?? null);
 
+  // Per-submission invite state. Keyed by submission id so a navigation
+  // between submissions doesn't lose the just-issued code.
+  const [invites, setInvites] = useState<
+    Record<string, { code: string | null; emailSent: boolean }>
+  >({});
+  const [inviteBusy, setInviteBusy] = useState<'idle' | 'creating' | 'sending'>('idle');
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
   const filtered = useMemo(
     () =>
       items.filter((s) => {
@@ -78,6 +86,74 @@ export default function ApplicationsClient({
           s.id === id ? { ...s, status: initial.find((i) => i.id === id)?.status ?? 'NEW' } : s,
         ),
       );
+    }
+  };
+
+  // Accept an applicant: create an Invitation row (which auto-sets the
+  // submission's status to INVITED) and email the applicant their invite
+  // code in one click. Two endpoints in sequence — if the second fails the
+  // invitation still exists and the trainer can resend.
+  const acceptAndInvite = async (s: SerializedSubmission) => {
+    if (s.kind !== 'APPLICATION') return;
+    setInviteError(null);
+    setInviteBusy('creating');
+    try {
+      const create = await fetch('/api/invitations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: s.email, submissionId: s.id }),
+      });
+      const data = await create.json().catch(() => ({}));
+      if (!create.ok) {
+        throw new Error(data?.message ?? 'Could not create invitation');
+      }
+      const code: string | null = data?.code ?? null;
+      if (!code) {
+        throw new Error('Invitation created but no code was returned');
+      }
+      // Mark INVITED locally and store the code for this submission.
+      setItems((prev) =>
+        prev.map((it) => (it.id === s.id ? { ...it, status: 'INVITED' } : it)),
+      );
+      setInvites((prev) => ({ ...prev, [s.id]: { code, emailSent: false } }));
+
+      // Now send the invite email.
+      setInviteBusy('sending');
+      const send = await fetch('/api/send-invite-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientName: s.name, inviteCode: code }),
+      });
+      if (send.ok) {
+        setInvites((prev) => ({ ...prev, [s.id]: { code, emailSent: true } }));
+      } else {
+        // Invitation exists but email send failed; let the trainer retry.
+        setInviteError('Invite created. Email failed to send — try Resend.');
+      }
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Invite failed');
+    } finally {
+      setInviteBusy('idle');
+    }
+  };
+
+  const resendInviteEmail = async (s: SerializedSubmission) => {
+    const code = invites[s.id]?.code;
+    if (!code) return;
+    setInviteError(null);
+    setInviteBusy('sending');
+    try {
+      const send = await fetch('/api/send-invite-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientName: s.name, inviteCode: code }),
+      });
+      if (!send.ok) throw new Error('Email send failed');
+      setInvites((prev) => ({ ...prev, [s.id]: { code, emailSent: true } }));
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Resend failed');
+    } finally {
+      setInviteBusy('idle');
     }
   };
 
@@ -332,6 +408,135 @@ export default function ApplicationsClient({
                   </div>
                 </div>
               )}
+
+              {/* Accept & invite — APPLICATION kind only. Once invited (either
+                  in this session via the button below or before page load),
+                  show the success card with code + Resend. */}
+              {selected.kind === 'APPLICATION' && (() => {
+                const inviteState = invites[selected.id];
+                const alreadyInvited = selected.status === 'INVITED' || !!inviteState;
+                if (!alreadyInvited) {
+                  return (
+                    <div style={{ marginBottom: 20 }}>
+                      <button
+                        type="button"
+                        onClick={() => acceptAndInvite(selected)}
+                        disabled={inviteBusy !== 'idle'}
+                        className="mf-btn"
+                        style={{
+                          height: 40,
+                          padding: '0 16px',
+                          background: 'var(--mf-accent, #FF4D1C)',
+                          color: 'var(--mf-accent-ink, #0A0A0B)',
+                          borderColor: 'var(--mf-accent, #FF4D1C)',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        {inviteBusy === 'creating' ? (
+                          <>
+                            <Loader2 size={14} aria-hidden style={{ animation: 'spin 1s linear infinite' }} />
+                            Creating invitation…
+                          </>
+                        ) : inviteBusy === 'sending' ? (
+                          <>
+                            <Loader2 size={14} aria-hidden style={{ animation: 'spin 1s linear infinite' }} />
+                            Sending email…
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={14} aria-hidden />
+                            Accept &amp; send invite
+                          </>
+                        )}
+                      </button>
+                      <div className="mf-fg-mute" style={{ fontSize: 11, marginTop: 6 }}>
+                        Creates a 6-character code, marks this submission as INVITED, and
+                        emails {selected.email} the invite link.
+                      </div>
+                      {inviteError && (
+                        <div role="alert" style={{ fontSize: 12, color: '#fca5a5', marginTop: 6 }}>
+                          {inviteError}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    className="mf-card"
+                    style={{
+                      padding: 14,
+                      marginBottom: 20,
+                      background: 'rgba(43,217,133,0.06)',
+                      borderColor: 'rgba(43,217,133,0.32)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        color: 'var(--mf-green, #2BD985)',
+                        marginBottom: 6,
+                      }}
+                    >
+                      <Check size={14} aria-hidden />
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mf-mono), monospace',
+                          fontSize: 10,
+                          letterSpacing: '0.1em',
+                        }}
+                      >
+                        INVITED
+                      </span>
+                    </div>
+                    {inviteState?.code ? (
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-mf-mono), monospace',
+                          fontSize: 22,
+                          letterSpacing: '0.1em',
+                          fontVariantNumeric: 'tabular-nums',
+                          marginBottom: 6,
+                        }}
+                      >
+                        {inviteState.code}
+                      </div>
+                    ) : (
+                      <div className="mf-fg-dim" style={{ fontSize: 12, marginBottom: 6 }}>
+                        Invitation already sent before this session.
+                      </div>
+                    )}
+                    <div className="mf-fg-mute" style={{ fontSize: 11, marginBottom: 10 }}>
+                      {inviteState?.emailSent
+                        ? `Sent to ${selected.email}.`
+                        : inviteState?.code
+                        ? 'Code created. Email send pending — use Resend if needed.'
+                        : 'See the original invite email or /admin/invitations for the code.'}
+                    </div>
+                    {inviteState?.code && (
+                      <button
+                        type="button"
+                        onClick={() => resendInviteEmail(selected)}
+                        disabled={inviteBusy !== 'idle'}
+                        className="mf-btn"
+                        style={{ height: 32, padding: '0 12px', fontSize: 12 }}
+                      >
+                        {inviteBusy === 'sending' ? 'Sending…' : 'Resend invite email'}
+                      </button>
+                    )}
+                    {inviteError && (
+                      <div role="alert" style={{ fontSize: 12, color: '#fca5a5', marginTop: 6 }}>
+                        {inviteError}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div
                 style={{
