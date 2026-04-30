@@ -26,6 +26,14 @@ export function ApplyForm({
   const [goal, setGoal] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [heightFt, setHeightFt] = useState('');
+  const [heightIn, setHeightIn] = useState('');
+  const [weightLb, setWeightLb] = useState('');
+  const [primaryGoal, setPrimaryGoal] = useState('');
+  const [trainingExperience, setTrainingExperience] = useState('');
+  const [daysPerWeek, setDaysPerWeek] = useState('');
+  const [injuries, setInjuries] = useState('');
+  const [limitations, setLimitations] = useState('');
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,11 +43,20 @@ export function ApplyForm({
       return;
     }
     if (goal.trim().length < 3) {
-      setError('Tell your trainer what you\u2019re trying to do — at least a few words.');
+      setError('Tell your trainer what you’re trying to do — at least a few words.');
       return;
     }
     setSubmitting(true);
     try {
+      const ft = parseInt(heightFt, 10);
+      const inch = parseInt(heightIn, 10);
+      const totalInches =
+        Number.isFinite(ft) || Number.isFinite(inch)
+          ? (Number.isFinite(ft) ? ft : 0) * 12 + (Number.isFinite(inch) ? inch : 0)
+          : undefined;
+      const weight = parseFloat(weightLb);
+      const days = parseInt(daysPerWeek, 10);
+
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,6 +66,14 @@ export function ApplyForm({
           phone: phone.trim() || undefined,
           trainerId: selection.id ?? undefined,
           goal: goal.trim() || undefined,
+          heightInches: totalInches,
+          weightLb: Number.isFinite(weight) ? weight : undefined,
+          primaryGoal: primaryGoal || undefined,
+          trainingExperience: trainingExperience || undefined,
+          limitations: limitations.trim() || undefined,
+          daysPerWeek: Number.isFinite(days) ? days : undefined,
+          // injuries is sent so the existing schema column gets populated.
+          injuries: injuries.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -170,6 +195,130 @@ export function ApplyForm({
           placeholder="e.g. Lose 20 lbs by summer, get stronger for hiking season, rehab a shoulder…"
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
+        />
+      </Field>
+
+      <div
+        className="mf-eyebrow"
+        style={{ marginBottom: -6, marginTop: 8 }}
+      >
+        ABOUT YOU
+      </div>
+      <div
+        className="mf-fg-mute"
+        style={{ fontSize: 11, marginTop: -10, marginBottom: -4 }}
+      >
+        Trainers use this to write your first program — skip anything
+        you&apos;d rather discuss in person.
+      </div>
+
+      <Field label="HEIGHT" hint="Optional">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            className="mf-input"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="ft"
+            value={heightFt}
+            onChange={(e) => setHeightFt(e.target.value.replace(/\D/g, ''))}
+            maxLength={1}
+            style={{ width: 80 }}
+          />
+          <input
+            className="mf-input"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="in"
+            value={heightIn}
+            onChange={(e) => setHeightIn(e.target.value.replace(/\D/g, ''))}
+            maxLength={2}
+            style={{ width: 80 }}
+          />
+        </div>
+      </Field>
+
+      <Field label="CURRENT WEIGHT" hint="lb · optional">
+        <input
+          className="mf-input"
+          inputMode="decimal"
+          placeholder="175"
+          value={weightLb}
+          onChange={(e) => setWeightLb(e.target.value)}
+          style={{ width: 120 }}
+        />
+      </Field>
+
+      <Field label="TRAINING EXPERIENCE" hint="Optional">
+        <select
+          className="mf-input"
+          value={trainingExperience}
+          onChange={(e) => setTrainingExperience(e.target.value)}
+        >
+          <option value="">— Select —</option>
+          <option value="NONE">New to lifting</option>
+          <option value="SOME">Some experience</option>
+          <option value="INTERMEDIATE">Intermediate</option>
+          <option value="ADVANCED">Advanced</option>
+        </select>
+      </Field>
+
+      <Field label="PRIMARY GOAL" hint="Optional · helps your trainer match programming">
+        <select
+          className="mf-input"
+          value={primaryGoal}
+          onChange={(e) => setPrimaryGoal(e.target.value)}
+        >
+          <option value="">— Select —</option>
+          <option value="LOSE_FAT">Lose fat</option>
+          <option value="BUILD_MUSCLE">Build muscle</option>
+          <option value="GET_STRONGER">Get stronger</option>
+          <option value="SPORT_SPECIFIC">Sport-specific</option>
+          <option value="GENERAL_HEALTH">General health</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </Field>
+
+      <Field label="DAYS / WEEK YOU CAN TRAIN" hint="Optional">
+        <select
+          className="mf-input"
+          value={daysPerWeek}
+          onChange={(e) => setDaysPerWeek(e.target.value)}
+          style={{ width: 120 }}
+        >
+          <option value="">—</option>
+          {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field
+        label="PREVIOUS INJURIES"
+        hint="Optional · so your trainer can program around them"
+      >
+        <textarea
+          className="mf-input"
+          rows={2}
+          maxLength={500}
+          placeholder="e.g. Rotator cuff strain 2024 — still avoid overhead press"
+          value={injuries}
+          onChange={(e) => setInjuries(e.target.value)}
+        />
+      </Field>
+
+      <Field
+        label="PHYSICAL LIMITATIONS"
+        hint="Optional · anything that affects how you move"
+      >
+        <textarea
+          className="mf-input"
+          rows={2}
+          maxLength={500}
+          placeholder="e.g. Bad knees on stairs, mild lower back from desk job"
+          value={limitations}
+          onChange={(e) => setLimitations(e.target.value)}
         />
       </Field>
 
