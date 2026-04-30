@@ -2,6 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { Mail, Phone, BellOff, Inbox, UserPlus, UserX, Check, Loader2 } from 'lucide-react';
+import {
+  formatHeightInches,
+  formatWeightLb,
+  humanizePrimaryGoal,
+  humanizeTrainingExperience,
+} from '@/lib/intake';
 
 type Kind = 'APPLICATION' | 'NOTIFY_WHEN_OPEN';
 type Status = 'NEW' | 'IN_PROGRESS' | 'CONTACTED' | 'INVITED' | 'COMPLETED' | 'DECLINED';
@@ -19,6 +25,14 @@ export interface SerializedSubmission {
   createdAt: string;
   /** Pre-populated from the matching Invitation row when status=INVITED. */
   inviteCode: string | null;
+  heightInches: number | null;
+  weightLb: number | null;
+  primaryGoal: string | null;
+  fitnessLevel: string | null;
+  fitnessGoals: string | null;
+  injuries: string | null;
+  limitations: string | null;
+  daysPerWeek: number | null;
 }
 
 const STATUSES: Status[] = ['NEW', 'IN_PROGRESS', 'CONTACTED', 'INVITED', 'COMPLETED', 'DECLINED'];
@@ -384,22 +398,73 @@ export default function ApplicationsClient({
 
               {selected.kind === 'APPLICATION' ? (
                 <>
-                  <div className="mf-eyebrow" style={{ marginBottom: 8 }}>
-                    Message
+                  {/* ---- Expanded intake (2026-04-30) ---- */}
+                  <div
+                    className="mf-eyebrow"
+                    style={{ marginTop: 24, marginBottom: 8 }}
+                  >
+                    ABOUT
                   </div>
                   <div
                     style={{
-                      padding: 14,
-                      background: 'var(--mf-surface-2, #0E0E10)',
-                      border: '1px solid var(--mf-hairline, #1F1F22)',
-                      borderRadius: 4,
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      whiteSpace: 'pre-wrap',
-                      marginBottom: 20,
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                      gap: '8px 24px',
+                      marginBottom: 16,
                     }}
+                    className="intake-grid"
                   >
-                    {selected.message || '(no message)'}
+                    <IntakeRow label="HEIGHT" value={formatHeightInches(selected.heightInches)} />
+                    <IntakeRow label="WEIGHT" value={formatWeightLb(selected.weightLb)} />
+                    <IntakeRow
+                      label="EXPERIENCE"
+                      value={humanizeTrainingExperience(selected.fitnessLevel)}
+                    />
+                    <IntakeRow
+                      label="DAYS/WEEK"
+                      value={selected.daysPerWeek != null ? String(selected.daysPerWeek) : '—'}
+                    />
+                  </div>
+
+                  <div
+                    className="mf-eyebrow"
+                    style={{ marginTop: 16, marginBottom: 8 }}
+                  >
+                    GOAL
+                  </div>
+                  <div style={{ marginBottom: 16, fontSize: 14, lineHeight: 1.5 }}>
+                    <span className="mf-fg">{humanizePrimaryGoal(selected.primaryGoal)}</span>
+                    {selected.fitnessGoals ? (
+                      <span className="mf-fg-dim"> &middot; &ldquo;{selected.fitnessGoals}&rdquo;</span>
+                    ) : selected.message ? (
+                      <span className="mf-fg-dim"> &middot; &ldquo;{selected.message}&rdquo;</span>
+                    ) : null}
+                  </div>
+
+                  <div
+                    className="mf-eyebrow"
+                    style={{ marginTop: 16, marginBottom: 8 }}
+                  >
+                    INJURIES
+                  </div>
+                  <div
+                    style={{ marginBottom: 16, fontSize: 13, whiteSpace: 'pre-wrap' }}
+                    className={selected.injuries ? 'mf-fg' : 'mf-fg-dim'}
+                  >
+                    {selected.injuries ?? '—'}
+                  </div>
+
+                  <div
+                    className="mf-eyebrow"
+                    style={{ marginTop: 16, marginBottom: 8 }}
+                  >
+                    LIMITATIONS
+                  </div>
+                  <div
+                    style={{ marginBottom: 24, fontSize: 13, whiteSpace: 'pre-wrap' }}
+                    className={selected.limitations ? 'mf-fg' : 'mf-fg-dim'}
+                  >
+                    {selected.limitations ?? '—'}
                   </div>
                 </>
               ) : (
@@ -680,6 +745,11 @@ export default function ApplicationsClient({
             align-items: start;
           }
         }
+        @media (max-width: 600px) {
+          .intake-grid {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
     </div>
   );
@@ -770,5 +840,24 @@ function KindBadge({ kind }: { kind: Kind }) {
     >
       {isApp ? 'APPLY' : 'NOTIFY-ME'}
     </span>
+  );
+}
+
+function IntakeRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div className="mf-eyebrow" style={{ marginBottom: 2 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: 'var(--font-mf-mono), monospace',
+          fontSize: 13,
+        }}
+        className={value === '—' ? 'mf-fg-dim' : 'mf-fg'}
+      >
+        {value}
+      </div>
+    </div>
   );
 }

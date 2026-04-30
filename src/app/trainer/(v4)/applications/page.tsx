@@ -23,6 +23,14 @@ export default async function TrainerApplicationsPage() {
       waitlist: true,
       notifiedAt: true,
       createdAt: true,
+      heightInches: true,
+      weightLb: true,
+      primaryGoal: true,
+      fitnessLevel: true,
+      fitnessGoals: true,
+      injuries: true,
+      limitations: true,
+      daysPerWeek: true,
     },
   });
 
