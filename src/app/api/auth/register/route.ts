@@ -105,6 +105,28 @@ export async function POST(request: Request) {
       }
     });
 
+    // Carry-over from intake: seed the new client's ClientProfile with the
+    // height/weight they supplied on the apply form, so they don't have to
+    // re-enter it inside the app. Match the ContactSubmission by lowercased
+    // email (same key we used to validate the invitation). Trainers don't
+    // get a ClientProfile — they only exist for CLIENT users.
+    if (redeemerRole === 'CLIENT') {
+      const intake = await prisma.contactSubmission.findFirst({
+        where: { email: normalizedEmail },
+        select: { heightInches: true, weightLb: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (intake && (intake.heightInches != null || intake.weightLb != null)) {
+        await prisma.clientProfile.create({
+          data: {
+            userId: user.id,
+            height: intake.heightInches ?? undefined,
+            weight: intake.weightLb ?? undefined,
+          },
+        });
+      }
+    }
+
     // New TRAINER users need a Trainer row + slug + referral code right away so
     // they can be published, searched, and have a shareable /apply/{slug} link
     // without having to visit the Sharing panel first.
