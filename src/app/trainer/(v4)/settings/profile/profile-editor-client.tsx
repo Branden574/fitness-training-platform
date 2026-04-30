@@ -558,6 +558,7 @@ function ProfileForm() {
           display: 'flex',
           gap: 8,
           alignItems: 'center',
+          justifyContent: 'flex-end',
           flexWrap: 'wrap',
           position: 'sticky',
           top: 0,
@@ -568,20 +569,11 @@ function ProfileForm() {
           marginBottom: 16,
         }}
       >
-        <a
-          href="/trainer/settings"
-          className="mf-btn"
-          style={{
-            height: 40,
-            padding: '0 14px',
-            fontSize: 12,
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-          }}
-        >
-          ← Back to Settings
-        </a>
+        {/* Back to Settings was here in the previous design but the breadcrumb
+            (TRAINER / SETTINGS / PROFILE) and the SubNav strip above the
+            editor both already handle that affordance — keep this row focused
+            on Save + Publish so the action surface is tight. The button group
+            now right-aligns via justify-content on the parent. */}
         <button
           type="button"
           onClick={togglePublish}
@@ -590,7 +582,6 @@ function ProfileForm() {
           style={{
             height: 40,
             padding: '0 16px',
-            margin: '0 auto',
             borderColor: profile.trainerIsPublic
               ? 'var(--mf-green, #2BD985)'
               : 'var(--mf-hairline-strong)',
@@ -726,7 +717,8 @@ function ProfileForm() {
           </div>
 
           <nav
-            style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '0 4px 8px' }}
+            className="mf-profile-nav-list"
+            style={{ padding: '0 4px 8px' }}
           >
             {NAV_ITEMS.map((s) => {
               const sel = active === s.key;
@@ -735,10 +727,10 @@ function ProfileForm() {
                   key={s.key}
                   type="button"
                   onClick={() => setActive(s.key)}
-                  className="focus-ring"
+                  className="focus-ring mf-profile-nav-btn"
+                  data-active={sel || undefined}
                   style={{
                     position: 'relative',
-                    width: '100%',
                     textAlign: 'left',
                     padding: '8px 10px',
                     border: 'none',
@@ -751,6 +743,7 @@ function ProfileForm() {
                   {sel && (
                     <span
                       aria-hidden="true"
+                      className="mf-profile-nav-tick"
                       style={{
                         position: 'absolute',
                         left: 0,
@@ -764,7 +757,7 @@ function ProfileForm() {
                   )}
                   <div style={{ fontSize: 13, lineHeight: 1.25 }}>{s.label}</div>
                   <div
-                    className="mf-fg-mute mf-font-mono"
+                    className="mf-fg-mute mf-font-mono mf-profile-nav-summary"
                     style={{
                       fontSize: 9,
                       letterSpacing: '0.06em',
@@ -872,7 +865,18 @@ function ProfileForm() {
           .mf-pf-span-12 { grid-column: span 12; }
         }
 
-        /* md: show horizontal section tabs as a strip above the center pane */
+        /* Default nav-list layout (vertical column). Below md the rail itself
+           is hidden in favor of the mobile select. */
+        .mf-profile-nav-list {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .mf-profile-nav-btn { width: 100%; }
+
+        /* md (768-1023): show the rail as a horizontal section tab strip
+           above the center pane. Hide per-tab summaries, collapse the
+           progress meter into a compact strip. */
         @media (min-width: 768px) {
           .mf-profile-mobile-nav { display: none; }
           .mf-profile-nav {
@@ -880,7 +884,19 @@ function ProfileForm() {
             border: 1px solid var(--mf-hairline);
             border-radius: 4px;
             background: var(--mf-surface-1);
-            padding: 12px 8px;
+            padding: 8px 8px 4px;
+          }
+          .mf-profile-nav-list {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 4px;
+          }
+          .mf-profile-nav-btn { width: auto; padding: 6px 12px !important; }
+          .mf-profile-nav-summary { display: none; }
+          .mf-profile-nav-tick { display: none; }
+          .mf-profile-nav-btn[data-active] {
+            background: var(--mf-accent) !important;
+            color: var(--mf-accent-ink, #0A0A0B) !important;
           }
         }
 
@@ -895,6 +911,20 @@ function ProfileForm() {
             max-height: calc(100vh - 100px);
             overflow-y: auto;
             align-self: start;
+            padding: 12px 8px;
+          }
+          .mf-profile-nav-list {
+            flex-direction: column;
+            gap: 2px;
+          }
+          .mf-profile-nav-btn { width: 100%; padding: 8px 10px !important; }
+          .mf-profile-nav-summary { display: block; }
+          .mf-profile-nav-tick { display: block; }
+          /* Restore the surface-3 selection bg on lg+, override the md
+             accent-bg rule so vertical nav looks like the original. */
+          .mf-profile-nav-btn[data-active] {
+            background: var(--mf-surface-3) !important;
+            color: var(--mf-fg) !important;
           }
         }
 
