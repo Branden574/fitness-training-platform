@@ -64,6 +64,16 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          if (user.archivedAt) {
+            // Archived accounts are scheduled for permanent deletion.
+            // Block login during the 30-day grace window so the trainer
+            // can restore them before the cron purges the account.
+            await prisma.loginEvent.create({
+              data: { email: normalizedEmail, userId: user.id, success: false, reason: 'account_archived' }
+            }).catch(() => {});
+            return null;
+          }
+
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
           if (!isPasswordValid) {

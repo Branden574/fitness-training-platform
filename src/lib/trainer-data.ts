@@ -12,6 +12,15 @@ export async function requireTrainerSession(): Promise<Session> {
     if (session.user.role === 'CLIENT') redirect('/client');
     redirect('/auth/signin');
   }
+  // Belt-and-suspenders: existing JWT sessions for archived users get
+  // rejected on the next API call. (Login is already blocked at credentials.)
+  const fresh = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { archivedAt: true },
+  });
+  if (fresh?.archivedAt) {
+    redirect('/auth/signin');
+  }
   return session;
 }
 
